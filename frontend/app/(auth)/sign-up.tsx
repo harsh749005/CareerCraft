@@ -128,7 +128,6 @@ export default function SignUpScreen() {
   if (pendingVerification) {
     return (
       <SafeScreen>
-        <Bar/>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
