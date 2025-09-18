@@ -52,29 +52,41 @@ const formatExperience = () => {
         ? `${exp.start} - ${exp.end}` 
         : (exp.year || '');
 
-      // Convert asterisk bullet points to HTML list
-      const formatBulletPoints = (text) => {
+      // 🔧 Enhanced Bullet + Bold Formatter
+      const formatBulletPoints = (text: string) => {
         if (!text) return '';
-        const bullets = text.split('*').filter(bullet => bullet.trim());
-        
+
+        // 1️⃣ First handle bold text safely
+        let safeText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // 2️⃣ Split by line breaks or bullets
+        const bullets = safeText
+          .split(/\n|\r|\*/g) // split on * or newlines
+          .map(bullet => bullet.trim())
+          .filter(Boolean);
+
         if (bullets.length <= 1) {
-          return `<div>${text}</div>`;
+          // No bullets → return plain div
+          return `<div>${safeText}</div>`;
         }
 
+        // 3️⃣ Wrap bullets in <li>
         const listItems = bullets
-          .map(bullet => `<li style="margin-top: 2px;">${bullet.trim()}</li>`)
+          .map(bullet => `<li style="margin-top: 2px;">${bullet}</li>`)
           .join('');
 
-        return `<ul style=" font-size:10px;margin-top:2px">${listItems}</ul>`;
+        return `<ul style="font-size:10px;margin-top:2px">${listItems}</ul>`;
       };
 
       return `
         <div style="margin-top:4px">
-          <div style="display: flex; justify-content: space-between; ">
-        
-          <strong style="font-family: 'Times New Roman';font-size: 10pt;">${exp.company || ''}</strong>
-         
-          <em style="font-family: 'Times New Roman';font-size: 10px;">${duration}</em>
+          <div style="display: flex; justify-content: space-between;">
+            <strong style="font-family: 'Times New Roman';font-size: 10pt;">
+              ${exp.company || ''}
+            </strong>
+            <em style="font-family: 'Times New Roman';font-size: 10px;">
+              ${duration}
+            </em>
           </div>
           <div style="font-style: italic; font-size: 11px;">
             ${exp.role || ''}
@@ -85,6 +97,7 @@ const formatExperience = () => {
     })
     .join('') || '';
 };
+
 
 
   const formatEducation = () => {

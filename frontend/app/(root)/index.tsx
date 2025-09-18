@@ -233,7 +233,7 @@ export default function Index() {
           />
         )}
 
-        {step === 9 && (
+        {step === 3 && (
           <EducationStep
             data={formData}
             addEducation={addEducation}
@@ -310,7 +310,7 @@ export default function Index() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 3 && <ReviewStep data={formData} prevStep={prevStep} />}
+        {step === 9 && <ReviewStep data={formData} prevStep={prevStep} />}
       </View>
     </SafeScreen>
   );

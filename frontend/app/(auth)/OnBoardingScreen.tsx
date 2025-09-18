@@ -9,6 +9,11 @@ import {
 import { LinearGradient } from "expo-linear-gradient"; // or react-native-linear-gradient
 import { router } from "expo-router";
 
+import responsive from "@/components/appcomp/responsive";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
 const OnboardingScreen = () => {
   const handleSignUp = () => {
@@ -43,9 +48,9 @@ const OnboardingScreen = () => {
       >
         {/* Main content */}
         <View style={styles.content}>
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Create Your Perfect Resume</Text>
-            <Text style={styles.subtitle}>
+          <View style={[styles.textContainer, { paddingHorizontal: wp(4) }]}>
+            <Text style={[styles.title, { fontSize: wp(8.4),paddingHorizontal: wp(4) }]}>Create Your Perfect Resume</Text>
+            <Text style={[styles.subtitle, { fontSize: wp(4) }]}>
               Build professional resumes with our easy-to-use templates and land
               your dream job
             </Text>
@@ -53,16 +58,16 @@ const OnboardingScreen = () => {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={styles.signUpButton}
+              style={[styles.signUpButton, { paddingVertical: wp(4), paddingHorizontal: wp(8) }]}
               onPress={handleSignUp}
             >
-              <Text style={styles.signUpButtonText}>Sign Up</Text>
+              <Text style={[styles.signUpButtonText, { fontSize: wp(4.5) }]}>Sign Up</Text>
             </TouchableOpacity>
 
             <View style={styles.signInContainer}>
-              <Text style={styles.signInText}>Already have an account? </Text>
+              <Text style={[styles.signInText, { fontSize: wp(4) }]}>Already have an account? </Text>
               <TouchableOpacity onPress={handleSignIn}>
-                <Text style={styles.signInLink}>Sign In</Text>
+                <Text style={[styles.signInLink, { fontSize: wp(4) }]}>Sign In</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -75,7 +80,7 @@ const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: wp(5),
   },
   content: {
     flex: 1,

@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Dimensions } from "react-native";
+
+import responsive from "../appcomp/responsive";
+
 
 // ✅ Direct imports
 import resume1 from "../../assets/images/resume/resume1.png";
@@ -74,7 +76,7 @@ const ResumeOptions: React.FC<ResumeOptionsProps> = ({
           {/* <View style={styles.stepIndicator}>
             <Text style={styles.stepText}>Step 3 of 4</Text>
           </View> */}
-          <Text style={[styles.title, { }]}>Resume Templates</Text>
+          <Text style={[styles.title, { fontSize: responsive.fontSize(28) }]}>Resume Templates</Text>
           <Text style={[styles.subtitle, { }]}>
             Find the perfect design for your professional profile
           </Text>

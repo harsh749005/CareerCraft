@@ -47,6 +47,10 @@ const getSpacing = (baseSpacing: number): number => {
   if (isLargeScreen) return baseSpacing * 1.2;
   return baseSpacing;
 };
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -58,6 +62,7 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = React.useState(false);
   const [code, setCode] = React.useState("");
   const [disable, setDisable] = React.useState(false);
+  const [error, setError] = React.useState(""); // Add error state
   // 🔹 Validate form whenever inputs change
   React.useEffect(() => {
     if (
@@ -91,10 +96,41 @@ export default function SignUpScreen() {
       // Set 'pendingVerification' to true to display second form
       // and capture OTP code
       setPendingVerification(true);
-    } catch (err) {
+    } catch (error: unknown) {
       // See https://clerk.com/docs/custom-flows/error-handling
       // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      console.error(JSON.stringify(error, null, 2));
+
+      // Narrow error shape safely (Clerk API errors expose an `errors` array)
+      if (
+        error &&
+        typeof error === "object" &&
+        "errors" in error &&
+        Array.isArray((error as any).errors) &&
+        (error as any).errors.length > 0
+      ) {
+        const first = (error as any).errors[0];
+        const errorCode: string | undefined = first?.code;
+        const errorMessage: string = String(first?.message || "");
+
+        if (
+          errorCode === "form_identifier_exists" ||
+          errorMessage.toLowerCase().includes("already exists") ||
+          errorMessage.toLowerCase().includes("already taken")
+        ) {
+          setError("An account with this email address already exists. Please try signing in instead.");
+        } else {
+          setError(errorMessage || "An error occurred during sign up.");
+        }
+        return;
+      }
+
+      // Generic fallback
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
   };
 
@@ -128,6 +164,7 @@ export default function SignUpScreen() {
   if (pendingVerification) {
     return (
       <SafeScreen>
+        <StatusBar barStyle="dark-content" />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -152,7 +189,7 @@ export default function SignUpScreen() {
 
   return (
     <SafeScreen>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content"/>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -185,6 +222,8 @@ export default function SignUpScreen() {
               onChangeText={setPassword}
               style={styles.input}
             />
+            <Text style={{fontSize:wp(3),fontFamily:"WorkSansRegular",color:"#a9a9a9"}}>• Must have 5 special keywords,letter & number</Text>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TouchableOpacity
               disabled={disable}
@@ -266,5 +305,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "WorkSansMedium",
     color: "#000",
+  },  
+  errorText: {
+    color: "#d9534f", // Slightly soft red
+    fontSize: 13,
+    marginTop: 4,
+    fontFamily: "WorkSansRegular",
   },
 });
