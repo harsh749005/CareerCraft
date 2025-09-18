@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "CareerCraft",
+    "slug": "CareerCraft",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/mainLOGO.png",
+    "scheme": "careercraft",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.harsh749005.CareerCraft",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/mainLOGO.png",
+        "backgroundImage": "./assets/images/mainLOGO.png",
+        "monochromeImage": "./assets/images/mainLOGO.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.harsh749005.CareerCraft"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/mainLOGO.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/mainLOGO.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e7ad7f99-8f64-47c0-86b1-837de8c08ef9"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e7ad7f99-8f64-47c0-86b1-837de8c08ef9"
+    }
+  }
+}
