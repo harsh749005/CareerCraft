@@ -24,12 +24,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ data, prevStep }) => {
       setTimeout(async () => {
         console.log("Final Form Data:", data);
         alert("Form Submitted Successfully!");
-        const pdfPath = await generatePDF(data);
-        alert(`PDF saved at: ${pdfPath}`);
+        await generatePDF(data);
+        // alert(`PDF saved at: ${pdfPath}`);
         setIsGenerating(false);
       }, 3000);
 
-      setIsGenerating(false);
       // Here you can also open/share the PDF if you want
     } catch (err) {
       setIsGenerating(false);

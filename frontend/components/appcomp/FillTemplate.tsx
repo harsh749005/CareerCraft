@@ -127,38 +127,68 @@ const formatExperience = () => {
       .join('') || '';
   };
 
-  const formatProjects = () => {
-    return formData.projects
+const formatProjects = () => {
+  return (
+    formData.projects
       ?.map(project => {
-                  // Convert asterisk bullet points to HTML list
-          const formatBulletPoints = (text) =>{
-            if (!text) return '';
-            //  Split by asterisks and filter out empty strings
-            const bullets = text.split('*').filter(bullet => bullet.trim());
-            if(bullets <= 1){
-              // If no asterisks found, return as regular text
-              return `<div>${text}</div>`;
-            }
-            const listItems = bullets
-            .map(bullet => `<li style="margin-bottom: 2px;font-size:10px;">${bullet.trim()}</li>`)
-            .join('');
+        // 🔧 Enhanced Bullet + Bold Formatter (same as formatExperience)
+        const formatBulletPoints = (text: string) => {
+          if (!text) return "";
 
-            return `<ul style="margin: 0px 0; ">${listItems}</ul>`;
+          // 1️⃣ Convert **bold**
+          let safeText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+          // 2️⃣ Split by line breaks
+          const bullets = safeText
+            .split(/\n|\r/)
+            .map(line => line.trim())
+            .filter(Boolean);
+
+          // 3️⃣ Convert * to <li>
+          const listItems = bullets
+            .map(line => {
+              if (line.startsWith("*")) {
+                return `<li style="margin:0; padding:0; font-size:10px;">${line.replace(/^\*\s*/, "")}</li>`;
+              }
+              return line;
+            })
+            .join("");
+
+          const hasBullets = bullets.some(line => line.startsWith("*"));
+
+          if (hasBullets) {
+            return `<ul style="margin:0; padding-left:12px; list-style-position:inside;">${listItems}</ul>`;
           }
-          // margin-bottom: 15px;
+
+          return `<div>${listItems}</div>`;
+        };
+
         return `
           <div style="margin-bottom: 4px;">
             <div style="margin-bottom: 2px;">
-              <strong style="font-family: 'Times New Roman';font-size: 11px;">${project.title || ''}</strong> - 
-              <em style="font-family: 'Times New Roman';font-size: 10px;">${project.technologies || ''}</em>
+              <strong style="font-family: 'Times New Roman';font-size: 11px;">
+                ${project.title || ""}
+              </strong> - 
+              <em style="font-family: 'Times New Roman';font-size: 10px;">
+                ${project.technologies || ""}
+              </em>
             </div>
-            ${project.description ? `<div>${formatBulletPoints(project.description)}</div>` : ''}
-            ${project.liveUrl ? `<em style="margin-left:10px;font-family: 'Times New Roman';font-size:10px;">Live demo:<a href="${project.liveUrl}">${project.liveUrl}</a></em>` : ''}
+            ${project.description ? formatBulletPoints(project.description) : ""}
+            ${
+              project.liveUrl
+                ? `<em style="margin-left:10px;font-family: 'Times New Roman';font-size:10px;">
+                     Live demo: <a href="${project.liveUrl}">${project.liveUrl}</a>
+                   </em>`
+                : ""
+            }
           </div>
         `;
       })
-      .join('') || '';
-  };
+      .join("") || ""
+  );
+};
+
+
 const formatSummary = () => {
   const text = formData.professional_summary;
 

@@ -71,7 +71,7 @@ const ResumeOptions: React.FC<ResumeOptionsProps> = ({
    
       <View style={styles.container}>
          <View style={styles.header}>
-          <SignOutButton/>
+          {/* <SignOutButton/> */}
           {/* Progress Indicator */}
           {/* <View style={styles.stepIndicator}>
             <Text style={styles.stepText}>Step 3 of 4</Text>

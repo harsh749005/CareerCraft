@@ -10,8 +10,6 @@ const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 export default function RootLayout() {
     if (!clerkKey) {
     console.error("❌ Clerk publishable key is missing!");
-  }else{
-    console.log("Your key", clerkKey)
   }
   const [fontsLoaded] = useFonts({
     // Inter
