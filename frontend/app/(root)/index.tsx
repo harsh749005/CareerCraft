@@ -1,3 +1,4 @@
+import MainScreen from "@/components/screens/MainScreen";
 import EducationStep from "@/components/screens/EducationStep";
 import ResumeOptions from "@/components/screens/ResumeOptions";
 import ReviewStep from "@/components/screens/ReviewStep";
@@ -217,7 +218,12 @@ export default function Index() {
         {/* Step Counter */}
         {/* <Text style={{ fontSize: 18, marginBottom: 10 }}>Step {step}/9</Text> */}
 
-        {step === 1 && (
+        {
+              step === 1 && (
+                <MainScreen></MainScreen>
+              )
+        }
+        {step === 2 && (
           <ResumeOptions
             nextStep={nextStep}
             updateSelectedTemplate={updateSelectedTemplate}
