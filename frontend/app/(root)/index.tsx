@@ -1,350 +1,252 @@
-import MainScreen from "@/components/screens/MainScreen";
-import EducationStep from "@/components/screens/EducationStep";
-import ResumeOptions from "@/components/screens/ResumeOptions";
-import ReviewStep from "@/components/screens/ReviewStep";
-import SkillsStep from "@/components/screens/SkillStep";
-import SummaryStep from "@/components/screens/SummaryStep";
-import WorkExperienceStep from "@/components/screens/WorkExperience";
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+} from "react-native";
+import React from "react";
 import SafeScreen from "@/components/appcomp/SafeScreen";
-import Projects from "@/components/screens/Projects";
-import PersonalInfoStep from "@/components/screens/PersonalInfoStep";
-import OtherLinks from "@/components/screens/OtherLinks";
-import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useRouter } from "expo-router";
 
-export default function Index() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<{
-    personal_info: Record<string, any>;
-    professional_summary: string;
-    work_experience: any[];
-    projects: any[];
-    education: any[];
-    skills: {
-      languages: string[];
-      frameworks: string[];
-      tools: string[];
-      databases: string[];
-    };
-    // certifications: string[];
-    // languages: string[];
-    selected_template: string;
-    otherLinks: Record<string, any>;
-  }>({
-    personal_info: {},
-    professional_summary: "",
-    work_experience: [], // ✅ now properly typed
-    projects: [],
-    education: [],
-    skills: {
-      languages: [],
-      frameworks: [],
-      tools: [],
-      databases: [],
-    },
-    // certifications: [],
-    // languages: [],
-    selected_template: "",
-    otherLinks: {},
-  });
+const Index = () => {
+  const router = useRouter();
 
-  // 🔹 Update Personal Info (nested object)
-  const updatePersonalInfo = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      personal_info: { ...prev.personal_info, [field]: value },
-    }));
-  };
-
-  // 🔹 Add Work Experience
-  const addWorkExperience = (exp: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      work_experience: [...prev.work_experience, exp],
-    }));
-  };
-
-  // 🔹 Update Work Experience
-  const updateWorkExperience = (
-    index: number,
-    field: string,
-    value: string
-  ) => {
-    const updated = formData.work_experience.map((exp, i) =>
-      i === index ? { ...exp, [field]: value } : exp
-    );
-    setFormData({ ...formData, work_experience: updated });
-  };
-  // Remove Exprerienc
-  const removeExperience = (index: number) => {
-    const updated = formData.work_experience.filter((_, i) => i !== index);
-    setFormData({ ...formData, work_experience: updated });
-  };
-  // add projects
-  const addProjects = (pro: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      projects: [...prev.projects, pro],
-    }));
-  };
-  // update project
-  const updateProjects = (index: number, field: string, value: string) => {
-    const updated = formData.projects.map((pro, i) =>
-      i === index ? { ...pro, [field]: value } : pro
-    );
-    setFormData({ ...formData, projects: updated });
-  };
-  // Remove Exprerienc
-  const removeProjects = (index: number) => {
-    const updated = formData.projects.filter((_, i) => i !== index);
-    setFormData({ ...formData, projects: updated });
-  };
-
-  // 🔹 Update Summary
-  const updateSummary = (value: string) => {
-    setFormData((prev) => ({ ...prev, professional_summary: value }));
-  };
-
-  // add Certification
-  // const addCertification = (cert:string) => {
-  //   setFormData((prev:any) => ({
-  //     ...prev,
-  //     certifications: [...prev.certifications, cert],
-  //   }));
-  // };
-
-  // 🔹 Update Certifications
-  // const updateCertification = (index:number, value:string) => {
-  //   const updated = formData.certifications.map((cert, i) =>
-  //     i === index ? value : cert
-  //   );
-  //   setFormData({ ...formData, certifications: updated });
-  // };
-
-  // add Education
-  const addEducation = (edu: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      education: [...prev.education, edu],
-    }));
-  };
-
-  // 🔹 Update Education
-  const updateEducation = (index: number, field: string, value: string) => {
-    const updated = formData.education.map((edu, i) =>
-      i === index ? { ...edu, [field]: value } : edu
-    );
-    setFormData({ ...formData, education: updated });
-  };
-  const handleRemoveEducationExperience = (index: number) => {
-    const updated = formData.education.filter((_, i) => i !== index);
-    setFormData({ ...formData, education: updated });
-  };
-
-  // 🔹 Add & Remove Languages
-  // const handleLanguage = (lang:string) => {
-  //   setFormData((prev:any) => {
-  //     const alreadySelected = prev.languages.includes(lang);
-
-  //     return {
-  //       ...prev,
-  //       languages: alreadySelected
-  //         ? prev.languages.filter((item:any) => item !== lang) // remove if already selected
-  //         : [...prev.languages, lang], // add if not selected
-  //     };
-  //   });
-  // };
-
-  // 🔹 Update Languages
-  // const updateLanguage = (index:number, value:string) => {
-  //   const updated = formData.languages.map((lang, i) =>
-  //     i === index ? value : lang
-  //   );
-  //   setFormData({ ...formData, languages: updated });
-  // };
-
-  // Your updateSkill function:
-  type SkillCategory = "languages" | "frameworks" | "tools" | "databases";
-  const updateSkill = (category: SkillCategory, skill: string) => {
-    setFormData((prev) => {
-      const currentSkills = prev.skills[category] || [];
-      const alreadySelected = currentSkills.includes(skill);
-
-      return {
-        ...prev,
-        skills: {
-          ...prev.skills,
-          [category]: alreadySelected
-            ? currentSkills.filter((item: string) => item !== skill)
-            : [...currentSkills, skill],
-        },
-      };
-    });
-  };
-
-  // 🔹 Update Selected Template
-  const updateSelectedTemplate = (value: string) => {
-    console.log("Selected Template in Index:", value);
-    setFormData((prev) => ({ ...prev, selected_template: value }));
-  };
-
-  // 🔹 Update updateOtherLinks (nested object)
-  const updateOtherLinks = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      otherLinks: { ...prev.otherLinks, [field]: value },
-    }));
-  };
-
-  // 🔹 Navigation
-  const nextStep = () => setStep((prev) => prev + 1);
-  const prevStep = () => setStep((prev) => prev - 1);
-  const totalSteps = 9;
-  // const progress = step / totalSteps;
   return (
-    <SafeScreen>
-      <View style={{ flex: 1, padding: 20 }}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View
-            style={[
-              styles.progressFill,
-              { flex: step, backgroundColor: "#000" },
-            ]}
-          />
-          <View style={{ flex: totalSteps - step, backgroundColor: "#eee" }} />
-        </View>
-        {/* <Text style={styles.header}>Step {step} / {totalSteps}</Text> */}
-        {/* Step Counter */}
-        {/* <Text style={{ fontSize: 18, marginBottom: 10 }}>Step {step}/9</Text> */}
+    <>
+      <StatusBar barStyle="dark-content" />
+      <SafeScreen>
+        <ScrollView style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            {/* Header Section */}
+            <View style={styles.header}>
+              <Text style={styles.title}>CareerCraft</Text>
+              <Text style={styles.subtitle}>
+                Build, analyze, and optimize your resume with AI-powered tools
+              </Text>
+            </View>
 
-        {
-              step === 1 && (
-                <MainScreen></MainScreen>
-              )
-        }
-        {step === 2 && (
-          <ResumeOptions
-            nextStep={nextStep}
-            updateSelectedTemplate={updateSelectedTemplate}
-          />
-        )}
+            {/* Main Features */}
+            <View style={styles.featuresSection}>
+              <TouchableOpacity
+                style={styles.featureCard}
+                onPress={() => router.push("/(root)/BuildResume")}
+                activeOpacity={0.8}
+              >
+                <View style={styles.featureIcon}>
+                  <Text style={styles.featureIconText}>📝</Text>
+                </View>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Build Resume</Text>
+                  <Text style={styles.featureDescription}>
+                    Create a professional, ATS-friendly resume tailored to your career goals
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-        {step === 2 && (
-          <PersonalInfoStep
-            data={formData.personal_info}
-            updatePersonalInfo={updatePersonalInfo}
-            prevStep={prevStep}
-            nextStep={nextStep}
-          />
-        )}
+              <TouchableOpacity
+                style={styles.featureCard}
+                onPress={() => router.push("/(root)/Analyze")}
+                activeOpacity={0.8}
+              >
+                <View style={styles.featureIcon}>
+                  <Text style={styles.featureIconText}>🔍</Text>
+                </View>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Analyze Resume</Text>
+                  <Text style={styles.featureDescription}>
+                    Get instant feedback with AI-powered insights and recommendations
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-        {step === 3 && (
-          <EducationStep
-            data={formData}
-            addEducation={addEducation}
-            updateEducation={updateEducation}
-            removeEducationExperience={handleRemoveEducationExperience}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
-        {step === 4 && (
-          // <LanguagesStep
-          //   data={formData}
-          //   handleLanguage={handleLanguage}
-          //   nextStep={nextStep}
-          //   prevStep={prevStep}
-          // />
-          <SkillsStep
-            data={formData}
-            updateSkill={updateSkill}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
-        {step === 5 && (
-          <Projects
-            data={formData}
-            addProjects={addProjects}
-            updateProjects={updateProjects}
-            removeProjects={removeProjects}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
-        {step === 6 && (
-          // <CertificationsStep
-          //   data={formData}
-          //   addCertification={addCertification}
-          //   updateCertification={updateCertification}
-          //   nextStep={nextStep}
-          //   prevStep={prevStep}
-          // />
-          <WorkExperienceStep
-            data={formData}
-            addExperience={addWorkExperience}
-            updateExperience={updateWorkExperience}
-            removeExperience={removeExperience}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
-        {step === 7 && (
-          <OtherLinks
-            data={formData}
-            updateOtherLinks={updateOtherLinks}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
+              {/* Coming Soon Features */}
+              <View style={[styles.featureCard, styles.disabledCard]}>
+                <View style={styles.comingSoonBadge}>
+                  <Text style={styles.comingSoonText}>Coming Soon</Text>
+                </View>
+                <View style={styles.featureIcon}>
+                  <Text style={styles.featureIconText}>🎯</Text>
+                </View>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Job Match Score</Text>
+                  <Text style={styles.featureDescription}>
+                    Compare your resume against job descriptions for better matches
+                  </Text>
+                </View>
+              </View>
 
-        {step === 8 && (
-          <SummaryStep
-            data={formData}
-            summary={formData.professional_summary}
-            updateSummary={updateSummary}
-            nextStep={nextStep}
-            prevStep={prevStep}
-          />
-        )}
+              <View style={[styles.featureCard, styles.disabledCard]}>
+                <View style={styles.comingSoonBadge}>
+                  <Text style={styles.comingSoonText}>Coming Soon</Text>
+                </View>
+                <View style={styles.featureIcon}>
+                  <Text style={styles.featureIconText}>📚</Text>
+                </View>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Resume Templates</Text>
+                  <Text style={styles.featureDescription}>
+                    Choose from industry-specific templates designed by experts
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-        {/* {step === 6 && (
-          <ResumeOptions
-            nextStep={nextStep}
-            prevStep={prevStep}
-            updateSelectedTemplate={updateSelectedTemplate}
-          />
-        )} */}
-        {step === 9 && <ReviewStep data={formData} prevStep={prevStep} />}
-      </View>
-    </SafeScreen>
+            {/* Stats Section */}
+            <View style={styles.statsContainer}>
+              <Text style={styles.statsTitle}>Why Use Resume Analyzer?</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>95%</Text>
+                  <Text style={styles.statLabel}>ATS Compatible</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>10K+</Text>
+                  <Text style={styles.statLabel}>Resumes Analyzed</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>3x</Text>
+                  <Text style={styles.statLabel}>Interview Rate</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeScreen>
+    </>
   );
-}
+};
+
+export default Index;
 
 const styles = StyleSheet.create({
-  progressContainer: {
-    flexDirection: "row",
-    height: 2,
-    // borderRadius: 6,
-    overflow: "hidden",
-    marginBottom: 15,
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#ffffff",
   },
-  progressFill: {
-    // borderRadius: 6,
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
+  header: {
+    alignItems: "center",
+    paddingTop: 20,
+    marginBottom: 30,
+  },
+  title: {
+    fontFamily: "PlayfairDisplayRegular",
+    fontSize: 32,
+    textAlign: "center",
+    color: "#1a1a1a",
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontFamily: "WorkSansRegular",
+    fontSize: 16,
+    textAlign: "center",
+    color: "#666666",
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  featuresSection: {
+    marginBottom: 30,
+  },
+  featureCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  stepText: {
-    fontSize: 12,
+  disabledCard: {
+    opacity: 0.6,
+  },
+  comingSoonBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  comingSoonText: {
     fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontSize: 11,
+    color: "#666666",
+  },
+  featureIcon: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#000000",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  featureIconText: {
+    fontSize: 24,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontFamily: "WorkSansSemiBold",
+    fontSize: 18,
+    color: "#1a1a1a",
+    marginBottom: 6,
+  },
+  featureDescription: {
+    fontFamily: "WorkSansRegular",
+    fontSize: 14,
+    color: "#666666",
+    lineHeight: 20,
+  },
+  statsContainer: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    padding: 24,
+    marginTop: 10,
+  },
+  statsTitle: {
+    fontFamily: "WorkSansSemiBold",
+    fontSize: 20,
+    color: "#ffffff",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    gap:6
+  },
+  statItem: {
+    alignItems: "center",
+  },
+  statNumber: {
+    fontFamily: "WorkSansBold",
+    fontSize: 28,
+    color: "#ffffff",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontFamily: "WorkSansRegular",
+    fontSize: 11,
+    color: "#cccccc",
+    textAlign: "center",
   },
 });

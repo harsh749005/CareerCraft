@@ -12,5 +12,10 @@ export default function RootLayout() {
   }
 
   // Case 2: Logged in → skip onboarding, go straight to app
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="BuildResume" />
+      <Stack.Screen name="Analyze" />
+    </Stack>
+  );
 }
