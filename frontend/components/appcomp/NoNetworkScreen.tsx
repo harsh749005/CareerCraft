@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { StatusBar } from 'expo-status-bar';
 
 export default function NoInternetScreen() {
   const handleTryAgain = async () => {
