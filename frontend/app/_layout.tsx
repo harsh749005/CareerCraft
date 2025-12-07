@@ -3,12 +3,17 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import NoInternetScreen from "@/components/appcomp/NoNetworkScreen";
 
 const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export default function RootLayout() {
-    if (!clerkKey) {
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+
+  if (!clerkKey) {
     console.error("❌ Clerk publishable key is missing!");
   }
   const [fontsLoaded] = useFonts({
@@ -31,11 +36,38 @@ export default function RootLayout() {
     WorkSansExtraBold: require("../assets/fonts/WorkSans-ExtraBold.ttf"),
   });
 
+  // Check network connectivity on mount and listen for changes
+  useEffect(() => {
+    // Initial check
+    const checkConnection = async () => {
+      const state = await NetInfo.fetch();
+      setIsConnected(state.isConnected);
+      setIsChecking(false);
+    };
+
+    checkConnection();
+
+    // Subscribe to network state updates
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+      setIsChecking(false);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  // Show no internet screen if not connected (after initial check)
+  if (!isChecking && isConnected === false) {
+    return <NoInternetScreen />;
+  }
 
   // if (!fontsLoaded) return <PageLoader />;
   return (

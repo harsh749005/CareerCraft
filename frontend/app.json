@@ -2,7 +2,7 @@
   "expo": {
     "name": "CareerCraft",
     "slug": "CareerCraft",
-    "version": "1.0.0",
+    "version": "2.40.9",
     "orientation": "portrait",
     "icon": "./assets/images/mainLOGO.png",
     "scheme": "careercraft",
@@ -44,7 +44,8 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
