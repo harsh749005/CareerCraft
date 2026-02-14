@@ -342,6 +342,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
     color: "#999999",
-    fontFamily: "WorkSansRegular",
+    fontFamily: "WorkSansMedium",
   },
 });

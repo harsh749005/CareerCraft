@@ -11,12 +11,19 @@ import PersonalInfoStep from "@/components/screens/PersonalInfoStep";
 import OtherLinks from "@/components/screens/OtherLinks";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import IndustrySelector from "./TemplateSelector/IndustrySelector";
+import ResumeOptionEnhanced from "./TemplateSelector/ResumeOptionEnhanced";
 
 export default function BuildReume() {
-  const [option,setOption] = useState("");
-  const handleOption = (e:string) =>{
-    setOption(e);
-  }
+  //const [option,setOption] = useState("");
+  const [selectedIndustry, setSelectedIndustry] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  // const updateSelectedIndustry = (industry: string) => {
+  //   setSelectedIndustry(industry);
+  // };
+  // const handleOption = (e:string) =>{
+  //   setOption(e);
+  // }
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<{
     personal_info: Record<string, any>;
@@ -228,13 +235,17 @@ export default function BuildReume() {
               )
         } */}
         {step === 1 && (
-          <ResumeOptions
-            nextStep={nextStep}
-            updateSelectedTemplate={updateSelectedTemplate}
-          />
+          <IndustrySelector nextStep={nextStep} updateSelectedIndustry={setSelectedIndustry} />
+          // <ResumeOptions
+          //   nextStep={nextStep}
+          //   updateSelectedTemplate={updateSelectedTemplate}
+          // />
+        )}
+        {step === 2 && (
+          <ResumeOptionEnhanced nextStep={nextStep} updateSelectedTemplate={setSelectedTemplate} selectedIndustry={selectedIndustry} />
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <PersonalInfoStep
             data={formData.personal_info}
             updatePersonalInfo={updatePersonalInfo}
