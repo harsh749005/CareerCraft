@@ -4,7 +4,7 @@
     "slug": "CareerCraft",
     "version": "2.40.9",
     "orientation": "portrait",
-    "icon": "./assets/images/LOGOV2.png",
+    "icon": "./assets/images/mainLOGO2.png",
     "scheme": "careercraft",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,9 +18,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/LOGOV2.png",
-        "backgroundImage": "./assets/images/LOGOV2.png",
-        "monochromeImage": "./assets/images/LOGOV2.png"
+        "foregroundImage": "./assets/images/mainLOGO2.png",
+        "backgroundImage": "./assets/images/mainLOGO2.png",
+        "monochromeImage": "./assets/images/mainLOGO2.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -28,14 +28,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/LOGOV2.png"
+      "favicon": "./assets/images/mainLOGO2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/mainLOGO.png",
+          "image": "./assets/images/mainLOGO2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000",
