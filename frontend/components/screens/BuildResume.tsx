@@ -254,7 +254,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <EducationStep
             data={formData}
             addEducation={addEducation}
@@ -264,7 +264,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 4 && (
+        {step === 5 && (
           // <LanguagesStep
           //   data={formData}
           //   handleLanguage={handleLanguage}
@@ -278,7 +278,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 5 && (
+        {step === 6 && (
           <Projects
             data={formData}
             addProjects={addProjects}
@@ -288,7 +288,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 6 && (
+        {step === 7 && (
           // <CertificationsStep
           //   data={formData}
           //   addCertification={addCertification}
@@ -305,7 +305,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 7 && (
+        {step === 8 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
@@ -314,7 +314,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 8 && (
+        {step === 9 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
@@ -331,7 +331,7 @@ export default function BuildReume() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 9 && <ReviewStep data={formData} prevStep={prevStep} />}
+        {step === 10 && <ReviewStep data={formData} prevStep={prevStep} />}
       </View>
     </SafeScreen>
   );

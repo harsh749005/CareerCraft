@@ -6,8 +6,9 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // or react-native-linear-gradient
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import * as Application from 'expo-application';
 
 import responsive from "@/components/appcomp/responsive";
 import {
@@ -16,15 +17,14 @@ import {
 } from 'react-native-responsive-screen';
 
 const OnboardingScreen = () => {
+  const appVersion = Application.nativeApplicationVersion;
+  const buildNumber = Application.nativeBuildVersion;
+
   const handleSignUp = () => {
-    // Navigate to sign up screen
-    // console.log('Sign Up pressed');
     router.push("/(auth)/sign-up");
   };
 
   const handleSignIn = () => {
-    // Navigate to sign in screen
-    // console.log('Sign In pressed');
     router.push("/(auth)/sign-in");
   };
 
@@ -34,22 +34,24 @@ const OnboardingScreen = () => {
 
       <LinearGradient
         colors={[
-          "#FF6B6B", // Red-orange at top
-          "#FF8E8E", // Light red
-          "#ED78DD", // Pinkish purple
-          "#DDA0DD", // Plum
-          "#B19CD9", // Purple
-          "#d2d2d2ff", // Light gray/white at bottom
+          "#FF6B6B",
+          "#FF8E8E",
+          "#ED78DD",
+          "#DDA0DD",
+          "#B19CD9",
+          "#d2d2d2ff",
         ]}
         locations={[0, 0.01, 0.45, 0.6, 0.75, 1]}
-        start={{ x: 1, y: 0 }} // top-left corner
-        end={{ x: 0, y: 1 }} // bottom-right corner
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
         {/* Main content */}
         <View style={styles.content}>
           <View style={[styles.textContainer, { paddingHorizontal: wp(4) }]}>
-            <Text style={[styles.title, { fontSize: wp(8.4),paddingHorizontal: wp(4) }]}>Create Your Perfect Resume</Text>
+            <Text style={[styles.title, { fontSize: wp(8.4), paddingHorizontal: wp(4) }]}>
+              Create Your Perfect Resume
+            </Text>
             <Text style={[styles.subtitle, { fontSize: wp(4) }]}>
               Build professional resumes with our easy-to-use templates and land
               your dream job
@@ -69,6 +71,13 @@ const OnboardingScreen = () => {
               <TouchableOpacity onPress={handleSignIn}>
                 <Text style={[styles.signInLink, { fontSize: wp(4) }]}>Sign In</Text>
               </TouchableOpacity>
+            </View>
+
+            {/* App Version */}
+            <View style={styles.versionContainer}>
+              <Text style={styles.versionText}>
+                Version {appVersion}
+              </Text>
             </View>
           </View>
         </View>
@@ -98,7 +107,6 @@ const styles = StyleSheet.create({
     color: "black",
     textAlign: "center",
     marginBottom: 16,
-    // lineHeight: 38,
     fontFamily: "PlayfairDisplayMedium",
   },
   subtitle: {
@@ -146,6 +154,15 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 16,
     fontFamily: "WorkSansMedium",
+  },
+  versionContainer: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  versionText: {
+    fontSize: 12,
+    color: "rgba(0, 0, 0, 0.5)",
+    fontFamily: "WorkSansRegular",
   },
 });
 
