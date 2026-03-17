@@ -1,335 +1,205 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  StatusBar,
   TouchableOpacity,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-interface PersonalInfoStepProps {
+interface Props {
   data: any;
   updatePersonalInfo: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
-const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
+
+const PersonalInfoStep: React.FC<Props> = ({
   data,
   updatePersonalInfo,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          {/* Progress Indicator */}
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Personal Info</Text>
-          <Text style={styles.subtitle}>Provide your details</Text>
-        </View>
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-        {/* Name Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="Name *"
-          placeholderTextColor="#a9a9a9"
-          value={data.name || ""}
-          onChangeText={(val) => updatePersonalInfo("name", val)}
-        />
+  const renderInput = (
+    label: string,
+    key: string,
+    keyboardType: any = "default",
+  ) => {
+    const value = data[key] || "";
+    const isFocused = focusedField === key;
 
-        {/* Email Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="Email *"
-          placeholderTextColor="#a9a9a9"
-          keyboardType="email-address"
-          value={data.email || ""}
-          onChangeText={(val) => updatePersonalInfo("email", val)}
-        />
-                {/* Name Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="Number *"
-          placeholderTextColor="#a9a9a9"
-          value={data.number || ""}
-          onChangeText={(val) => updatePersonalInfo("number", val)}
-        />
+    return (
+      <View style={styles.inputContainer}>
+        {(value || isFocused) && <Text style={styles.label}>{label}</Text>}
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder={isFocused ? "" : label}
+            placeholderTextColor="#aaa"
+            value={value}
+            keyboardType={keyboardType}
+            onFocus={() => setFocusedField(key)}
+            onBlur={() => setFocusedField(null)}
+            onChangeText={(val) => updatePersonalInfo(key, val)}
+          />
+
+          {/* ✅ Green Tick */}
+          {value.length > 0 && (
+            <Ionicons name="checkmark-circle" size={20} color="#81B29A" />
+          )}
         </View>
       </View>
-    </>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 🔹 Navbar */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={prevStep}>
+          <Ionicons name="arrow-back" size={22} color="#3D405B" />
+        </TouchableOpacity>
+
+        <Text style={styles.stepText}>
+          Step {step} of {totalSteps}
+        </Text>
+
+        <TouchableOpacity>
+          <Text style={styles.previewText}>Preview</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 🔹 Title */}
+      <Text style={styles.title}>Contact Details</Text>
+
+      {/* 🔹 Heading */}
+      <Text style={styles.mainHeading}>
+        What’s the best way for employers to contact you?
+      </Text>
+
+      <Text style={styles.subHeading}>
+        We suggest including an email and phone number
+      </Text>
+
+      {/* 🔹 Inputs */}
+      {renderInput("Name", "name")}
+      {renderInput("Email", "email", "email-address")}
+      {renderInput("Phone Number", "number", "numeric")}
+
+      {/* 🔹 Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.nextBtn} onPress={nextStep}>
+          <Text style={styles.nextText}>CONTINUE</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
+
+export default PersonalInfoStep;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F4F1DE",
+    // paddingTop: 60,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
   },
 
-  header: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  experienceCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  experienceHeader: {
+  navbar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
   },
 
-  experienceTitle: {
-    fontSize: 18,
-    color: "#666",
+  stepText: {
+    fontFamily: "WorkSansMedium",
+    color: "#3D405B",
+  },
+
+  previewText: {
+    color: "#81B29A",
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  title: {
+    marginTop: 20,
+    textAlign: "center",
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#6c6c6c",
     fontFamily: "WorkSansMedium",
   },
 
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
+  mainHeading: {
+    marginTop: 10,
+    fontSize: 24,
+    textAlign: "center",
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
   },
 
-  deleteButtonText: {
-    color: "#ff4444",
+  subHeading: {
+    marginTop: 8,
+    fontSize: 14,
+    textAlign: "center",
+    color: "#6c6c6c",
+    fontFamily: "WorkSansRegular",
+    marginBottom: 30,
+  },
+
+  inputContainer: {
+    marginBottom: 20,
+  },
+
+  label: {
     fontSize: 12,
-    fontFamily: "WorkSansMedium",
+    color: "#3D405B",
+    marginBottom: 4,
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#ccc",
+    paddingBottom: 6,
   },
 
   input: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#d0d0d0",
-    fontFamily: "WorkSansRegular",
-    fontSize: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    color: "#333",
-  },
-
-  multilineInput: {
-    minHeight: 80,
-  },
-
-  polishButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  polishButtonLoading: {
-    backgroundColor: "#5eb3ff",
-  },
-
-  polishContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  loadingContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  polishIcon: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-
-  polishButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-
-  polishButtonTextLoading: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    textAlign: "center",
-    marginLeft: 8,
-  },
-
-  dateSection: {
-    marginBottom: 16,
-  },
-
-  dateLabel: {
+    flex: 1,
     fontSize: 16,
     color: "#333",
     fontFamily: "WorkSansRegular",
-    marginBottom: 8,
-  },
-
-  dateButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-
-  dateButtonDisabled: {
-    backgroundColor: "#cccccc",
-  },
-
-  dateButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontFamily: "WorkSansMedium",
-    fontSize: 16,
-  },
-
-  dateButtonTextDisabled: {
-    color: "#666666",
-  },
-
-  switchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-
-  switchLabel: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-  },
-
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginVertical: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  addButtonIcon: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-  },
-
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
   },
 
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
+    justifyContent: "center",
+    marginTop: "auto",
+    marginBottom: 20,
   },
 
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
+  nextBtn: {
+    backgroundColor: "#81B29A",
+    paddingVertical: 14,
     paddingHorizontal: 30,
-    minWidth: 100,
+    borderRadius: 30,
+    width: "100%",
   },
 
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
+  nextText: {
+    color: "#fff",
+    fontFamily: "WorkSansBold",
     fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
     textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
   },
 });
-export default PersonalInfoStep;

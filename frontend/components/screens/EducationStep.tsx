@@ -1,271 +1,155 @@
 import React, { useState } from "react";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  StatusBar,
-  ScrollView,
   TouchableOpacity,
-  Alert,
-  Switch,
 } from "react-native";
-interface EducationStepProps {
+import { Ionicons } from "@expo/vector-icons";
+
+interface Props {
   data: any;
-  addEducation: any;
-  updateEducation: any;
-  removeEducationExperience: any;
+  addEducation: (edu: any) => void;
+  updateEducation: (index: number, field: string, value: string) => void;
+  removeEducationExperience: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
-const EducationStep: React.FC<EducationStepProps> = ({
+
+const EducationStep: React.FC<Props> = ({
   data,
   addEducation,
   updateEducation,
   removeEducationExperience,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
-  const education = data.education || [];
-  const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState<any>({
-    visible: false,
-    field: null,
-    index: null,
-  });
-  const formattedMonthYear = (currentDate: any) => {
-    return currentDate.toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-  };
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isPresent, setIsPresent] = useState(false);
+  const edu = data.education?.[0] || {};
 
-  const onChange = (event: any, selectedDate: any) => {
-    if (event.type === "dismissed") {
-      setShowPicker({ visible: false, field: null, index: null });
-      return;
-    }
+  const renderInput = (label: string, key: string) => {
+    const value = edu[key] || "";
+    const isFocused = focusedField === key;
 
-    const currentDate = selectedDate || date;
-    setDate(currentDate);
-
-    // Save directly into Education
-    updateEducation(
-      showPicker.index,
-      showPicker.field,
-      formattedMonthYear(currentDate)
-    );
-
-    setShowPicker({ visible: false, field: null, index: null });
-  };
-  const handleNext = () => {
-    if (education.length === 0) {
-      Alert.alert(
-        "Add Education Details",
-        "Please add at least one education detail to continue",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    // Validate required fields
-    const incompleteEducation = education.some(
-      (edu: any) => !edu.institution || !edu.degree || !edu.result
-    );
-
-    if (incompleteEducation) {
-      Alert.alert(
-        "Complete Required Fields",
-        "Please fill in Fields for all experiences",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    nextStep();
-  };
-
-  const handleAddEducation = () => {
-    addEducation({
-      institution: "",
-      degree: "",
-      result: "",
-    });
-  };
-
-  const handleRemoveExperience = (index: number) => {
-    if (education.length === 1) {
-      Alert.alert(
-        "Cannot Remove",
-        "You need at least one work education entry",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    Alert.alert(
-      "Remove Experience",
-      "Are you sure you want to remove this education details?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => removeEducationExperience(index),
-        },
-      ]
+    return (
+      <View style={styles.inputContainer}>
+        {/* 🔹 Floating Label */}
+        {(value || isFocused) && <Text style={styles.label}>{label}</Text>}
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder={isFocused ? "" : label}
+            placeholderTextColor="#aaa"
+            value={value}
+            onFocus={() => setFocusedField(key)}
+            onBlur={() => setFocusedField(null)}
+            onChangeText={(val) => updateEducation(0, key, val)}
+          />
+          {/* ✅ Green Tick */}
+          {value && (
+            <Ionicons name="checkmark-circle" size={20} color="#81B29A" />
+          )}
+        </View>
+      </View>
     );
   };
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          {/* Progress Indicator */}
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Education</Text>
-          <Text style={styles.subtitle}>
-            Tell us about your education background
-          </Text>
-        </View>
+    <View style={styles.container}>
+      {/* 🔹 Navbar */}
+      <View style={styles.navbar}>
+  
+  {/* 🔹 Left */}
+  <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+    <Ionicons name="arrow-back" size={22} color="#3D405B" />
+  </TouchableOpacity>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          {education.map((edu: any, index: number) => (
-            <View key={index} style={styles.card}>
-              <View style={styles.secondaryHeader}>
-                <Text style={styles.secondaryTitle}>
-                  Experience {index + 1}
-                </Text>
-                {education.length > 1 && (
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleRemoveExperience(index)}
-                  >
-                    <Text style={styles.deleteButtonText}>✕</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="School/University *"
-                placeholderTextColor="#a9a9a9" 
-                value={edu.institution || ""}
-                onChangeText={(val) =>
-                  updateEducation(index, "institution", val)
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Degree *"
-                placeholderTextColor="#a9a9a9" 
-                value={edu.degree || ""}
-                onChangeText={(val) => updateEducation(index, "degree", val)}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="cgpa/10 or percentage *"
-                placeholderTextColor="#a9a9a9" 
-                value={edu.result || ""}
-                onChangeText={(val) => updateEducation(index, "result", val)}
-              />
+  {/* 🔹 Center (ABSOLUTE) */}
+  <View style={styles.centerContent}>
+    <Text style={styles.stepText}>
+      Step {step} of {totalSteps}
+    </Text>
+    <Text style={styles.title}>EDUCATION</Text>
+  </View>
 
-              {/* Start Date */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  Start Date: {edu.start || "Not selected"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "start", index })
-                  }
-                >
-                  <Text style={styles.dateButtonText}>PICK START DATE</Text>
-                </TouchableOpacity>
-              </View>
+  {/* 🔹 Right */}
+  <TouchableOpacity style={styles.rightBtn}>
+    <Text style={styles.previewText}>Preview</Text>
+  </TouchableOpacity>
 
-              {/* End Date */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  End Date: {edu.end || "Not selected"}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.dateButton,
-                    edu.end === "Present" && styles.dateButtonDisabled,
-                  ]}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "end", index })
-                  }
-                  disabled={edu.end === "Present"}
-                >
-                  <Text
-                    style={[
-                      styles.dateButtonText,
-                      edu.end === "Present" && styles.dateButtonTextDisabled,
-                    ]}
-                  >
-                    PICK END DATE
-                  </Text>
-                </TouchableOpacity>
+</View>
 
-                <View style={styles.switchContainer}>
-                  <Switch
-                    value={edu.end === "Present"}
-                    onValueChange={(val) =>
-                      updateEducation(index, "end", val ? "Present" : "")
-                    }
-                    trackColor={{ false: "#d0d0d0", true: "#007AFF" }}
-                    thumbColor={edu.end === "Present" ? "#ffffff" : "#f4f3f4"}
-                  />
-                  <Text style={styles.switchLabel}>
-                    Currently pursuing here
-                  </Text>
-                </View>
-              </View>
-            </View>
+      {/* 🔹 Title */}
 
-            // dates
-          ))}
-          {/* Add Experience Button */}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={handleAddEducation}
-          >
-            <Text style={styles.addButtonIcon}>+</Text>
-            <Text style={styles.addButtonText}>ADD EDUCATION DETAILS</Text>
-          </TouchableOpacity>
-        </ScrollView>
+      <Text style={styles.mainHeading}>Tell us about your education</Text>
 
-        {/* Date Picker */}
-        {showPicker.visible && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="spinner"
-            onChange={onChange}
-            style={{ backgroundColor: "white" }}
-          />
-        )}
+      <Text style={styles.subHeading}>
+        {`Include every school, even if you're still there or didn’t graduate`}
+      </Text>
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
+      {/* 🔹 Inputs */}
+
+      {renderInput("Institution", "institution")}
+      {renderInput("Degree", "degree")}
+      {renderInput("Result / CGPA", "result")}
+      {/* 🔹 Start Date */}
+      <Text style={styles.label}>Start Date</Text>
+      <View style={styles.dateRow}>
+        <TouchableOpacity style={styles.dateInput}>
+          <Text style={styles.dateText}>Month</Text>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.dateInput}>
+          <Text style={styles.dateText}>Year</Text>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+        </TouchableOpacity>
       </View>
-    </>
+
+      {/* 🔹 Graduation Date */}
+      <Text style={styles.label}>Graduation Date</Text>
+      <View style={styles.dateRow}>
+        <TouchableOpacity
+          style={[styles.dateInput, isPresent && styles.disabledInput]}
+          disabled={isPresent}
+        >
+          <Text style={styles.dateText}>Month</Text>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.dateInput, isPresent && styles.disabledInput]}
+          disabled={isPresent}
+        >
+          <Text style={styles.dateText}>Year</Text>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+        </TouchableOpacity>
+      </View>
+
+      {/* 🔹 Present Checkbox */}
+      <View style={styles.presentRow}>
+        <Text style={styles.presentText}>Present</Text>
+        <TouchableOpacity
+          style={[styles.checkbox, isPresent && styles.checkboxActive]}
+          onPress={() => setIsPresent(!isPresent)}
+        >
+          {isPresent && <Ionicons name="checkmark" size={14} color="#fff" />}
+        </TouchableOpacity>
+      </View>
+
+      {/* 🔹 Continue Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.nextBtn} onPress={nextStep}>
+          <Text style={styles.nextText}>CONTINUE</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
@@ -274,224 +158,174 @@ export default EducationStep;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F4F1DE",
     paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
   },
 
-  header: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  card: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    // borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    // Shadow for iOS
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    // Shadow for Android
-    elevation: 2,
-  },
-  secondaryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-
-  secondaryTitle: {
-    fontSize: 18,
-    color: "#666",
-    fontFamily: "WorkSansMedium",
-  },
-  deleteButton: {
-    width: 30,
-    height: 30,
-    // borderRadius: 15,
-    // backgroundColor: "transparent",
+  navbar: {
+    height: 50,
     justifyContent: "center",
+  },
+  
+  leftIcon: {
+    position: "absolute",
+    left: 0,
+  },
+  
+  rightBtn: {
+    position: "absolute",
+    right: 0,
+  },
+  
+  centerContent: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
   },
 
-  deleteButtonText: {
-    color: "#ff4444",
+  stepText: {
+    fontFamily: "WorkSansRegular",
     fontSize: 12,
-    fontFamily: "WorkSansMedium",
+    color: "#3D405B",
+  },
+
+  previewText: {
+    color: "#81B29A",
+    fontFamily: "WorkSansSemiBold",
+    // backgroundColor: "orange",
+    // fontSize: 6,
+  },
+
+  title: {
+    // marginTop: 20,
+    textAlign: "center",
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#6c6c6c",
+    fontFamily: "WorkSansBold",
+  },
+
+  mainHeading: {
+    marginTop: 10,
+    fontSize: 30,
+    textAlign: "left",
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+  },
+
+  subHeading: {
+    marginTop: 8,
+    fontSize: 14,
+    textAlign: "left",
+    color: "#6c6c6c",
+    fontFamily: "WorkSansRegular",
+    marginBottom: 30,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#ccc",
+    paddingBottom: 6,
   },
 
   input: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+    fontFamily: "WorkSansRegular",
+  },
+
+  label: {
+    fontSize: 12,
+    color: "#3D405B",
+    fontFamily: "WorkSansSemiBold",
+    marginBottom: 6,
+  },
+
+  dateRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 20,
+  },
+
+  dateInput: {
+    flex: 1,
     borderBottomWidth: 1.5,
-    borderBottomColor: "#d0d0d0",
-    fontFamily: "WorkSansRegular",
-    fontSize: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    color: "#333",
-  },
-
-  dateSection: {
-    marginBottom: 16,
-  },
-
-  dateLabel: {
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-    marginBottom: 8,
-  },
-
-  dateButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    // borderRadius: 8,
-    marginBottom: 8,
-  },
-
-  dateButtonDisabled: {
-    backgroundColor: "#cccccc",
-  },
-
-  dateButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontFamily: "WorkSansMedium",
-    fontSize: 16,
-  },
-
-  dateButtonTextDisabled: {
-    color: "#666666",
-  },
-
-  switchContainer: {
+    borderBottomColor: "#ccc",
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
+    justifyContent: "space-between",
+    paddingVertical: 10,
   },
 
-  switchLabel: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#333",
+  dateText: {
+    color: "#666",
     fontFamily: "WorkSansRegular",
   },
 
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    // borderRadius: 8,
-    marginVertical: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    // Shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  disabledInput: {
+    opacity: 0.4,
   },
 
-  addButtonIcon: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "WorkSansMedium",
+  presentRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+
+  presentText: {
     marginRight: 8,
+    fontFamily: "WorkSansMedium",
+    color: "#3D405B",
   },
 
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1.5,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  checkboxActive: {
+    backgroundColor: "#81B29A",
+    borderColor: "#81B29A",
+  },
+
+  continueBtn: {
+    backgroundColor: "#81B29A",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    width: "100%",
   },
 
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    // borderRadius: 8,
-    minWidth: 100,
-  },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    // borderRadius: 8,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  progressContainer: {
-    alignItems: "center",
+    justifyContent: "center",
+    marginTop: "auto",
     marginBottom: 20,
   },
 
-  progressText: {
-    fontSize: 14,
-    color: "#999999",
-    fontFamily: "WorkSansRegular",
+  inputContainer: {
+    marginBottom: 20,
+  },
+
+  nextBtn: {
+    backgroundColor: "#81B29A",
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 30,
+    width: "100%",
+  },
+
+  nextText: {
+    color: "#fff",
+    fontFamily: "WorkSansBold",
+    fontSize: 16,
+    textAlign: "center",
   },
 });

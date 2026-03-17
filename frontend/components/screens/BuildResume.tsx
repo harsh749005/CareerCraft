@@ -46,7 +46,9 @@ export default function BuildReume() {
     professional_summary: "",
     work_experience: [], // ✅ now properly typed
     projects: [],
-    education: [],
+    // EducationStep edits `education[0]` as a controlled form.
+    // Ensure we always have an initial object to write into.
+    education: [{}],
     skills: {
       languages: [],
       frameworks: [],
@@ -133,7 +135,7 @@ export default function BuildReume() {
   // };
 
   // add Education
-  const addEducation = (edu: string) => {
+  const addEducation = (edu: any) => {
     setFormData((prev: any) => ({
       ...prev,
       education: [...prev.education, edu],
@@ -214,17 +216,17 @@ export default function BuildReume() {
   // const progress = step / totalSteps;
   return (
     <SafeScreen>
-      <View style={{ flex: 1, padding: 20 }}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View
-            style={[
-              styles.progressFill,
-              { flex: step, backgroundColor: "#000" },
-            ]}
-          />
-          <View style={{ flex: totalSteps - step, backgroundColor: "#eee" }} />
-        </View>
+      <View style={{ flex: 1 }}>
+      {/* 🔹 Progress Bar */}
+      {/* <View style={styles.progressContainer}>
+        <View
+          style={[
+            styles.progressFill,
+            { flex: step, backgroundColor: "#81B29A" },
+          ]}
+        />
+        <View style={{ flex: totalSteps - step, backgroundColor: "#eee" }} />
+      </View> */}
         {/* <Text style={styles.header}>Step {step} / {totalSteps}</Text> */}
         {/* Step Counter */}
         {/* <Text style={{ fontSize: 18, marginBottom: 10 }}>Step {step}/9</Text> */}
@@ -235,26 +237,32 @@ export default function BuildReume() {
               )
         } */}
         {step === 1 && (
-          <IndustrySelector nextStep={nextStep} updateSelectedIndustry={setSelectedIndustry} />
-          // <ResumeOptions
-          //   nextStep={nextStep}
-          //   updateSelectedTemplate={updateSelectedTemplate}
-          // />
+          // <IndustrySelector nextStep={nextStep} updateSelectedIndustry={setSelectedIndustry} />
+          <ResumeOptions
+          nextStep={nextStep}
+          prevStep={prevStep}
+          updateSelectedTemplate={updateSelectedTemplate}
+          step={step}
+          totalSteps={totalSteps}
+        />
+      
         )}
-        {step === 2 && (
+        {/* {step === 2 && (
           <ResumeOptionEnhanced nextStep={nextStep} updateSelectedTemplate={setSelectedTemplate} selectedIndustry={selectedIndustry} />
-        )}
+        )} */}
 
-        {step === 3 && (
+        {step === 2 && (
           <PersonalInfoStep
             data={formData.personal_info}
             updatePersonalInfo={updatePersonalInfo}
             prevStep={prevStep}
             nextStep={nextStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <EducationStep
             data={formData}
             addEducation={addEducation}
@@ -262,6 +270,8 @@ export default function BuildReume() {
             removeEducationExperience={handleRemoveEducationExperience}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
         {step === 5 && (
@@ -337,29 +347,3 @@ export default function BuildReume() {
   );
 }
 
-const styles = StyleSheet.create({
-  progressContainer: {
-    flexDirection: "row",
-    height: 2,
-    // borderRadius: 6,
-    overflow: "hidden",
-    marginBottom: 15,
-  },
-  progressFill: {
-    // borderRadius: 6,
-  },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-});
