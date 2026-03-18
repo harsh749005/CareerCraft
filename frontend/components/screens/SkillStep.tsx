@@ -1,626 +1,727 @@
 import React, { useState } from "react";
 import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
+  View,
   Text,
   TextInput,
+  StyleSheet,
   TouchableOpacity,
-  View,
+  ScrollView,
+  Modal,
+  SafeAreaView,
+  StatusBar,
 } from "react-native";
-import Entypo from "@expo/vector-icons/Entypo";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-interface SkillsStepProps {
+import { Ionicons } from "@expo/vector-icons";
+
+interface Props {
   data: any;
   updateSkill: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
-const SkillsStep: React.FC<SkillsStepProps> = ({
+
+const jobTitleSuggestions = [
+  "Backend Developer",
+  "Backend Developer Intern",
+  "Frontend Developer",
+  "Frontend Engineer",
+  "Full Stack Developer",
+  "Mobile App Developer",
+  "Android Developer",
+  "iOS Developer",
+  "React Native Developer",
+  "Flutter Developer",
+  "Business Development Manager",
+  "Sales Manager",
+  "Product Manager",
+  "Project Manager",
+  "UI/UX Designer",
+  "Graphic Designer",
+  "Data Scientist",
+  "Data Analyst",
+  "Machine Learning Engineer",
+  "DevOps Engineer",
+  "Cloud Engineer",
+  "Software Engineer",
+  "QA Engineer",
+  "Scrum Master",
+  "Digital Marketing Manager",
+  "SEO Specialist",
+  "Content Writer",
+  "HR Manager",
+  "Finance Analyst",
+  "Cybersecurity Engineer",
+];
+
+const jobSkillsMap: { keywords: string[]; skills: string[] }[] = [
+  {
+    keywords: ["backend", "back end", "back-end", "server", "api developer"],
+    skills: [
+      "Node.js",
+      "Express.js",
+      "Apache Server",
+      "MongoDB",
+      "PostgreSQL",
+      "REST API",
+      "Docker",
+      "Redis",
+      "GraphQL",
+      "Nginx",
+    ],
+  },
+  {
+    keywords: [
+      "frontend",
+      "front end",
+      "front-end",
+      "ui developer",
+      "web developer",
+    ],
+    skills: [
+      "HTML",
+      "CSS",
+      "React",
+      "JavaScript",
+      "TypeScript",
+      "Tailwind CSS",
+      "Vue.js",
+      "SASS",
+      "Webpack",
+      "Figma",
+    ],
+  },
+  {
+    keywords: [
+      "mobile",
+      "android",
+      "ios",
+      "flutter",
+      "react native",
+      "app developer",
+    ],
+    skills: [
+      "React Native",
+      "Flutter",
+      "Android Studio",
+      "Java",
+      "Kotlin",
+      "Swift",
+      "Xcode",
+      "Firebase",
+      "Expo",
+      "Dart",
+    ],
+  },
+  {
+    keywords: [
+      "business development",
+      "bd manager",
+      "sales manager",
+      "growth manager",
+    ],
+    skills: [
+      "Sales Proposal Documentation",
+      "Contract Management",
+      "ROI Evaluation",
+      "CRM Tools",
+      "Lead Generation",
+      "Market Research",
+      "Negotiation",
+      "KPI Tracking",
+      "B2B Sales",
+      "Strategic Planning",
+    ],
+  },
+  {
+    keywords: ["fullstack", "full stack", "full-stack"],
+    skills: [
+      "React",
+      "Node.js",
+      "MongoDB",
+      "Express.js",
+      "PostgreSQL",
+      "TypeScript",
+      "Docker",
+      "AWS",
+      "GraphQL",
+      "Redis",
+    ],
+  },
+  {
+    keywords: [
+      "data scientist",
+      "data analyst",
+      "machine learning",
+      "ml engineer",
+      "ai engineer",
+    ],
+    skills: [
+      "Python",
+      "TensorFlow",
+      "Pandas",
+      "NumPy",
+      "SQL",
+      "Scikit-learn",
+      "Matplotlib",
+      "Power BI",
+      "Tableau",
+      "Jupyter",
+    ],
+  },
+  {
+    keywords: ["devops", "cloud engineer", "infrastructure", "sre"],
+    skills: [
+      "Docker",
+      "Kubernetes",
+      "AWS",
+      "CI/CD",
+      "Terraform",
+      "Linux",
+      "Jenkins",
+      "GitHub Actions",
+      "Azure",
+      "GCP",
+    ],
+  },
+  {
+    keywords: ["ui", "ux", "designer", "product designer", "graphic"],
+    skills: [
+      "Figma",
+      "Adobe XD",
+      "Sketch",
+      "Prototyping",
+      "Wireframing",
+      "User Research",
+      "Illustrator",
+      "Photoshop",
+      "Design Systems",
+      "Accessibility",
+    ],
+  },
+  {
+    keywords: ["seo", "digital marketing", "content", "social media"],
+    skills: [
+      "SEO",
+      "Google Analytics",
+      "Content Writing",
+      "Social Media Management",
+      "Email Marketing",
+      "Copywriting",
+      "WordPress",
+      "Canva",
+      "Meta Ads",
+      "Google Ads",
+    ],
+  },
+  {
+    keywords: ["project manager", "scrum master", "product manager", "agile"],
+    skills: [
+      "Agile",
+      "Scrum",
+      "JIRA",
+      "Trello",
+      "Risk Management",
+      "Stakeholder Management",
+      "Roadmapping",
+      "Sprint Planning",
+      "Confluence",
+      "MS Project",
+    ],
+  },
+];
+
+// Default skills shown before any search
+const defaultSkills = [
+  "Communication",
+  "Teamwork",
+  "Problem Solving",
+  "Time Management",
+  "Leadership",
+  "Critical Thinking",
+  "Adaptability",
+  "Microsoft Office",
+  "Project Management",
+  "Customer Service",
+];
+
+const getSkillsForTitle = (title: string): string[] => {
+  if (!title.trim()) return defaultSkills;
+  const lower = title.toLowerCase();
+  for (const entry of jobSkillsMap) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) {
+      return entry.skills;
+    }
+  }
+  return defaultSkills;
+};
+
+const SkillsStep: React.FC<Props> = ({
   data,
   updateSkill,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
-  const [activeTab, setActiveTab] = useState("languages");
-  const [inputText, setInputText] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // Get current skills based on active tab
-  const getCurrentSkills = () => data.skills?.[activeTab] || [];
-
-  const tabs = [
-    {
-      key: "languages",
-      label: "Languages",
-      icon: <Entypo name="code" size={16} color="black" />,
-    },
-    {
-      key: "frameworks",
-      label: "Frameworks",
-      icon: <MaterialIcons name="web" size={16} color="black" />,
-    },
-    {
-      key: "tools",
-      label: "Tools",
-      icon: <Entypo name="tools" size={16} color="black" />,
-    },
-    {
-      key: "databases",
-      label: "Databases",
-      icon: <MaterialIcons name="storage" size={16} color="black" />,
-    },
-  ];
-
-  // Categorized technologies
-  const technologiesByCategory: any = {
-    languages: [
-      "JavaScript",
-      "Python",
-      "Java",
-      "TypeScript",
-      "PHP",
-      "C++",
-      "C#",
-      "Ruby",
-      "Go",
-      "Swift",
-      "Kotlin",
-      "Rust",
-      "Dart",
-      "Scala",
-    ],
-    frameworks: [
-      "React",
-      "Vue.js",
-      "Angular",
-      "Node.js",
-      "Express.js",
-      "Next.js",
-      "Django",
-      "Flask",
-      "Spring Boot",
-      "Laravel",
-      "React Native",
-      "Flutter",
-    ],
-    tools: [
-      "Git",
-      "Docker",
-      "Webpack",
-      "Vite",
-      "Jenkins",
-      "GitHub Actions",
-      "Postman",
-      "VS Code",
-      "IntelliJ",
-      "Figma",
-      "Photoshop",
-    ],
-    databases: [
-      "MySQL",
-      "PostgreSQL",
-      "MongoDB",
-      "Redis",
-      "SQLite",
-      "Firebase",
-      "Oracle",
-      "Cassandra",
-      "DynamoDB",
-    ],
-  };
-
-  const allTechnologies = technologiesByCategory[activeTab] || [];
-  const currentSkills = getCurrentSkills();
-  const handleNext = () => {
-    const totalSkills = Object.values(data.skills || {}).flat().length;
-    if (totalSkills === 0) {
-      Alert.alert(
-        "Select Skills",
-        "Please select at least one skill to continue",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-    nextStep();
-  };
-
-  const filteredSuggestions = allTechnologies.filter(
-    (tech: string) =>
-      tech.toLowerCase().includes(inputText.toLowerCase()) &&
-      !currentSkills.includes(tech)
+  const [jobTitle, setJobTitle] = useState("");
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [modalQuery, setModalQuery] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(
+    data.skills?.languages || [],
   );
 
-  const handleInputChange = (text: string) => {
-    setInputText(text);
-    setShowSuggestions(text.length > 0);
+  const currentSkills = getSkillsForTitle(jobTitle);
+
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+    );
+    updateSkill(skill);
   };
 
-  const handleAddSkill = (skill: any) => {
-    updateSkill(activeTab, skill);
-    setInputText("");
-    setShowSuggestions(false);
+  const removeSkill = (skill: string) => {
+    setSelectedSkills((prev) => prev.filter((s) => s !== skill));
+    updateSkill(skill);
   };
 
-  const handleManualAdd = () => {
-    if (inputText.trim() && !currentSkills.includes(inputText.trim())) {
-      handleAddSkill(inputText.trim());
-    }
-  };
+  // Filter job title suggestions in modal
+  const filteredTitles = modalQuery.trim()
+    ? jobTitleSuggestions.filter((t) =>
+        t.toLowerCase().includes(modalQuery.toLowerCase()),
+      )
+    : [];
 
-  const getTabTitle = (tab: any) => {
-    const count = data.skills?.[tab.key]?.length || 0;
-    return `${tab.label}${count > 0 ? ` (${count})` : ""}`;
+  const handleSelectTitle = (title: string) => {
+    setJobTitle(title);
+    setModalQuery("");
+    setSearchModalVisible(false);
   };
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          {/* Progress Indicator */}
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Technical Skills</Text>
-          <Text style={styles.subtitle}>
-            Add your programming languages, frameworks, tools, and databases
+    <View style={styles.container}>
+      {/* Navbar */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+          <Ionicons name="arrow-back" size={22} color="#3D405B" />
+        </TouchableOpacity>
+        <View style={styles.centerContent}>
+          <Text style={styles.stepText}>
+            Step {step} of {totalSteps}
           </Text>
+          <Text style={styles.title}>SKILL STEP</Text>
         </View>
+        <TouchableOpacity style={styles.rightBtn}>
+          <Text style={styles.previewText}>Preview</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Tabs */}
-        <View style={styles.tabContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {tabs.map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-                onPress={() => {
-                  setActiveTab(tab.key);
-                  setInputText("");
-                  setShowSuggestions(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && styles.activeTabText,
-                    {},
-                  ]}
-                >
-                  {tab.icon}
-                </Text>
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && styles.activeTabText,
-                    {},
-                  ]}
-                >
-                  {getTabTitle(tab)}
-                </Text>
-              </TouchableOpacity>
+      {/* Heading */}
+      <Text style={styles.mainHeading}>
+        Add the skills you want to highlight
+      </Text>
+      <Text style={styles.subHeading}>
+        You can search or add your own skills
+      </Text>
+
+      {/* Skills Tag Box */}
+      <View style={styles.tagBox}>
+        <ScrollView style={{ maxHeight: 130 }}>
+          <View style={styles.tagWrapper}>
+            {selectedSkills.map((skill, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{skill}</Text>
+                <TouchableOpacity onPress={() => removeSkill(skill)}>
+                  <Ionicons
+                    name="close"
+                    size={14}
+                    color="#fff"
+                    style={{ marginLeft: 4 }}
+                  />
+                </TouchableOpacity>
+              </View>
             ))}
-          </ScrollView>
-        </View>
-
-        {/* Input Field */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder={`Add ${tabs
-              .find((t) => t.key === activeTab)
-              ?.label.toLowerCase()}...`}
-            value={inputText}
-            onChangeText={handleInputChange}
-            onSubmitEditing={handleManualAdd}
-          />
-          {inputText.length > 0 && (
-            <TouchableOpacity style={styles.addBtn} onPress={handleManualAdd}>
-              <Text style={styles.addBtnText}>Add</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Suggestions */}
-        {showSuggestions && filteredSuggestions.length > 0 && (
-          <View style={styles.suggestionsContainer}>
-            <Text style={styles.suggestionsTitle}>Suggestions:</Text>
-            <ScrollView style={styles.suggestionsScroll} nestedScrollEnabled>
-              {filteredSuggestions
-                .slice(0, 8)
-                .map((tech: string, index: number) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.suggestionItem}
-                    onPress={() => handleAddSkill(tech)}
-                  >
-                    <Text style={styles.suggestionText}>{tech}</Text>
-                  </TouchableOpacity>
-                ))}
-            </ScrollView>
-          </View>
-        )}
-
-        <ScrollView
-          style={styles.contentScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Selected Skills for Current Tab */}
-          <View style={styles.selectedSection}>
-            <Text style={styles.sectionTitle}>
-              Selected {tabs.find((t) => t.key === activeTab)?.label} (
-              {currentSkills.length})
-            </Text>
-            <View style={styles.selectedContainer}>
-              {currentSkills.map((skill: string, index: number) => (
-                <View key={index} style={styles.selectedTag}>
-                  <Text style={styles.selectedTagText}>{skill}</Text>
-                  <TouchableOpacity
-                    onPress={() => updateSkill(activeTab, skill)}
-                    style={styles.removeBtn}
-                  >
-                    <Text style={styles.removeBtnText}>×</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {currentSkills.length === 0 && (
-                <Text style={styles.emptyText}>
-                  No{" "}
-                  {tabs.find((t) => t.key === activeTab)?.label.toLowerCase()}{" "}
-                  selected yet.
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {/* Popular for Current Category */}
-          <View style={styles.popularSection}>
-            <Text style={styles.sectionTitle}>
-              Popular {tabs.find((t) => t.key === activeTab)?.label}
-            </Text>
-            <View style={styles.skillsContainer}>
-              {allTechnologies
-                .slice(0, 8)
-                .map((skill: string, index: number) => (
-                  <Pressable
-                    key={index}
-                    style={[
-                      styles.skillOption,
-                      currentSkills.includes(skill) &&
-                        styles.selectedSkillOption,
-                    ]}
-                    onPress={() => handleAddSkill(skill)}
-                  >
-                    <Text
-                      style={[
-                        styles.skillText,
-                        currentSkills.includes(skill) &&
-                          styles.selectedSkillText,
-                      ]}
-                    >
-                      {skill} {currentSkills.includes(skill) && "✓"}
-                    </Text>
-                  </Pressable>
-                ))}
-            </View>
-          </View>
-
-          {/* All Selected Skills Summary */}
-          <View style={styles.summarySection}>
-            <Text style={styles.summaryTitle}>All Selected Skills</Text>
-            {Object.entries(data.skills || {}).map(([category, skills]) => {
-              const typedSkills = skills as string[];
-              return (
-                typedSkills.length > 0 && (
-                  <View key={category} style={styles.summaryCategory}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
-                      <Text style={styles.summaryCategoryTitle}>
-                        {tabs.find((t) => t.key === category)?.icon}
-                      </Text>
-                      <Text style={styles.summaryCategoryTitle}>
-                        {tabs.find((t) => t.key === category)?.label} (
-                        {typedSkills.length})
-                      </Text>
-                    </View>
-                    <Text style={styles.summarySkills}>
-                      {typedSkills.join(", ")}
-                    </Text>
-                  </View>
-                )
-              );
-            })}
+            {selectedSkills.length === 0 && (
+              <Text style={styles.tagPlaceholder}>
+                Your selected skills appear here...
+              </Text>
+            )}
           </View>
         </ScrollView>
-
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Progress Indicator */}
-        {/* <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Step 3 of 4</Text>
-        </View> */}
       </View>
-    </>
+
+      {/* Continue Button */}
+      <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+        <Text style={styles.continueText}>CONTINUE</Text>
+      </TouchableOpacity>
+
+      {/* Examples Section Header */}
+      <View style={styles.examplesRow}>
+        <Text style={styles.examplesLabel}>EXAMPLES FROM OUR EXPERTS</Text>
+        <Ionicons name="chevron-up" size={18} color="#3D405B" />
+      </View>
+
+      {/* ✅ Search Box — tapping opens full screen modal */}
+      <TouchableOpacity
+        style={styles.searchBox}
+        onPress={() => setSearchModalVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Ionicons
+          name="search-outline"
+          size={18}
+          color="#666"
+          style={{ marginRight: 8 }}
+        />
+        <Text
+          style={jobTitle ? styles.searchActiveText : styles.searchPlaceholder}
+        >
+          {jobTitle || "Search by keyword or job title"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Skills List */}
+      <ScrollView
+        style={{ marginTop: 12 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {currentSkills.map((item, index) => {
+          const isSelected = selectedSkills.includes(item);
+          return (
+            <TouchableOpacity
+              key={index}
+              style={[styles.skillBox, isSelected && styles.selectedSkillBox]}
+              onPress={() => toggleSkill(item)}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.iconCircle,
+                  isSelected && styles.selectedIconCircle,
+                ]}
+              >
+                <Ionicons
+                  name={isSelected ? "checkmark" : "add"}
+                  size={16}
+                  color="#fff"
+                />
+              </View>
+              <Text
+                style={[
+                  styles.skillText,
+                  isSelected && styles.selectedSkillText,
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ✅ Full Screen Search Modal */}
+      <Modal
+        visible={searchModalVisible}
+        animationType="fade"
+        statusBarTranslucent
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
+
+          {/* Modal Search Bar */}
+          <View style={styles.modalSearchRow}>
+            <Ionicons
+              name="search-outline"
+              size={18}
+              color="#555"
+              style={{ marginRight: 8 }}
+            />
+            <TextInput
+              style={styles.modalSearchInput}
+              placeholder="Search by keyword or job title"
+              placeholderTextColor="#aaa"
+              value={modalQuery}
+              onChangeText={setModalQuery}
+              autoFocus
+            />
+            {modalQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setModalQuery("")}>
+                <Ionicons
+                  name="close"
+                  size={18}
+                  color="#555"
+                  style={{ marginRight: 8 }}
+                />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => {
+                setSearchModalVisible(false);
+                setModalQuery("");
+              }}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalDivider} />
+
+          {/* Empty State */}
+          {modalQuery.trim() === "" && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>
+                Start typing to search for{"\n"}your job title.
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                This will help us provide you with{"\n"}relevant content.
+              </Text>
+            </View>
+          )}
+
+          {/* Results */}
+          {modalQuery.trim().length > 0 && (
+            <ScrollView
+              style={styles.modalResults}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Custom option */}
+              <Text style={styles.sectionHeader}>CUSTOM</Text>
+              <TouchableOpacity
+                style={styles.resultRow}
+                onPress={() => handleSelectTitle(modalQuery)}
+              >
+                <Text style={styles.resultText}>{modalQuery}</Text>
+              </TouchableOpacity>
+
+              {/* Suggestions */}
+              {filteredTitles.length > 0 && (
+                <>
+                  <Text style={styles.sectionHeader}>SUGGESTIONS</Text>
+                  {filteredTitles.map((title, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.resultRow}
+                      onPress={() => handleSelectTitle(title)}
+                    >
+                      <Text style={styles.resultText}>{title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
+    </View>
   );
 };
 
+export default SkillsStep;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
-  },
-  header: {
+  container: { flex: 1, backgroundColor: "#F4F1DE", paddingHorizontal: 20 },
+
+  navbar: { height: 50, justifyContent: "center" },
+  leftIcon: { position: "absolute", left: 0 },
+  rightBtn: { position: "absolute", right: 0 },
+  centerContent: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
-    marginBottom: 20,
   },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
+  stepText: { fontFamily: "WorkSansRegular", fontSize: 12, color: "#3D405B" },
+  previewText: { color: "#81B29A", fontFamily: "WorkSansSemiBold" },
   title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
     textAlign: "center",
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#6c6c6c",
+    fontFamily: "WorkSansBold",
+  },
+
+  mainHeading: {
+    marginTop: 10,
+    fontSize: 30,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+  },
+  subHeading: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#6c6c6c",
+    fontFamily: "WorkSansRegular",
     marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
-  },
-  tabContainer: {
-    marginBottom: 15,
-  },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginRight: 10,
-    backgroundColor: "#f0f0f0",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    // borderRadius: 20,
-  },
-  activeTab: {
-    backgroundColor: "#007AFF",
-  },
-  tabText: {
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    color: "#666",
-  },
-  activeTabText: {
-    color: "white",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    // borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontFamily: "WorkSansRegular",
-  },
-  addBtn: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginLeft: 10,
-  },
-  addBtnText: {
-    color: "white",
-    fontFamily: "WorkSansMedium",
-  },
-  suggestionsContainer: {
-    backgroundColor: "#f9f9f9",
-    // borderRadius: 8,
+
+  tagBox: {
+    marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: "#ccc",
     padding: 10,
-    marginBottom: 15,
-    maxHeight: 120,
+    backgroundColor: "#fff",
+    minHeight: 80,
   },
-  suggestionsTitle: {
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    color: "#666",
-    marginBottom: 8,
-  },
-  suggestionsScroll: {
-    maxHeight: 80,
-  },
-  suggestionItem: {
-    paddingVertical: 6,
-    paddingHorizontal: 5,
-  },
-  suggestionText: {
-    fontSize: 15,
-    fontFamily: "WorkSansRegular",
-    color: "#007AFF",
-  },
-  contentScroll: {
-    flex: 1,
-  },
-  selectedSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: "WorkSansMedium",
-    color: "#333",
-    marginBottom: 10,
-  },
-  selectedContainer: {
+  tagWrapper: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    minHeight: 40,
+    alignItems: "center",
   },
-  selectedTag: {
-    backgroundColor: "#007AFF",
+  tag: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    // borderRadius: 20,
+    backgroundColor: "#81B29A",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  selectedTagText: {
-    color: "white",
-    fontSize: 14,
+  tagText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  tagPlaceholder: {
+    color: "#aaa",
+    fontSize: 13,
     fontFamily: "WorkSansRegular",
   },
-  removeBtn: {
-    marginLeft: 6,
+
+  continueBtn: {
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 16,
+    borderRadius: 30,
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 16,
+    marginBottom: 8,
   },
-  removeBtnText: {
-    color: "white",
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
-    fontFamily: "WorkSansMedium",
+    letterSpacing: 1,
   },
-  emptyText: {
-    color: "#999",
-    fontStyle: "italic",
-    fontFamily: "WorkSansRegular",
-    alignSelf: "center",
-    marginTop: 10,
-  },
-  popularSection: {
-    marginBottom: 20,
-  },
-  skillsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  skillOption: {
-    backgroundColor: "#f9f9f9",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    // borderRadius: 20,
-    alignSelf: "flex-start",
-  },
-  selectedSkillOption: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  skillText: {
-    textAlign: "center",
-    fontFamily: "WorkSansRegular",
-    fontSize: 14,
-    color: "#333",
-  },
-  selectedSkillText: {
-    color: "white",
-  },
-  summarySection: {
-    backgroundColor: "#f8f9fa",
-    padding: 15,
-    // borderRadius: 10,
-    marginBottom: 20,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontFamily: "WorkSansMedium",
-    color: "#333",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  summaryCategory: {
-    marginBottom: 12,
-  },
-  summaryCategoryTitle: {
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-    color: "#555",
-    marginBottom: 4,
-  },
-  summarySkills: {
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    color: "#666",
-    lineHeight: 20,
-  },
-  buttonContainer: {
+
+  examplesRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
+    alignItems: "center",
+    marginTop: 16,
     marginBottom: 10,
   },
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    // borderRadius: 8,
-    minWidth: 100,
-  },
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-  progressContainer: {
+  examplesLabel: { fontSize: 12, fontWeight: "bold", color: "#3D405B" },
+
+  searchBox: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
   },
-  progressText: {
+  searchPlaceholder: {
+    flex: 1,
+    color: "#aaa",
     fontSize: 14,
-    color: "#999999",
     fontFamily: "WorkSansRegular",
   },
-});
+  searchActiveText: {
+    flex: 1,
+    color: "#3D405B",
+    fontSize: 14,
+    fontFamily: "WorkSansSemiBold",
+  },
 
-export default SkillsStep;
+  skillBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
+  selectedSkillBox: { borderColor: "#81B29A", backgroundColor: "#f7fbf9" },
+  iconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#3D405B",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  selectedIconCircle: { backgroundColor: "#81B29A" },
+  skillText: { fontSize: 15, color: "#333", fontFamily: "WorkSansRegular" },
+  selectedSkillText: { color: "#81B29A", fontWeight: "600" },
+
+  // Modal styles
+  modalContainer: { flex: 1, backgroundColor: "#e8f5f2" },
+
+  modalSearchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#e8f5f2",
+    marginTop: 30,
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#3BBFAD",
+    paddingBottom: 4,
+    marginRight: 8,
+  },
+  cancelText: {
+    color: "#3D405B",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  modalDivider: { height: 1, backgroundColor: "#cde8e2", marginBottom: 8 },
+
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontFamily: "PlayfairDisplayBold",
+    color: "#3D405B",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "#555",
+    fontFamily: "WorkSansRegular",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+
+  modalResults: { backgroundColor: "#fff", flex: 1 },
+  sectionHeader: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#888",
+    letterSpacing: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    fontFamily: "WorkSansBold",
+  },
+  resultRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#eee",
+  },
+  resultText: { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+});

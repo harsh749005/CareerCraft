@@ -143,10 +143,22 @@ export default function BuildReume() {
   };
 
   // 🔹 Update Education
-  const updateEducation = (index: number, field: string, value: string) => {
-    const updated = formData.education.map((edu, i) =>
-      i === index ? { ...edu, [field]: value } : edu
-    );
+  const updateEducation = (
+    index: number,
+    field: string | Record<string, string>,
+    value?: string
+  ) => {
+    const updated = formData.education.map((edu, i) => {
+      if (i !== index) return edu;
+  
+      // 🔥 Handle object update
+      if (typeof field === "object") {
+        return { ...edu, ...field };
+      }
+  
+      return { ...edu, [field]: value };
+    });
+  
     setFormData({ ...formData, education: updated });
   };
   const handleRemoveEducationExperience = (index: number) => {
@@ -274,7 +286,7 @@ export default function BuildReume() {
             totalSteps={totalSteps}
           />
         )}
-        {step === 5 && (
+        {step === 4 && (
           // <LanguagesStep
           //   data={formData}
           //   handleLanguage={handleLanguage}
@@ -286,9 +298,11 @@ export default function BuildReume() {
             updateSkill={updateSkill}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
-        {step === 6 && (
+        {step === 5 && (
           <Projects
             data={formData}
             addProjects={addProjects}
@@ -298,7 +312,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 7 && (
+        {step === 6 && (
           // <CertificationsStep
           //   data={formData}
           //   addCertification={addCertification}
@@ -315,7 +329,7 @@ export default function BuildReume() {
             prevStep={prevStep}
           />
         )}
-        {step === 8 && (
+        {step === 7 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
@@ -324,7 +338,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 9 && (
+        {step === 8 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
