@@ -1,0 +1,27 @@
+<DatePickerModal
+  visible={showStartDate}
+  onClose={() => setShowStartDate(false)}
+  onConfirm={(m, y) => {
+    setStartMonth(m);   // ✅ local state updates immediately for display
+    setStartYear(y);
+    update("start_month", m);  // ✅ also persist to formData
+    update("start_year", y);
+  }}
+  initialMonth={startMonth}
+  initialYear={startYear}
+  title="Select Start Date"
+/>
+
+<DatePickerModal
+  visible={showEndDate}
+  onClose={() => setShowEndDate(false)}
+  onConfirm={(m, y) => {
+    setEndMonth(m);    // ✅ local state updates immediately for display
+    setEndYear(y);
+    update("end_month", m);
+    update("end_year", y);
+  }}
+  initialMonth={endMonth}
+  initialYear={endYear}
+  title="Select End Date"
+/>

@@ -6,16 +6,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  FlatList,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import PickerModal from "../model/Pickermodel";
+
 interface Props {
   data: any;
   addEducation: (edu: any) => void;
   updateEducation: (
     index: number,
     field: string | Record<string, string>,
-    value?: string,
+    value?: string
   ) => void;
   removeEducationExperience: (index: number) => void;
   nextStep: () => void;
@@ -24,227 +27,336 @@ interface Props {
   totalSteps: number;
 }
 
-const EducationStep: React.FC<Props> = ({
-  data,
-  addEducation,
-  updateEducation,
-  removeEducationExperience,
-  nextStep,
-  prevStep,
-  step,
-  totalSteps,
+const monthsList = [
+  { label: "January",   value: "01" },
+  { label: "February",  value: "02" },
+  { label: "March",     value: "03" },
+  { label: "April",     value: "04" },
+  { label: "May",       value: "05" },
+  { label: "June",      value: "06" },
+  { label: "July",      value: "07" },
+  { label: "August",    value: "08" },
+  { label: "September", value: "09" },
+  { label: "October",   value: "10" },
+  { label: "November",  value: "11" },
+  { label: "December",  value: "12" },
+];
+
+const yearsList = Array.from({ length: 52 }, (_, i) =>
+  (2036 - i).toString()
+);
+
+// ─── Date Picker Modal ───────────────────────────────────────────
+interface DatePickerProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (month: string, year: string) => void;
+  initialMonth?: string;
+  initialYear?: string;
+  title: string;
+}
+
+const DatePickerModal: React.FC<DatePickerProps> = ({
+  visible, onClose, onConfirm, initialMonth = "", initialYear = "", title,
 }) => {
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [showYearPicker, setShowYearPicker] = useState(false);
-  const [activeField, setActiveField] = useState("");
-  const months = [
-    "None",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+  const [tab, setTab] = useState<"month" | "year">("month");
+  const [selMonth, setSelMonth] = useState(initialMonth);
+  const [selYear, setSelYear] = useState(initialYear);
 
-  const years = Array.from({ length: 52 }, (_, i) => (2036 - i).toString());
+  React.useEffect(() => {
+    if (visible) {
+      setSelMonth(initialMonth);
+      setSelYear(initialYear);
+      setTab("month");
+    }
+  }, [visible]);
 
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const monthLabel = monthsList.find((m) => m.value === selMonth)?.label;
+  const preview =
+    selMonth && selYear
+      ? `${monthLabel} ${selYear}`
+      : selMonth
+      ? `${monthLabel} —`
+      : selYear
+      ? `— ${selYear}`
+      : "Select month and year";
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={dpStyles.overlay}>
+        <View style={dpStyles.sheet}>
+          <Text style={dpStyles.title}>{title}</Text>
+
+          {/* Tabs */}
+          <View style={dpStyles.tabRow}>
+            {(["month", "year"] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[dpStyles.tab, tab === t && dpStyles.tabActive]}
+                onPress={() => setTab(t)}
+              >
+                <Text style={[dpStyles.tabText, tab === t && dpStyles.tabTextActive]}>
+                  {t === "month" ? "Month" : "Year"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Month Grid */}
+          {tab === "month" && (
+            <View style={dpStyles.grid}>
+              {monthsList.map((m) => (
+                <TouchableOpacity
+                  key={m.value}
+                  style={[dpStyles.gridItem, selMonth === m.value && dpStyles.gridItemActive]}
+                  onPress={() => { setSelMonth(m.value); setTab("year"); }}
+                >
+                  <Text style={[dpStyles.gridText, selMonth === m.value && dpStyles.gridTextActive]}>
+                    {m.label.slice(0, 3)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Year Grid */}
+          {tab === "year" && (
+            <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+              <View style={dpStyles.grid}>
+                {yearsList.map((y) => (
+                  <TouchableOpacity
+                    key={y}
+                    style={[dpStyles.gridItem, selYear === y && dpStyles.gridItemActive]}
+                    onPress={() => setSelYear(y)}
+                  >
+                    <Text style={[dpStyles.gridText, selYear === y && dpStyles.gridTextActive]}>
+                      {y}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+
+          {/* Preview */}
+          <Text style={dpStyles.preview}>{preview}</Text>
+
+          {/* Buttons */}
+          <View style={dpStyles.btnRow}>
+            <TouchableOpacity style={dpStyles.cancelBtn} onPress={onClose}>
+              <Text style={dpStyles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[dpStyles.confirmBtn, (!selMonth || !selYear) && { opacity: 0.4 }]}
+              onPress={() => { onConfirm(selMonth, selYear); onClose(); }}
+              disabled={!selMonth || !selYear}
+            >
+              <Text style={dpStyles.confirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ─── Main Component ──────────────────────────────────────────────
+const EducationStep: React.FC<Props> = ({
+  data, addEducation, updateEducation,
+  removeEducationExperience, nextStep, prevStep, step, totalSteps,
+}) => {
   const edu = data.education?.[0] || {};
 
-  const renderInput = (label: string, key: string) => {
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isPresent, setIsPresent] = useState<boolean>(false);
+
+  // Local date state for immediate display
+  const [startMonth, setStartMonth] = useState(edu.start_month || "");
+  const [startYear,  setStartYear]  = useState(edu.start_year  || "");
+  const [endMonth,   setEndMonth]   = useState(edu.end_month   || "");
+  const [endYear,    setEndYear]    = useState(edu.end_year    || "");
+
+  const [showStartDate, setShowStartDate] = useState(false);
+  const [showEndDate,   setShowEndDate]   = useState(false);
+
+  const update = (field: string, value: string) =>
+    updateEducation(0, field, value);
+
+  const getDateLabel = (month: string, year: string) => {
+    if (!month || !year) return "";
+    const m = monthsList.find((mo) => mo.value === month);
+    return m ? `${m.label.slice(0, 3)} ${year}` : `${month}/${year}`;
+  };
+
+  const startLabel = getDateLabel(startMonth, startYear);
+  const endLabel   = getDateLabel(endMonth,   endYear);
+
+  // ── Field renderer ──
+  const renderField = (label: string, key: string) => {
     const value = edu[key] || "";
     const isFocused = focusedField === key;
 
     return (
-      <View style={styles.inputContainer}>
-        {/* 🔹 Floating Label */}
-        {(value || isFocused) && <Text style={styles.label}>{label}</Text>}
-        <View style={styles.inputWrapper}>
+      <View style={styles.fieldContainer}>
+        {(value || isFocused) && (
+          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+        )}
+        <View style={styles.fieldRow}>
           <TextInput
-            style={styles.input}
-            placeholder={isFocused ? "" : label}
+            style={styles.fieldInput}
+            placeholder={label}
             placeholderTextColor="#aaa"
             value={value}
             onFocus={() => setFocusedField(key)}
             onBlur={() => setFocusedField(null)}
-            onChangeText={(val) => updateEducation(0, key, val)}
+            onChangeText={(val) => update(key, val)}
           />
-          {/* ✅ Green Tick */}
           {value && (
-            <Ionicons name="checkmark-circle" size={20} color="#81B29A" />
+            <Ionicons name="checkmark-circle" size={20} color="#3BBFAD" />
           )}
         </View>
+        <View style={[styles.underline, isFocused && styles.underlineFocused]} />
       </View>
     );
   };
-  // const isPresent = !edu.end_month && !edu.end_year;
-  const [isPresent, setIsPresent] = useState(false);
+
   return (
     <View style={styles.container}>
-      {/* 🔹 Navbar */}
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
+
+      {/* ── Navbar ── */}
       <View style={styles.navbar}>
-        {/* 🔹 Left */}
         <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
           <Ionicons name="arrow-back" size={22} color="#3D405B" />
         </TouchableOpacity>
-
-        {/* 🔹 Center (ABSOLUTE) */}
         <View style={styles.centerContent}>
-          <Text style={styles.stepText}>
-            Step {step} of {totalSteps}
-          </Text>
-          <Text style={styles.title}>EDUCATION</Text>
+          <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
+          <Text style={styles.navTitle}>EDUCATION</Text>
         </View>
-
-        {/* 🔹 Right */}
         <TouchableOpacity style={styles.rightBtn}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Title */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Heading */}
+        <Text style={styles.mainHeading}>Tell us about your education</Text>
+        <Text style={styles.subHeading}>
+          {`Include every school, even if you're still there or didn't graduate`}
+        </Text>
 
-      <Text style={styles.mainHeading}>Tell us about your education</Text>
+        {/* Fields */}
+        <View style={styles.fieldsBlock}>
+          {renderField("Institution", "institution")}
+          {renderField("Degree", "degree")}
+          {renderField("Result / CGPA", "result")}
+        </View>
 
-      <Text style={styles.subHeading}>
-        {`Include every school, even if you're still there or didn’t graduate`}
-      </Text>
+        {/* ── Start Date ── full-width top/bottom borders */}
+        <View style={styles.dateSectionWrapper}>
+          <Text style={styles.dateSectionTitle}>START DATE</Text>
+          <TouchableOpacity
+            style={styles.datePickerRow}
+            onPress={() => setShowStartDate(true)}
+          >
+            <View style={styles.dateValueBlock}>
+              {startLabel ? (
+                <Text style={styles.dateValue}>{startLabel}</Text>
+              ) : (
+                <Text style={styles.datePlaceholder}>Select start date</Text>
+              )}
+            </View>
+            <Ionicons
+              name={startLabel ? "checkmark-circle" : "calendar-outline"}
+              size={20}
+              color={startLabel ? "#3BBFAD" : "#aaa"}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* 🔹 Inputs */}
+        {/* ── Graduation Date ── */}
+        <View style={[styles.dateSectionWrapper, isPresent && styles.dateSectionDisabled]}>
+          <Text style={styles.dateSectionTitle}>GRADUATION DATE</Text>
+          <TouchableOpacity
+            style={styles.datePickerRow}
+            onPress={() => !isPresent && setShowEndDate(true)}
+            disabled={isPresent}
+          >
+            <View style={styles.dateValueBlock}>
+              {isPresent ? (
+                <Text style={styles.datePresent}>Present</Text>
+              ) : endLabel ? (
+                <Text style={styles.dateValue}>{endLabel}</Text>
+              ) : (
+                <Text style={styles.datePlaceholder}>Select graduation date</Text>
+              )}
+            </View>
+            <Ionicons
+              name={endLabel && !isPresent ? "checkmark-circle" : "calendar-outline"}
+              size={20}
+              color={endLabel && !isPresent ? "#3BBFAD" : "#aaa"}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {renderInput("Institution", "institution")}
-      {renderInput("Degree", "degree")}
-      {renderInput("Result / CGPA", "result")}
-      {/* 🔹 Start Date */}
-      <Text style={styles.label}>Start Date</Text>
-      <View style={styles.dateRow}>
-        {/* Start Month */}
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => {
-            setActiveField("start_month");
-            setShowMonthPicker(true);
-          }}
-        >
-          <Text>{edu.start_month || "Month"}</Text>
-          <Ionicons
-            name="calendar-outline"
-            size={16}
-            color={edu.start_month ? "#81B29A" : "#666"}
-          />
-        </TouchableOpacity>
-        {/* Start Year */}
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => {
-            setActiveField("start_year");
-            setShowYearPicker(true);
-          }}
-        >
-          <Text>{edu.start_year || "Year"}</Text>
-          <Ionicons
-            name="calendar-outline"
-            size={16}
-            color={edu.start_year ? "#81B29A" : "#666"}
-          />
-        </TouchableOpacity>
-      </View>
+        {/* ── Present Checkbox ── */}
+        <View style={styles.presentRow}>
+          <TouchableOpacity
+            style={[styles.checkbox, isPresent && styles.checkboxActive]}
+            onPress={() => {
+              const next = !isPresent;
+              setIsPresent(next);
+              if (next) {
+                setEndMonth("");
+                setEndYear("");
+                update("end_month", "");
+                update("end_year", "");
+              }
+            }}
+          >
+            {isPresent && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </TouchableOpacity>
+          <Text style={styles.presentText}>Currently studying here</Text>
+        </View>
 
-      {/* 🔹 Graduation Date */}
-      <Text style={styles.label}>Graduation Date</Text>
-      <View style={styles.dateRow}>
-        <TouchableOpacity
-          style={styles.dateInput}
-          disabled={isPresent}
-          onPress={() => {
-            setActiveField("end_month");
-            setShowMonthPicker(true);
-          }}
-        >
-          <Text>{edu.end_month || "Month"}</Text>
-          <Ionicons
-            name="calendar-outline"
-            size={16}
-            color={edu.end_month ? "#81B29A" : "#666"}
-          />
-        </TouchableOpacity>
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
-        <TouchableOpacity
-          style={styles.dateInput}
-          disabled={isPresent}
-          onPress={() => {
-            setActiveField("end_year");
-            setShowYearPicker(true);
-          }}
-        >
-          <Text>{edu.end_year || "Year"}</Text>
-          <Ionicons
-            name="calendar-outline"
-            size={16}
-            color={edu.end_year ? "#81B29A" : "#666"}
-          />
-        </TouchableOpacity>
-      </View>
+      {/* ── Continue ── */}
+      <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+        <Text style={styles.continueText}>CONTINUE</Text>
+      </TouchableOpacity>
 
-      {/* 🔹 Present Checkbox */}
-      <View style={styles.presentRow}>
-        <Text style={styles.presentText}>Present</Text>
-        <TouchableOpacity
-          style={[
-            styles.checkbox,
-            isPresent ? styles.checkboxActive : styles.checkbox,
-          ]}
-          onPress={() => {
-            const next = !isPresent;
-            setIsPresent(next);
-
-            if (!isPresent) {
-              updateEducation(0, {
-                end_month: "",
-                end_year: "",
-              });
-            }
-          }}
-        >
-          {isPresent && <Ionicons name="checkmark" size={14} color="#fff" />}
-        </TouchableOpacity>
-      </View>
-
-      {/* 🔹 Continue Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.nextBtn} onPress={nextStep}>
-          <Text style={styles.nextText}>CONTINUE</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Month Picker Model */}
-      <PickerModal
-        visible={showMonthPicker}
-        title="Month"
-        data={months}
-        selectedValue={edu[activeField] || ""}
-        onClose={() => setShowMonthPicker(false)}
-        onSelect={(value) => {
-          updateEducation(0, activeField, value === "None" ? "" : value);
-          setShowMonthPicker(false);
+      {/* ── Date Pickers ── */}
+      <DatePickerModal
+        visible={showStartDate}
+        onClose={() => setShowStartDate(false)}
+        title="Select Start Date"
+        initialMonth={startMonth}
+        initialYear={startYear}
+        onConfirm={(m, y) => {
+          setStartMonth(m);
+          setStartYear(y);
+          update("start_month", m);
+          update("start_year", y);
         }}
       />
-      {/* Year Picker Model */}
-      <PickerModal
-        visible={showYearPicker}
-        title="Year"
-        data={years}
-        selectedValue={edu[activeField] || ""}
-        onClose={() => setShowYearPicker(false)}
-        onSelect={(value) => {
-          updateEducation(0, activeField, value);
-          setShowYearPicker(false);
+
+      <DatePickerModal
+        visible={showEndDate}
+        onClose={() => setShowEndDate(false)}
+        title="Select Graduation Date"
+        initialMonth={endMonth}
+        initialYear={endYear}
+        onConfirm={(m, y) => {
+          setEndMonth(m);
+          setEndYear(y);
+          update("end_month", m);
+          update("end_year", y);
         }}
       />
     </View>
@@ -253,277 +365,212 @@ const EducationStep: React.FC<Props> = ({
 
 export default EducationStep;
 
+// ─── Styles ─────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F4F1DE",
-    paddingHorizontal: 20,
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
 
   navbar: {
-    height: 50,
-    justifyContent: "center",
-  },
-
-  leftIcon: {
-    position: "absolute",
-    left: 0,
-  },
-
-  rightBtn: {
-    position: "absolute",
-    right: 0,
-  },
-
-  centerContent: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
+  leftIcon:     { position: "absolute", left: 20 },
+  rightBtn:     { position: "absolute", right: 20 },
+  centerContent:{ flex: 1, alignItems: "center" },
+  stepText:     { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle:     { fontSize: 14, fontWeight: "bold", letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
+  previewText:  { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
 
-  stepText: {
-    fontFamily: "WorkSansRegular",
-    fontSize: 12,
-    color: "#3D405B",
-  },
-
-  previewText: {
-    color: "#81B29A",
-    fontFamily: "WorkSansSemiBold",
-    // backgroundColor: "orange",
-    // fontSize: 6,
-  },
-
-  title: {
-    // marginTop: 20,
-    textAlign: "center",
-    fontSize: 14,
-    letterSpacing: 1,
-    color: "#6c6c6c",
-    fontFamily: "WorkSansBold",
-  },
+  scrollContent: { paddingBottom: 100 },
 
   mainHeading: {
-    marginTop: 10,
+    marginTop: 24,
     fontSize: 30,
-    textAlign: "left",
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
+    lineHeight: 38,
+    paddingHorizontal: 20,
   },
-
   subHeading: {
     marginTop: 8,
     fontSize: 14,
-    textAlign: "left",
-    color: "#6c6c6c",
+    color: "#888",
     fontFamily: "WorkSansRegular",
-    marginBottom: 30,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#ccc",
-    paddingBottom: 6,
+    lineHeight: 22,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
 
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-  },
-
-  label: {
-    fontSize: 12,
+  // Fields block
+  fieldsBlock: { paddingHorizontal: 20 },
+  fieldContainer: { marginBottom: 20 },
+  floatingLabel: {
+    fontSize: 10,
+    fontWeight: "bold",
     color: "#3D405B",
+    letterSpacing: 0.5,
+    marginBottom: 2,
     fontFamily: "WorkSansSemiBold",
-    marginBottom: 6,
   },
+  fieldRow:   { flexDirection: "row", alignItems: "center" },
+  fieldInput: { flex: 1, fontSize: 16, color: "#3D405B", paddingVertical: 8, fontFamily: "WorkSansRegular" },
+  underline:        { height: 1,   backgroundColor: "#ddd", marginTop: 2 },
+  underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
 
-  dateRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 20,
+  // ── Date sections — full width top/bottom borders ──
+  dateSectionWrapper: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginBottom: 2,
   },
-
-  dateInput: {
-    flex: 1,
+  dateSectionDisabled: { opacity: 0.4 },
+  dateSectionTitle: {
+    fontSize: 10,
+    fontFamily: "WorkSansBold",
+    color: "#3D405B",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  datePickerRow: {
     flexDirection: "row",
-    justifyContent: "space-between", // 🔥 pushes icon right
     alignItems: "center",
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#ccc",
-    paddingVertical: 10,
+    justifyContent: "space-between",
   },
+  dateValueBlock: { flex: 1 },
+  dateValue:       { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  datePlaceholder: { fontSize: 16, color: "#bbb",    fontFamily: "WorkSansRegular" },
+  datePresent:     { fontSize: 16, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
-  dateText: {
-    color: "#666",
-    fontFamily: "WorkSansRegular",
-  },
-
-  disabledInput: {
-    opacity: 0.4,
-  },
-
+  // Present checkbox
   presentRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: 30,
+    justifyContent: "flex-end",
+    paddingHorizontal: 20,
+    marginTop: 14,
+    gap: 10,
   },
-
-  presentText: {
-    marginRight: 8,
-    fontFamily: "WorkSansMedium",
-    color: "#3D405B",
-  },
-
   checkbox: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderWidth: 1.5,
     borderColor: "#ccc",
+    borderRadius: 4,
     justifyContent: "center",
     alignItems: "center",
   },
-
   checkboxActive: {
-    backgroundColor: "#81B29A",
-    borderColor: "#81B29A",
+    backgroundColor: "#3BBFAD",
+    borderColor: "#3BBFAD",
+  },
+  presentText: {
+    fontSize: 14,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
   },
 
+  // Continue
   continueBtn: {
-    backgroundColor: "#81B29A",
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: "center",
-    width: "100%",
-  },
-
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: "auto",
-    marginBottom: 20,
-  },
-
-  inputContainer: {
-    marginBottom: 20,
-  },
-
-  nextBtn: {
-    backgroundColor: "#81B29A",
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-    width: "100%",
-  },
-
-  nextText: {
-    color: "#fff",
-    fontFamily: "WorkSansBold",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  modalOverlay: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 18,
+    borderRadius: 32,
+    alignItems: "center",
+  },
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
+  },
+});
+
+// ─── DatePicker Styles ───────────────────────────────────────────
+const dpStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
-
-  modalContainer: {
+  sheet: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "60%",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
-
-  closeBtn: {
-    position: "absolute",
-    top: 10,
-    right: 0,
-    backgroundColor: "#81B29A",
-    width: 20,
-    height: 20,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
-
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontFamily: "WorkSansBold",
+  title: {
+    fontSize: 17,
+    fontWeight: "bold",
     color: "#3D405B",
+    marginBottom: 16,
+    textAlign: "center",
+    fontFamily: "WorkSansBold",
   },
-
-  monthItem: {
+  tabRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    marginBottom: 16,
+    borderRadius: 10,
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: "#eee",
-    borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
   },
+  tab:           { flex: 1, paddingVertical: 10, alignItems: "center", backgroundColor: "#f5f5f5" },
+  tabActive:     { backgroundColor: "#3BBFAD" },
+  tabText:       { color: "#888", fontFamily: "WorkSansRegular", fontSize: 14 },
+  tabTextActive: { color: "#fff", fontFamily: "WorkSansBold" },
 
-  selectedMonthItem: {
-    borderColor: "#81B29A",
-    backgroundColor: "#f7fbf9",
-  },
-  monthText: {
-    fontSize: 16,
-    fontFamily: "WorkSansRegular",
-    color: "#333",
-  },
-
-  selectedMonthText: {
-    color: "#81B29A",
-    fontFamily: "WorkSansSemiBold",
-  },
-  yearItem: {
+  // Grid for both months and years
+  grid: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
+  },
+  gridItem: {
+    width: "30%",
+    paddingVertical: 13,
     borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    marginBottom: 4,
   },
+  gridItemActive: { backgroundColor: "#3BBFAD" },
+  gridText:       { fontSize: 14, color: "#555", fontFamily: "WorkSansRegular" },
+  gridTextActive: { color: "#fff", fontWeight: "bold", fontFamily: "WorkSansBold" },
 
-  selectedYearItem: {
-    borderColor: "#81B29A",
-    backgroundColor: "#f7fbf9",
-  },
-
-  yearText: {
-    fontSize: 16,
-    fontFamily: "WorkSansRegular",
-    color: "#333",
-  },
-
-  selectedYearText: {
-    color: "#81B29A",
+  preview: {
+    textAlign: "center",
+    marginTop: 14,
+    fontSize: 14,
+    color: "#3D405B",
     fontFamily: "WorkSansSemiBold",
   },
+  btnRow: { flexDirection: "row", gap: 12, marginTop: 20 },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  cancelText: { color: "#888", fontFamily: "WorkSansSemiBold" },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 30,
+    backgroundColor: "#3BBFAD",
+    alignItems: "center",
+  },
+  confirmText: { color: "#fff", fontWeight: "bold", fontFamily: "WorkSansBold" },
 });

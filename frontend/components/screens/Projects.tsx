@@ -1,18 +1,18 @@
-// import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
   Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
-  // Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
 import CustomLoader from "../appcomp/CustomLoader";
+
 interface ProjectStepProps {
   data: any;
   addProjects: any;
@@ -20,7 +20,10 @@ interface ProjectStepProps {
   removeProjects: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
+
 const ProjectStep: React.FC<ProjectStepProps> = ({
   data,
   addProjects,
@@ -28,586 +31,501 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   removeProjects,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
   const projectExperience = data.projects || [];
-  // const [date, setDate] = useState(new Date());
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingIndex, setGeneratingIndex] = useState(null); // Track which experience is being generated
-  // const [showPicker, setShowPicker] = useState<any>({
-  //   visible: false,
-  //   field: null,
-  //   index: null,
-  // });
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // const formattedMonthYear = (currentDate: any) => {
-  //   return currentDate.toLocaleDateString("en-US", {
-  //     month: "short",
-  //     year: "numeric",
-  //   });
-  // };
-
-  // const onChange = (event: any, selectedDate: any) => {
-  //   if (event.type === "dismissed") {
-  //     setShowPicker({ visible: false, field: null, index: null });
-  //     return;
-  //   }
-
-  //   const currentDate = selectedDate || date;
-  //   setDate(currentDate);
-
-  //   updateProjects(
-  //     showPicker.index,
-  //     showPicker.field,
-  //     formattedMonthYear(currentDate)
-  //   );
-
-  //   setShowPicker({ visible: false, field: null, index: null });
-  // };
+  // Ensure at least one project exists
+  React.useEffect(() => {
+    if (projectExperience.length === 0) {
+      addProjects({ title: "", technologies: "", description: "", liveUrl: "" });
+    }
+  }, []);
 
   const handleNext = () => {
-    if (projectExperience.length === 0) {
-      Alert.alert(
-        "Add Work Project",
-        "Please add at least one work experience to continue",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
     const incompleteProjects = projectExperience.some(
       (pro: any) => !pro.title || !pro.description
     );
-
-    if (incompleteProjects) {
-      Alert.alert(
-        "Complete Required Fields",
-        "Please fill in Company and Role for all experiences",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
+    // if (incompleteProjects) {
+    //   Alert.alert("Complete Required Fields", "Please fill in Title and Description for all projects.", [{ text: "OK" }]);
+    //   return;
+    // }
     nextStep();
-  };
-
-  const handleAddProject = () => {
-    addProjects({
-      title: "",
-      description: "",
-    });
   };
 
   const handleRemoveProject = (index: number) => {
     if (projectExperience.length === 1) {
-      Alert.alert("Cannot Remove", "You need at least one project entry", [
-        { text: "OK" },
-      ]);
+      Alert.alert("Cannot Remove", "You need at least one project entry.", [{ text: "OK" }]);
       return;
     }
-
-    Alert.alert(
-      "Remove Project",
-      "Are you sure you want to remove this project details?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => removeProjects(index),
-        },
-      ]
-    );
+    Alert.alert("Remove Project", "Are you sure you want to remove this project?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => removeProjects(index) },
+    ]);
   };
 
-  // Fixed generateSummary function with index parameter
-  const generateSummary = async (index: any) => {
+  const generateSummary = async (index: number) => {
     const proj = projectExperience[index];
     if (!proj || !proj.title || proj.description.length <= 5) {
-      Alert.alert(
-        "Not enough content",
-        "Please write at least a few words about your project before polishing it.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Not enough content", "Please write at least a few words about your project before polishing.", [{ text: "OK" }]);
       return;
     }
     setIsGenerating(true);
     setGeneratingIndex(index);
-
     try {
-      const prompt = `Polish the following work experience description by improving grammar, punctuation, readability, and incorporating relevant technical terms where appropriate. 
-Do not shorten , no headings or  expand the overall meaning beyond the original context. 
-Return the polished version strictly as 4 clear and concise bullet points:
-
-
-"${proj.description}"`;
-
+      const prompt = `Polish the following project description by improving grammar, punctuation, readability, and incorporating relevant technical terms. 
+Do not shorten or expand the overall meaning. Return strictly 4 clear and concise bullet points:\n\n"${proj.description}"`;
       const result = await callGeminiAPI(prompt);
-      console.log(result);
       updateProjects(index, "description", result);
     } catch (error) {
-      console.error("Error generating summary:", error);
-      Alert.alert(
-        "Error",
-        "Failed to polish the project description. Please try again.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Error", "Failed to polish the description. Please try again.", [{ text: "OK" }]);
     } finally {
       setIsGenerating(false);
       setGeneratingIndex(null);
     }
   };
 
+  const renderField = (
+    index: number,
+    key: string,
+    label: string,
+    placeholder: string,
+    multiline = false,
+    iconName?: string
+  ) => {
+    const fieldId = `${index}-${key}`;
+    const value = projectExperience[index]?.[key] || "";
+    const isFocused = focusedField === fieldId;
+
+    return (
+      <View style={styles.fieldContainer}>
+        {(value || isFocused) && (
+          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+        )}
+        <View style={styles.fieldRow}>
+          {iconName && (
+            <Ionicons
+              name={iconName as any}
+              size={18}
+              color={isFocused ? "#3BBFAD" : value ? "#3D405B" : "#bbb"}
+              style={{ marginRight: 8, marginTop: multiline ? 6 : 0 }}
+            />
+          )}
+          <TextInput
+            style={[
+              styles.fieldInput,
+              multiline && styles.multilineInput,
+            ]}
+            placeholder={isFocused ? placeholder : label}
+            placeholderTextColor="#bbb"
+            value={value}
+            multiline={multiline}
+            textAlignVertical={multiline ? "top" : "center"}
+            onFocus={() => setFocusedField(fieldId)}
+            onBlur={() => setFocusedField(null)}
+            onChangeText={(val) => updateProjects(index, key, val)}
+          />
+          {value && !multiline && (
+            <Ionicons name="checkmark-circle" size={18} color="#3BBFAD" />
+          )}
+        </View>
+        {/* Full-width underline for non-multiline, top+bottom for multiline */}
+        {!multiline && (
+          <View style={[styles.underline, isFocused && styles.underlineFocused]} />
+        )}
+      </View>
+    );
+  };
+
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Project Experience</Text>
-          <Text style={styles.subtitle}>
-            Tell us about your professional background
-          </Text>
+
+        {/* ── Navbar ── */}
+        <View style={styles.navbar}>
+          <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+            <Ionicons name="arrow-back" size={22} color="#3D405B" />
+          </TouchableOpacity>
+          <View style={styles.centerContent}>
+            <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
+            <Text style={styles.navTitle}>PROJECTS</Text>
+          </View>
+          <TouchableOpacity style={styles.rightBtn}>
+            <Text style={styles.previewText}>Preview</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView
-          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
         >
+          {/* Heading */}
+          <View style={styles.headingBlock}>
+            <Text style={styles.mainHeading}>Your Projects</Text>
+            <Text style={styles.subHeading}>
+              Showcase your best work — include live links and tech stack for maximum impact
+            </Text>
+          </View>
+
+          {/* ── Project Cards ── */}
           {projectExperience.map((exp: any, index: number) => (
-            <View key={index} style={styles.experienceCard}>
-              <View style={styles.experienceHeader}>
-                <Text style={styles.experienceTitle}>Project {index + 1}</Text>
+            <View key={index} style={styles.projectCard}>
+
+              {/* Card Header */}
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <View style={styles.projectBadge}>
+                    <Text style={styles.projectBadgeText}>{index + 1}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.projectLabel}>PROJECT {index + 1}</Text>
+                    {exp.title ? (
+                      <Text style={styles.projectTitlePreview} numberOfLines={1}>
+                        {exp.title}
+                      </Text>
+                    ) : (
+                      <Text style={styles.projectTitleEmpty}>Untitled project</Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Delete button */}
                 {projectExperience.length > 1 && (
                   <TouchableOpacity
-                    style={styles.deleteButton}
+                    style={styles.deleteBtn}
                     onPress={() => handleRemoveProject(index)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Text style={styles.deleteButtonText}>✕</Text>
+                    <Ionicons name="trash-outline" size={18} color="#e07070" />
                   </TouchableOpacity>
                 )}
               </View>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Title *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.title || ""}
-                onChangeText={(val) => updateProjects(index, "title", val)}
-              />
-                            <TextInput
-                style={styles.input}
-                placeholder="reactjs , nextjs , mongodb *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.technologies || ""}
-                onChangeText={(val) => updateProjects(index, "technologies", val)}
-              />
+              <View style={styles.cardDivider} />
 
-              <TextInput
-                style={[styles.input, styles.multilineInput]}
-                placeholder="Write a few words about your description *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.description || ""}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                onChangeText={(val) =>
-                  updateProjects(index, "description", val)
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Live link *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.liveUrl || ""}
-                onChangeText={(val) => updateProjects(index, "liveUrl", val)}
-              />
+              {/* Fields */}
+              <View style={styles.cardBody}>
+                {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
+                {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
+                {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
+              </View>
 
-              {/* Polish Button */}
-              <TouchableOpacity
-                style={[
-                  styles.polishButton,
-                  isGenerating &&
-                    generatingIndex === index &&
-                    styles.polishButtonLoading,
-                ]}
-                onPress={() => generateSummary(index)}
-                disabled={isGenerating && generatingIndex === index}
-              >
-                {isGenerating && generatingIndex === index ? (
-                  <View style={styles.loadingContent}>
-                    <CustomLoader size={16} color="#ffffff" bars={8} />
-                    <Text style={styles.polishButtonTextLoading}>
-                      Polishing...
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.polishContent}>
-                    <Text style={styles.polishIcon}>✨</Text>
-                    <Text style={styles.polishButtonText}>Polish with AI</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              {/* ── Description — full width top/bottom borders ── */}
+              <View style={styles.descriptionWrapper}>
+                <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
+                <TextInput
+                  style={styles.descriptionInput}
+                  placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
+                  placeholderTextColor="#bbb"
+                  value={exp.description || ""}
+                  multiline
+                  textAlignVertical="top"
+                  onChangeText={(val) => updateProjects(index, "description", val)}
+                />
+              </View>
 
-              {/* Start Date */}
-              {/* <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  Start Date: {exp.start || "Not selected"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "start", index })
-                  }
-                >
-                  <Text style={styles.dateButtonText}>PICK START DATE</Text>
-                </TouchableOpacity>
-              </View> */}
-
-              {/* End Date */}
-              {/* <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  End Date: {exp.end || "Not selected"}
-                </Text>
+              {/* ── AI Polish Button ── */}
+              <View style={styles.aiSection}>
                 <TouchableOpacity
                   style={[
-                    styles.dateButton,
-                    exp.end === "Present" && styles.dateButtonDisabled,
+                    styles.aiBtn,
+                    isGenerating && generatingIndex === index && styles.aiBtnLoading,
                   ]}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "end", index })
-                  }
-                  disabled={exp.end === "Present"}
+                  onPress={() => generateSummary(index)}
+                  disabled={isGenerating && generatingIndex === index}
+                  activeOpacity={0.85}
                 >
-                  <Text
-                    style={[
-                      styles.dateButtonText,
-                      exp.end === "Present" && styles.dateButtonTextDisabled,
-                    ]}
-                  >
-                    PICK END DATE
-                  </Text>
+                  {isGenerating && generatingIndex === index ? (
+                    <View style={styles.aiBtnInner}>
+                      <CustomLoader size={18} color="#3BBFAD" bars={12} />
+                      <Text style={styles.aiBtnText}>Polishing description...</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.aiBtnInner}>
+                      <View style={styles.sparkleBox}>
+                        <Text style={styles.sparkle}>✦</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.aiBtnLabel}>Polish with AI</Text>
+                        <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
+                      </View>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={16}
+                        color="#3BBFAD"
+                        style={{ marginLeft: "auto" }}
+                      />
+                    </View>
+                  )}
                 </TouchableOpacity>
-
-                <View style={styles.switchContainer}>
-                  <Switch
-                    value={exp.end === "Present"}
-                    onValueChange={(val) =>
-                      updateExperience(index, "end", val ? "Present" : "")
-                    }
-                    trackColor={{ false: "#d0d0d0", true: "#007AFF" }}
-                    thumbColor={exp.end === "Present" ? "#ffffff" : "#f4f3f4"}
-                  />
-                  <Text style={styles.switchLabel}>Currently working here</Text>
-                </View>
-              </View> */}
+              </View>
             </View>
           ))}
 
-          {/* Add Experience Button */}
-          <TouchableOpacity style={styles.addButton} onPress={handleAddProject}>
-            <Text style={styles.addButtonIcon}>+</Text>
-            <Text style={styles.addButtonText}>ADD PROJECT</Text>
+          {/* ── Add Another Project ── */}
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => addProjects({ title: "", technologies: "", description: "", liveUrl: "" })}
+            activeOpacity={0.8}
+          >
+            <View style={styles.addBtnIcon}>
+              <Ionicons name="add" size={20} color="#3BBFAD" />
+            </View>
+            <Text style={styles.addBtnText}>Add another project</Text>
           </TouchableOpacity>
+
+          <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Date Picker */}
-        {/* {showPicker.visible && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="spinner"
-            onChange={onChange}
-          />
-        )} */}
-
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Progress Indicator */}
-        {/* <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Step 3 of 4</Text>
-        </View> */}
+        {/* ── Continue ── */}
+        <TouchableOpacity style={styles.continueBtn} onPress={handleNext}>
+          <Text style={styles.continueText}>CONTINUE</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
 };
 
+export default ProjectStep;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
 
-  header: {
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 20,
   },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: {
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
   },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  previewText: {
+    color: "#3BBFAD",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
   },
 
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
+  scrollContent: { paddingBottom: 20 },
+
+  // Heading
+  headingBlock: { paddingHorizontal: 20,  marginBottom: 20 },
+  mainHeading: {
+    marginTop:10,
     fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+    lineHeight: 36,
+    maxWidth: 300,
   },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  experienceCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  experienceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-
-  experienceTitle: {
-    fontSize: 18,
+  subHeading: {
+    marginTop: 6,
+    fontSize: 15,
     color: "#666",
-    fontFamily: "WorkSansMedium",
-  },
-
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  deleteButtonText: {
-    color: "#ff4444",
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-  },
-
-  input: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#d0d0d0",
-    fontFamily: "WorkSansRegular",
-    fontSize: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    color: "#333",
-  },
-
-  multilineInput: {
-    minHeight: 80,
-  },
-
-  polishButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  polishButtonLoading: {
-    backgroundColor: "#5eb3ff",
-  },
-
-  polishContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  loadingContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  polishIcon: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-
-  polishButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-
-  polishButtonTextLoading: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    textAlign: "center",
-    marginLeft: 8,
-  },
-
-  dateSection: {
-    marginBottom: 16,
-  },
-
-  dateLabel: {
-    fontSize: 16,
-    color: "#333",
     fontFamily: "WorkSansRegular",
     marginBottom: 8,
   },
 
-  dateButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+  // Project Card
+  projectCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#fff",
   },
 
-  dateButtonDisabled: {
-    backgroundColor: "#cccccc",
-  },
-
-  dateButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontFamily: "WorkSansMedium",
-    fontSize: 16,
-  },
-
-  dateButtonTextDisabled: {
-    color: "#666666",
-  },
-
-  switchContainer: {
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
-  },
-
-  switchLabel: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-  },
-
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginVertical: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  addButtonIcon: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-  },
-
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  buttonContainer: {
-    flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "#F4F1DE",
   },
-
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  progressContainer: {
+  cardHeaderLeft: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    gap: 12,
+  },
+  projectBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#3BBFAD",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  projectBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "WorkSansBold",
+  },
+  projectLabel: {
+    fontSize: 10,
+    fontFamily: "WorkSansBold",
+    color: "#888",
+    letterSpacing: 1,
+  },
+  projectTitlePreview: {
+    fontSize: 14,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
+    maxWidth: 200,
+  },
+  projectTitleEmpty: {
+    fontSize: 13,
+    fontFamily: "WorkSansRegular",
+    color: "#bbb",
+    fontStyle: "italic",
+  },
+  deleteBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#fff5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#fdd",
+  },
+  cardDivider: { height: 1, backgroundColor: "#eee" },
+
+  cardBody: { paddingHorizontal: 16, paddingTop: 16 },
+
+  // Fields
+  fieldContainer: { marginBottom: 16 },
+  floatingLabel: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#3D405B",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    fontFamily: "WorkSansSemiBold",
+  },
+  fieldRow: { flexDirection: "row", alignItems: "center" },
+  fieldInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#3D405B",
+    paddingVertical: 6,
+    fontFamily: "WorkSansRegular",
+  },
+  multilineInput: { minHeight: 70 },
+  underline: { height: 1, backgroundColor: "#eee", marginTop: 4 },
+  underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
+
+  // Description — full width
+  descriptionWrapper: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+    marginTop: 4,
+  },
+  descriptionLabel: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#3D405B",
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    fontFamily: "WorkSansSemiBold",
+  },
+  descriptionInput: {
+    minHeight: 120,
+    fontSize: 14,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    lineHeight: 24,
+    paddingBottom: 12,
   },
 
-  progressText: {
-    fontSize: 14,
-    color: "#999999",
-    fontFamily: "WorkSansRegular",
+  // AI Button
+  aiSection: { padding: 16 },
+  aiBtn: {
+    borderWidth: 1.5,
+    borderColor: "#3BBFAD",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#fff",
+  },
+  aiBtnLoading: { backgroundColor: "#f0faf8", borderColor: "#81B29A" },
+  aiBtnInner: { flexDirection: "row", alignItems: "center", gap: 12 },
+  sparkleBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#e8f5f2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sparkle: { fontSize: 16, color: "#3BBFAD" },
+  aiBtnLabel: { fontSize: 14, fontFamily: "WorkSansSemiBold", color: "#3D405B" },
+  aiBtnSub: { fontSize: 11, fontFamily: "WorkSansRegular", color: "#888", marginTop: 1 },
+  aiBtnText: { fontSize: 14, fontFamily: "WorkSansRegular", color: "#3D405B", marginLeft: 8 },
+
+  // Add button
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 10,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: "#3BBFAD",
+    borderStyle: "dashed",
+    borderRadius: 14,
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#f9fffe",
+  },
+  addBtnIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#e8f5f2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addBtnText: { fontSize: 14, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
+
+  // Continue
+  continueBtn: {
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 18,
+    borderRadius: 32,
+    alignItems: "center",
+  },
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
   },
 });
-export default ProjectStep;

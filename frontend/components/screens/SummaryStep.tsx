@@ -8,56 +8,50 @@ import {
   StatusBar,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
 import CustomLoader from "../appcomp/CustomLoader";
+
 interface SummaryStepProps {
   data: any;
   summary: any;
   updateSummary: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
+
 const SummaryStep: React.FC<SummaryStepProps> = ({
   data,
   summary,
   updateSummary,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
   const { work_experience, education, skills } = data;
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generateSummary = async () => {
     setIsGenerating(true);
-    // for ${
-    //       personal_info.full_name
-    //     }.
     try {
       if (summary.length === 0) {
         const prompt = `Write a professional resume summary 
           Here's their work experience: ${JSON.stringify(work_experience.year)}
           Here's their education: ${JSON.stringify(education.degree)}
-          Here are their skills: ${JSON.stringify(
-            skills.languages
-          )}${JSON.stringify(skills.frameworks)}${JSON.stringify(
-          skills.tools
-        )}${JSON.stringify(skills.databases)}
+          Here are their skills: ${JSON.stringify(skills.languages)}${JSON.stringify(skills.frameworks)}${JSON.stringify(skills.tools)}${JSON.stringify(skills.databases)}
           Guidelines:
 - Return strictly 3 clear and concise bullet points.  
-- Do not add headings or extra explanations or double astrisk.  
-- Use strong, impactful action verbs (e.g., "engineered", "optimized", "led", "developed").  
+- Do not add headings or extra explanations or double asterisk.  
+- Use strong, impactful action verbs.  
 - Highlight achievements, problem-solving ability, and technical expertise.  
-- Keep it professional and results-oriented.  
-- Keep the meaning true to the provided details, but polish language for maximum impact. 
-          `;
+- Keep it professional and results-oriented.`;
         const result = await callGeminiAPI(prompt);
         updateSummary(result);
       } else if (summary.length > 5) {
-        const prompt = `Polish the following work experience description by improving grammar, punctuation, readability, and incorporating relevant technical terms where appropriate. 
-Do not shorten , no headings or  expand the overall meaning beyond the original context. 
-Return the polished version strictly as 3 clear and concise bullet points:
-
-"${summary}"`;
+        const prompt = `Polish the following resume summary. Do not shorten or expand beyond original context. Return strictly 3 clear bullet points:\n\n"${summary}"`;
         const result = await callGeminiAPI(prompt);
         updateSummary(result);
       }
@@ -68,333 +62,367 @@ Return the polished version strictly as 3 clear and concise bullet points:
     }
   };
 
+  const isEmpty = summary.length === 0;
+
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
       <View style={styles.container}>
+
+        {/* ── Navbar ── */}
+        <View style={styles.navbar}>
+          <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+            <Ionicons name="arrow-back" size={22} color="#3D405B" />
+          </TouchableOpacity>
+          <View style={styles.centerContent}>
+            <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
+            <Text style={styles.navTitle}>SUMMARY</Text>
+          </View>
+          <TouchableOpacity style={styles.rightBtn}>
+            <Text style={styles.previewTextbtn}>Preview</Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
-          style={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
         >
-          {/* Header Section */}
-          <View style={styles.header}>
-            {/* <View style={styles.stepIndicator}>
-              <Text style={styles.stepText}>Step 3 of 4</Text>
-            </View> */}
-            <Text style={styles.title}>Professional Summary</Text>
-            <Text style={styles.subtitle}>
-              Create a compelling summary that highlights your key strengths,
-              experience, and career objectives
+          {/* Heading */}
+          <View style={styles.headingBlock}>
+            <Text style={styles.mainHeading}>Professional Summary</Text>
+            <Text style={styles.subHeading}>
+              A strong summary helps recruiters understand your value at a glance
             </Text>
           </View>
 
-          {/* Main Content */}
-          <View style={styles.contentSection}>
-            {/* Input Section */}
-            <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>Your Professional Summary</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    summary.length > 0 && styles.inputFilled,
-                  ]}
-                  placeholder="Write a compelling professional summary that showcases your expertise, achievements, and career goals..."
-                  placeholderTextColor="#a0a0a0"
-                  value={summary}
-                  onChangeText={updateSummary}
-                  multiline
-                  numberOfLines={6}
-                  textAlignVertical="top"
-                />
-                {summary.length > 0 && (
-                  <Text style={styles.characterCount}>
-                    {summary.length} characters
-                  </Text>
-                )}
-              </View>
-            </View>
+          {/* ── Textarea — full width top/bottom border ── */}
+          <View style={styles.textAreaWrapper}>
+            {/* Character count top right */}
+            {summary.length > 0 && (
+              <Text style={styles.charCount}>{summary.length} characters</Text>
+            )}
+            <TextInput
+              style={styles.textArea}
+              placeholder={
+                "Write your professional summary here...\n\n• Highlight your key skills\n• Mention years of experience\n• State your career objective"
+              }
+              placeholderTextColor="#bbb"
+              value={summary}
+              onChangeText={updateSummary}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
 
-            {/* AI Generate Button */}
+          {/* ── AI Button ── */}
+          <View style={styles.aiSection}>
             <TouchableOpacity
               onPress={generateSummary}
-              style={[
-                styles.generateButton,
-                isGenerating && styles.generateButtonLoading,
-              ]}
+              style={[styles.aiBtn, isGenerating && styles.aiBtnLoading]}
               disabled={isGenerating}
+              activeOpacity={0.85}
             >
               {isGenerating ? (
-                <View style={styles.loadingContent}>
-                  <CustomLoader size={20} color="#ffffff" bars={12} />
-                  <Text style={styles.generateButtonTextLoading}>
-                    AI is crafting your summary...
-                  </Text>
+                <View style={styles.aiBtnInner}>
+                  <CustomLoader size={18} color="#fff" bars={12} />
+                  <Text style={styles.aiBtnText}>Crafting your summary...</Text>
                 </View>
               ) : (
-                <View style={styles.generateContent}>
-                  <Text style={styles.generateIcon}>✨</Text>
-                  <Text style={styles.generateButtonText}>
-                    {summary.length === 0
-                      ? "Generate AI Summary"
-                      : "Polish with AI"}
-                  </Text>
+                <View style={styles.aiBtnInner}>
+                  <View style={styles.sparkleBox}>
+                    <Text style={styles.sparkle}>✦</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.aiBtnLabel}>
+                      {isEmpty ? "Generate with AI" : "Polish with AI"}
+                    </Text>
+                    <Text style={styles.aiBtnSub}>
+                      {isEmpty
+                        ? "Based on your resume data"
+                        : "Improve grammar & impact"}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={18}
+                    color="#3BBFAD"
+                    style={{ marginLeft: "auto" }}
+                  />
                 </View>
               )}
             </TouchableOpacity>
-
-            {/* Tips Section */}
-            <View style={styles.tipsSection}>
-              <Text style={styles.tipsTitle}>💡 Pro Tips</Text>
-              <View style={styles.tipsList}>
-                <Text style={styles.tipItem}>
-                  • Based on your previous form details AI can generate summary
-                </Text>
-                <Text style={styles.tipItem}>
-                  • Keep it concise (2-3 sentences)
-                </Text>
-                <Text style={styles.tipItem}>
-                  • Highlight your most relevant experience
-                </Text>
-                <Text style={styles.tipItem}>
-                  • Include key skills and achievements
-                </Text>
-                <Text style={styles.tipItem}>
-                  • Tailor it to your target role
-                </Text>
-              </View>
-            </View>
-
-            {/* Preview Section */}
-            {summary.length > 0 && (
-              <View style={styles.previewSection}>
-                <Text style={styles.previewTitle}>Preview</Text>
-                <View style={styles.previewContainer}>
-                  <Text style={styles.previewText}>{summary}</Text>
-                </View>
-              </View>
-            )}
           </View>
+
+          {/* ── Tips ── */}
+          <View style={styles.tipsCard}>
+            <View style={styles.tipsHeader}>
+              <Ionicons name="bulb-outline" size={16} color="#3BBFAD" />
+              <Text style={styles.tipsTitle}>Pro Tips</Text>
+            </View>
+            {[
+              "AI generates summary based on your previous form details",
+              "Keep it concise — 2 to 3 sentences works best",
+              "Use strong action verbs like led, built, optimized",
+              "Tailor it to your target role for best results",
+            ].map((tip, i) => (
+              <View key={i} style={styles.tipRow}>
+                <View style={styles.tipDot} />
+                <Text style={styles.tipText}>{tip}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* ── Preview ── */}
+          {summary.length > 0 && (
+            <View style={styles.previewCard}>
+              <View style={styles.previewHeader}>
+                <Ionicons name="eye-outline" size={16} color="#3D405B" />
+                <Text style={styles.previewTitle}>Preview</Text>
+              </View>
+              <Text style={styles.previewText}>{summary}</Text>
+            </View>
+          )}
+
+          <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
+        {/* ── Continue Button ── */}
+        <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+          <Text style={styles.continueText}>CONTINUE</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
 };
 
+export default SummaryStep;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
   },
-  scrollContent: {
-    flex: 1,
-  },
-  header: {
+
+  // Navbar
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 20,
   },
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
   stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 20,
+    fontSize: 11,
+    color: "#3D405B",
     fontFamily: "WorkSansRegular",
   },
-  contentSection: {
-    // paddingHorizontal: 24,
-    paddingBottom: 120,
-  },
-  inputSection: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 18,
-    fontFamily: "WorkSansMedium",
-    color: "#1a1a1a",
-    marginBottom: 12,
-  },
-  inputContainer: {
-    position: "relative",
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: "#e6e6e6",
-    // borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    fontFamily: "WorkSansRegular",
-    color: "#1a1a1a",
-    minHeight: 120,
-    backgroundColor: "#fafafa",
-    lineHeight: 24,
-  },
-  inputFilled: {
-    borderColor: "#007AFF",
-    backgroundColor: "#ffffff",
-  },
-  characterCount: {
-    position: "absolute",
-    bottom: 8,
-    right: 12,
-    fontSize: 12,
-    color: "#999999",
-    fontFamily: "WorkSansRegular",
-  },
-  generateButton: {
-    backgroundColor: "#007AFF",
-    // borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    marginBottom: 32,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  generateButtonLoading: {
-    backgroundColor: "#5eb3ff",
-  },
-  generateContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  generateIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  generateButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-  generateButtonTextLoading: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontFamily: "WorkSansRegular",
-    textAlign: "center",
-    marginLeft: 12,
-  },
-  tipsSection: {
-    backgroundColor: "#f8f9fa",
-    // borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-  },
-  tipsTitle: {
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-    color: "#1a1a1a",
-    marginBottom: 12,
-  },
-  tipsList: {
-    gap: 8,
-  },
-  tipItem: {
+  navTitle: {
     fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    color: "#666666",
-    lineHeight: 20,
+    fontWeight: "bold",
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
   },
-  previewSection: {
+  previewTextbtn: {
+    color: "#3BBFAD",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  scrollContent: {
+    paddingBottom: 20,
+  },
+
+  // Heading
+  headingBlock: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
     marginBottom: 24,
   },
-  previewTitle: {
-    fontSize: 18,
-    fontFamily: "WorkSansMedium",
-    color: "#1a1a1a",
-    marginBottom: 12,
+  mainHeading: {
+    fontSize: 30,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+    lineHeight: 38,
+    marginBottom: 8,
   },
-  previewContainer: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    // borderRadius: 12,
-    padding: 16,
-  },
-  previewText: {
-    fontSize: 15,
+  subHeading: {
+    fontSize: 14,
+    color: "#888",
     fontFamily: "WorkSansRegular",
-    color: "#333333",
     lineHeight: 22,
   },
-  buttonContainer: {
+
+  // ── Textarea: full-width top/bottom borders ──
+  textAreaWrapper: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fafafa",
+    marginBottom: 20,
+  },
+  charCount: {
+    textAlign: "right",
+    fontSize: 11,
+    color: "#bbb",
+    fontFamily: "WorkSansRegular",
+    paddingRight: 14,
+    paddingTop: 8,
+  },
+  textArea: {
+    minHeight: 160,
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    lineHeight: 26,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+  },
+
+  // ── AI Button ──
+  aiSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  aiBtn: {
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#3BBFAD",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  aiBtnLoading: {
+    backgroundColor: "#f0faf8",
+    borderColor: "#81B29A",
+  },
+  aiBtnInner: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    alignItems: "center",
+    gap: 12,
+  },
+  sparkleBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#e8f5f2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sparkle: {
+    fontSize: 18,
+    color: "#3BBFAD",
+  },
+  aiBtnLabel: {
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
+  },
+  aiBtnSub: {
+    fontSize: 12,
+    fontFamily: "WorkSansRegular",
+    color: "#888",
+    marginTop: 2,
+  },
+  aiBtnText: {
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    marginLeft: 10,
+  },
+
+  // ── Tips ──
+  tipsCard: {
+    marginHorizontal: 20,
+    backgroundColor: "#F4F1DE",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+  },
+  tipsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  tipsTitle: {
+    fontSize: 13,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
+    letterSpacing: 0.3,
+  },
+  tipRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 8,
+  },
+  tipDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#3BBFAD",
+    marginTop: 7,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "WorkSansRegular",
+    color: "#666",
+    lineHeight: 20,
+  },
+
+  // ── Preview ──
+  previewCard: {
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 14,
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  previewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  previewTitle: {
+    fontSize: 13,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
+  },
+  previewText: {
+    fontSize: 14,
+    fontFamily: "WorkSansRegular",
+    color: "#555",
+    lineHeight: 24,
   },
 
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
+  // Continue
+  continueBtn: {
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 18,
+    borderRadius: 32,
+    alignItems: "center",
   },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
   },
 });
-
-export default SummaryStep;

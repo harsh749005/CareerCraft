@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,558 +7,817 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import CustomLoader from "../appcomp/CustomLoader";
 import { generatePDF } from "../generator/GeneratePDF";
-
+// ── Add these imports at the top of ReviewStep ──
+import AuthScreen from "../../app/(auth)/AuthScreen"; // adjust path
+import AsyncStorage from "@react-native-async-storage/async-storage"; // or your auth state
 interface ReviewStepProps {
   data: any;
   prevStep: () => void;
+  goToStep: (step: number) => void;
+  step: number;
+  totalSteps: number;
 }
 
-const ReviewStep: React.FC<ReviewStepProps> = ({ data, prevStep }) => {
+// ── Map each section to its step number ──
+// Adjust these numbers to match YOUR actual step order in BuildResume
+const STEP_MAP = {
+  personal: 1,
+  summary: 2,
+  work: 3, // WorkExperienceStep (basic info)
+  workDesc: 4, // JobDescriptionStep
+  education: 5,
+  skills: 6,
+  projects: 7,
+  links: 8,
+};
+
+const ReviewStep: React.FC<ReviewStepProps> = ({
+  data,
+  prevStep,
+  goToStep,
+  step,
+  totalSteps,
+}) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const handleSubmit = async () => {
-    setIsGenerating(true);
+  const [showAuth, setShowAuth] = useState(false); // ✅ controls auth screen
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // ✅ track auth state
 
+  // ✅ Check login status on mount
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
     try {
-      setTimeout(async () => {
-        console.log("Final Form Data:", data);
-        alert("Form Submitted Successfully!");
-        await generatePDF(data);
-        // alert(`PDF saved at: ${pdfPath}`);
-        setIsGenerating(false);
-      }, 3000);
-
-      // Here you can also open/share the PDF if you want
-    } catch (err) {
-      setIsGenerating(false);
-      console.error("Error generating PDF:", err);
-      alert("Something went wrong while generating the PDF.");
+      // Replace with your actual auth check
+      // e.g. AsyncStorage, Supabase session, Firebase currentUser, etc.
+      const token = await AsyncStorage.getItem("userToken");
+      setIsLoggedIn(!!token);
+    } catch {
+      setIsLoggedIn(false);
     }
   };
 
+  const handleSubmit = async () => {
+    // try {
+    // ✅ Gate: show auth if not logged in
+    if (!isLoggedIn) {
+      setShowAuth(true);
+      return;
+    }
+    generate();
+  };
+  const generate = async () => {
+    setIsGenerating(true);
+    try {
+      setTimeout(async () => {
+        console.log("Final Form Data:", data);
+        await generatePDF(data);
+        setIsGenerating(false);
+      }, 3000);
+    } catch (err) {
+      setIsGenerating(false);
+      console.error("Error generating PDF:", err);
+    }
+  };
+  // ✅ Called after successful login/register
+  const handleAuthSuccess = () => {
+    setIsLoggedIn(true);
+    setShowAuth(false);
+    generate(); // ✅ auto-trigger PDF after auth
+  };
+  // ✅ Show AuthScreen as full overlay if not logged in
+  if (showAuth) {
+    return (
+      <AuthScreen
+        onAuthSuccess={handleAuthSuccess}
+        onBack={() => setShowAuth(false)}
+      />
+    );
+  }
+  // ── Section wrapper with Edit button ──
+  const Section = ({
+    icon,
+    title,
+    stepKey,
+    children,
+  }: {
+    icon: string;
+    title: string;
+    stepKey: keyof typeof STEP_MAP;
+    children: React.ReactNode;
+  }) => (
+    <View style={styles.sectionCard}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionHeaderLeft}>
+          <View style={styles.sectionIconBox}>
+            <Ionicons name={icon as any} size={16} color="#3BBFAD" />
+          </View>
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+        {/* ✅ Edit button */}
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => goToStep(STEP_MAP[stepKey])}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="pencil-outline" size={13} color="#3BBFAD" />
+          <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.sectionDivider} />
+      {children}
+    </View>
+  );
+
+  const InfoRow = ({
+    label,
+    value,
+    column = false,
+  }: {
+    label: string;
+    value: string;
+    column?: boolean;
+  }) => (
+    <View style={[styles.infoRow, column && { flexDirection: "column" }]}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={[styles.infoValue, column && { marginTop: 4 }]}>
+        {value || "—"}
+      </Text>
+    </View>
+  );
+
   return (
     <>
-      <StatusBar barStyle="dark-content" />
-
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 4 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Review Your Resume</Text>
-          <Text style={styles.subtitle}>
-            Please review all information before generating your professional
-            resume
-          </Text>
+        {/* Navbar */}
+        <View style={styles.navbar}>
+          <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+            <Ionicons name="arrow-back" size={22} color="#3D405B" />
+          </TouchableOpacity>
+          <View style={styles.centerContent}>
+            <Text style={styles.stepText}>
+              Step {step} of {totalSteps}
+            </Text>
+            <Text style={styles.navTitle}>REVIEW</Text>
+          </View>
+          <View style={{ width: 60 }} />
         </View>
 
         <ScrollView
-          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          {/* Personal Information Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name:</Text>
-              <Text style={styles.infoValue}>{data.personal_info.name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email:</Text>
-              <Text style={styles.infoValue}>{data.personal_info.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Number:</Text>
-              <Text style={styles.infoValue}>{data.personal_info.number}</Text>
-            </View>
+          {/* Heading */}
+          <View style={styles.headingBlock}>
+            <Text style={styles.mainHeading}>Review Your Resume</Text>
+            <Text style={styles.subHeading}>
+              Tap Edit on any section to make changes before generating
+            </Text>
           </View>
 
-          {/* Work Experience Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Work Experience</Text>
-            {data.work_experience.map((exp: any, i: number) => (
-              <View key={i} style={styles.itemContainer}>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemTitle}>{exp.role}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Company:</Text>
-                  <Text style={styles.infoValue}>{exp.company}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Duration:</Text>
-                  <Text style={styles.infoValue}>
-                    {exp.start} - {exp.end}
-                  </Text>
-                </View>
-                {exp.description && (
-                  <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionText}>
-                      {exp.description}
+          {/* ── Personal Info ── */}
+          <Section
+            icon="person-outline"
+            title="Personal Information"
+            stepKey="personal"
+          >
+            <InfoRow label="Full Name" value={data.personal_info?.name} />
+            <InfoRow label="Email" value={data.personal_info?.email} />
+            <InfoRow label="Phone" value={data.personal_info?.number} />
+            {data.personal_info?.city && (
+              <InfoRow label="City" value={data.personal_info.city} />
+            )}
+          </Section>
+
+          {/* ── Professional Summary ── */}
+          {data.professional_summary?.length > 0 && (
+            <Section
+              icon="document-text-outline"
+              title="Professional Summary"
+              stepKey="summary"
+            >
+              <View style={styles.summaryBox}>
+                <Text style={styles.summaryText}>
+                  {data.professional_summary}
+                </Text>
+              </View>
+            </Section>
+          )}
+
+          {/* ── Work Experience ── */}
+          <Section
+            icon="briefcase-outline"
+            title="Work Experience"
+            stepKey="work"
+          >
+            {data.work_experience?.length > 0 ? (
+              data.work_experience.map((exp: any, i: number) => (
+                <View
+                  key={i}
+                  style={[styles.itemBlock, i > 0 && styles.itemBlockBorder]}
+                >
+                  <View style={styles.itemTitleRow}>
+                    <View style={styles.itemDot} />
+                    <Text style={styles.itemTitle}>
+                      {exp.job_title || exp.role || "—"}
                     </Text>
+                    {/* Per-item edit */}
+                    <TouchableOpacity
+                      style={styles.itemEditBtn}
+                      onPress={() => goToStep(STEP_MAP.work)}
+                    >
+                      <Ionicons name="pencil-outline" size={13} color="#aaa" />
+                    </TouchableOpacity>
                   </View>
-                )}
+                  <View style={styles.itemMeta}>
+                    {(exp.company_name || exp.company) && (
+                      <View style={styles.metaChip}>
+                        <Ionicons
+                          name="business-outline"
+                          size={12}
+                          color="#888"
+                        />
+                        <Text style={styles.metaText}>
+                          {exp.company_name || exp.company}
+                        </Text>
+                      </View>
+                    )}
+                    {(exp.start_month || exp.start) && (
+                      <View style={styles.metaChip}>
+                        <Ionicons
+                          name="calendar-outline"
+                          size={12}
+                          color="#888"
+                        />
+                        <Text style={styles.metaText}>
+                          {exp.start_month
+                            ? `${exp.start_month}/${exp.start_year}`
+                            : exp.start}{" "}
+                          —{" "}
+                          {exp.is_present
+                            ? "Present"
+                            : exp.end_month
+                              ? `${exp.end_month}/${exp.end_year}`
+                              : exp.end || "Present"}
+                        </Text>
+                      </View>
+                    )}
+                    {(exp.city || exp.country) && (
+                      <View style={styles.metaChip}>
+                        <Ionicons
+                          name="location-outline"
+                          size={12}
+                          color="#888"
+                        />
+                        <Text style={styles.metaText}>
+                          {[exp.city, exp.country].filter(Boolean).join(", ")}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {exp.description && (
+                    <Text style={styles.itemDesc}>{exp.description}</Text>
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyBlock}>
+                <Text style={styles.emptyText}>No work experience added</Text>
+                <TouchableOpacity
+                  style={styles.emptyAddBtn}
+                  onPress={() => goToStep(STEP_MAP.work)}
+                >
+                  <Ionicons name="add" size={14} color="#3BBFAD" />
+                  <Text style={styles.emptyAddText}>Add now</Text>
+                </TouchableOpacity>
               </View>
-            ))}
-          </View>
-          {/* Education Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Education</Text>
-            {data.projects.map((proj: any, i: number) => (
-              <View key={i} style={styles.itemContainer}>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemTitle}>{proj.title}</Text>
-                </View>
-                <View style={styles.projectInfoRow}>
-                  <Text style={styles.infoLabel}>Project description :</Text>
-                  <Text style={styles.infoValue}>{proj.description}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Live link:</Text>
-                  <Text style={styles.infoValue}>{proj.liveUrl}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
+            )}
+          </Section>
 
-          {/* Education Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Education</Text>
-            {data.education.map((edu: any, i: number) => (
-              <View key={i} style={styles.itemContainer}>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemTitle}>{edu.degree}</Text>
+          {/* ── Projects ── */}
+          <Section icon="folder-outline" title="Projects" stepKey="projects">
+            {data.projects?.length > 0 ? (
+              data.projects.map((proj: any, i: number) => (
+                <View
+                  key={i}
+                  style={[styles.itemBlock, i > 0 && styles.itemBlockBorder]}
+                >
+                  <View style={styles.itemTitleRow}>
+                    <View style={styles.itemDot} />
+                    <Text style={styles.itemTitle}>{proj.title || "—"}</Text>
+                    <TouchableOpacity
+                      style={styles.itemEditBtn}
+                      onPress={() => goToStep(STEP_MAP.projects)}
+                    >
+                      <Ionicons name="pencil-outline" size={13} color="#aaa" />
+                    </TouchableOpacity>
+                  </View>
+                  {proj.technologies && (
+                    <View style={styles.techRow}>
+                      {proj.technologies
+                        .split(",")
+                        .map((t: string, j: number) => (
+                          <View key={j} style={styles.techChip}>
+                            <Text style={styles.techChipText}>{t.trim()}</Text>
+                          </View>
+                        ))}
+                    </View>
+                  )}
+                  {proj.description && (
+                    <Text style={styles.itemDesc}>{proj.description}</Text>
+                  )}
+                  {proj.liveUrl && (
+                    <View style={[styles.metaChip, { marginTop: 6 }]}>
+                      <Ionicons
+                        name="globe-outline"
+                        size={12}
+                        color="#3BBFAD"
+                      />
+                      <Text style={[styles.metaText, { color: "#3BBFAD" }]}>
+                        {proj.liveUrl}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Field of Study:</Text>
-                  <Text style={styles.infoValue}>{edu.degree}</Text>
+              ))
+            ) : (
+              <View style={styles.emptyBlock}>
+                <Text style={styles.emptyText}>No projects added</Text>
+                <TouchableOpacity
+                  style={styles.emptyAddBtn}
+                  onPress={() => goToStep(STEP_MAP.projects)}
+                >
+                  <Ionicons name="add" size={14} color="#3BBFAD" />
+                  <Text style={styles.emptyAddText}>Add now</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </Section>
+
+          {/* ── Education ── */}
+          <Section icon="school-outline" title="Education" stepKey="education">
+            {data.education?.map((edu: any, i: number) => (
+              <View
+                key={i}
+                style={[styles.itemBlock, i > 0 && styles.itemBlockBorder]}
+              >
+                <View style={styles.itemTitleRow}>
+                  <View style={styles.itemDot} />
+                  <Text style={styles.itemTitle}>{edu.degree || "—"}</Text>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Institution:</Text>
-                  <Text style={styles.infoValue}>{edu.institution}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>CGPA:</Text>
-                  <Text style={styles.infoValue}>{edu.result}</Text>
+                <View style={styles.itemMeta}>
+                  {edu.institution && (
+                    <View style={styles.metaChip}>
+                      <Ionicons
+                        name="business-outline"
+                        size={12}
+                        color="#888"
+                      />
+                      <Text style={styles.metaText}>{edu.institution}</Text>
+                    </View>
+                  )}
+                  {edu.result && (
+                    <View style={styles.metaChip}>
+                      <Ionicons name="ribbon-outline" size={12} color="#888" />
+                      <Text style={styles.metaText}>CGPA: {edu.result}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             ))}
-          </View>
+          </Section>
 
-          {/* Skills Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Skills</Text>
+          {/* ── Skills ── */}
+          <Section icon="flash-outline" title="Skills" stepKey="skills">
             {Object.entries(data.skills).map(([category, skills], i) => {
               const typedSkills = skills as string[];
+              if (!typedSkills || typedSkills.length === 0) return null;
               return (
                 <View key={i} style={styles.skillCategory}>
-                  <Text style={styles.skillCategoryTitle}>{category}</Text>
-                  <View style={styles.skillsList}>
+                  <Text style={styles.skillCatLabel}>
+                    {category.toUpperCase()}
+                  </Text>
+                  <View style={styles.skillChips}>
                     {typedSkills.map((skill, j) => (
-                      <View key={j} style={styles.skillItem}>
-                        <Text style={styles.skillBullet}>•</Text>
-                        <Text style={styles.skillText}>{skill}</Text>
+                      <View key={j} style={styles.skillChip}>
+                        <Text style={styles.skillChipText}>{skill}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
               );
             })}
-          </View>
+          </Section>
 
-          {/* Certifications Section */}
-          {/* <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Certifications</Text>
-            {data.certifications.map((cert: string, i: number) => (
-              <View key={i} style={styles.certificateItem}>
-                <Text style={styles.certificateBullet}>•</Text>
-                <Text style={styles.certificateText}>{cert}</Text>
-              </View>
-            ))}
-          </View> */}
+          {/* ── Other Links ── */}
+          {data.otherLinks && Object.values(data.otherLinks).some(Boolean) && (
+            <Section
+              icon="link-outline"
+              title="Online Presence"
+              stepKey="links"
+            >
+              {Object.entries(data.otherLinks).map(([key, value], i) =>
+                value ? (
+                  <View key={i} style={styles.linkRow}>
+                    <Ionicons
+                      name={
+                        key === "github"
+                          ? "logo-github"
+                          : key === "linkedIn"
+                            ? "logo-linkedin"
+                            : key === "leetcode"
+                              ? "code-slash-outline"
+                              : key === "twitter"
+                                ? "logo-twitter"
+                                : "globe-outline"
+                      }
+                      size={16}
+                      color="#3BBFAD"
+                    />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.linkLabel}>
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </Text>
+                      <Text style={styles.linkValue}>{String(value)}</Text>
+                    </View>
+                  </View>
+                ) : null,
+              )}
+            </Section>
+          )}
 
-          {/* Languages Section */}
-          {/* <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Languages</Text>
-            {data.languages.map((lang: string, i: number) => (
-              <View key={i} style={styles.languageItem}>
-                <Text style={styles.languageBullet}>•</Text>
-                <Text style={styles.languageText}>{lang}</Text>
-              </View>
-            ))}
-          </View> */}
-          {/* Other Links Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Other Links</Text>
-            {Object.entries(data.otherLinks).map(([key, value], index) => (
-              <View key={index} style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{key}</Text>
-                <Text style={styles.infoValue}>{String(value)}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Professional Summary Section */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Professional Summary</Text>
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryText}>
-                {data.professional_summary}
-              </Text>
-            </View>
-          </View>
-
-          {/* Selected Template Section */}
-          {/* <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Selected Template</Text>
-            <View style={styles.templateContainer}>
-              <Text style={styles.templateName}>{data.selected_template}</Text>
-            </View>
-          </View> */}
+          <View style={{ height: 120 }} />
         </ScrollView>
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.nextButton} onPress={handleSubmit}>
+        {/* ── Generate Button ── */}
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={[
+              styles.generateBtn,
+              isGenerating && styles.generateBtnLoading,
+            ]}
+            onPress={handleSubmit} // ✅ now goes through auth gate
+            disabled={isGenerating}
+            activeOpacity={0.88}
+          >
             {isGenerating ? (
-              <View
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 8,
-                  alignItems: "center",
-                }}
-              >
-                <CustomLoader size={14} color="#ffffff" bars={8} />
-                <Text style={styles.nextButtonText}>Generateing...</Text>
+              <View style={styles.generateBtnInner}>
+                <CustomLoader size={18} color="#fff" bars={12} />
+                <Text style={styles.generateBtnText}>
+                  Generating your resume...
+                </Text>
               </View>
             ) : (
-              <Text style={styles.nextButtonText}>Generate Resume</Text>
+              <View style={styles.generateBtnInner}>
+                <View style={styles.generateIconBox}>
+                  <Ionicons name="document-text" size={18} color="#3BBFAD" />
+                </View>
+                <View>
+                  <Text style={styles.generateBtnLabel}>Generate Resume</Text>
+                  <Text style={styles.generateBtnSub}>
+                    {isLoggedIn ? "Export as PDF" : "Sign in to export"}
+                  </Text>
+                </View>
+                <Ionicons
+                  name={isLoggedIn ? "arrow-forward" : "lock-closed-outline"}
+                  size={18}
+                  color="#fff"
+                  style={{ marginLeft: "auto" }}
+                />
+              </View>
             )}
           </TouchableOpacity>
-        </View>
-
-        {/* Progress */}
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            Review complete - Ready to generate
-          </Text>
         </View>
       </View>
     </>
   );
 };
 
+export default ReviewStep;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
-  },
+  container: { flex: 1, backgroundColor: "#f7f7f5" },
 
-  header: {
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-  },
-
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginBottom: 16,
-  },
-
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
     paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
+  },
+  leftIcon: { position: "absolute", left: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
   },
 
-  scrollView: {
-    flex: 1,
-  },
+  scrollContent: { paddingBottom: 20 },
 
-  sectionCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    color: "#333333",
-    fontFamily: "WorkSansMedium",
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-
-  itemContainer: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-
-  itemHeader: {
+  headingBlock: { paddingHorizontal: 20, paddingTop: 24, marginBottom: 20 },
+  mainHeading: {
+    fontSize: 30,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+    lineHeight: 38,
     marginBottom: 8,
   },
-
-  itemTitle: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-  },
-  projectInfoRow: {
-    flexDirection: "column",
-    marginBottom: 4,
-    flexWrap: "wrap",
-  },
-  infoRow: {
-    flexDirection: "row",
-    marginBottom: 4,
-    flexWrap: "wrap",
-  },
-
-  infoLabel: {
+  subHeading: {
     fontSize: 14,
-    color: "#666666",
-    fontFamily: "WorkSansMedium",
-    minWidth: 80,
-    marginRight: 8,
-  },
-
-  infoValue: {
-    fontSize: 14,
-    color: "#333333",
-    fontFamily: "WorkSansRegular",
-    flex: 1,
-  },
-
-  descriptionContainer: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
-
-  descriptionText: {
-    fontSize: 14,
-    color: "#666666",
-    fontFamily: "WorkSansRegular",
-    lineHeight: 20,
-  },
-
-  skillCategory: {
-    marginBottom: 16,
-  },
-
-  skillCategoryTitle: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-    marginBottom: 8,
-  },
-
-  skillsList: {
-    paddingLeft: 8,
-  },
-
-  skillItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 4,
-  },
-
-  skillBullet: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-    lineHeight: 20,
-  },
-
-  skillText: {
-    fontSize: 14,
-    color: "#333333",
-    fontFamily: "WorkSansRegular",
-    flex: 1,
-    lineHeight: 20,
-  },
-
-  certificateItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-
-  certificateBullet: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-    lineHeight: 20,
-  },
-
-  certificateText: {
-    fontSize: 14,
-    color: "#333333",
-    fontFamily: "WorkSansRegular",
-    flex: 1,
-    lineHeight: 20,
-  },
-
-  languageItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-
-  languageBullet: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-    lineHeight: 20,
-  },
-
-  languageText: {
-    fontSize: 14,
-    color: "#333333",
-    fontFamily: "WorkSansRegular",
-    flex: 1,
-    lineHeight: 20,
-  },
-
-  summaryContainer: {
-    backgroundColor: "#ffffff",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-
-  summaryText: {
-    fontSize: 14,
-    color: "#333333",
+    color: "#888",
     fontFamily: "WorkSansRegular",
     lineHeight: 22,
   },
 
-  templateContainer: {
-    backgroundColor: "#f0f8ff",
-    padding: 12,
+  // Section
+  sectionCard: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#007AFF",
+    borderColor: "#eee",
+    overflow: "hidden",
   },
-
-  templateName: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-
-  buttonContainer: {
+  sectionHeader: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 140,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  generatingButton: {
-    backgroundColor: "#333333",
-  },
-
-  disabledButton: {
-    backgroundColor: "#e0e0e0",
-  },
-
-  disabledButtonText: {
-    color: "#999999",
-  },
-
-  buttonContent: {
+  sectionHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+  },
+  sectionIconBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "#e8f5f2",
     justifyContent: "center",
-  },
-
-  loader: {
-    marginRight: 8,
-  },
-
-  progressContainer: {
     alignItems: "center",
-    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
   },
 
-  progressText: {
+  // ✅ Edit button in section header
+  editBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#e8f5f2",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#c8e8e0",
+  },
+  editText: {
+    fontSize: 12,
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  // ✅ Per-item pencil icon
+  itemEditBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: "auto",
+  },
+
+  sectionDivider: { height: 1, backgroundColor: "#f0f0f0", marginBottom: 4 },
+
+  infoRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexWrap: "wrap",
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: "#aaa",
+    fontFamily: "WorkSansSemiBold",
+    minWidth: 90,
+    letterSpacing: 0.3,
+  },
+  infoValue: {
     fontSize: 14,
-    color: "#999999",
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+    flex: 1,
+  },
+
+  summaryBox: {
+    marginHorizontal: 16,
+    marginBottom: 14,
+    backgroundColor: "#F4F1DE",
+    borderRadius: 10,
+    padding: 14,
+  },
+  summaryText: {
+    fontSize: 13,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    lineHeight: 22,
+  },
+
+  itemBlock: { paddingHorizontal: 16, paddingVertical: 12 },
+  itemBlockBorder: { borderTopWidth: 1, borderTopColor: "#f0f0f0" },
+  itemTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  itemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#3BBFAD",
+  },
+  itemTitle: {
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+    color: "#3D405B",
+    flex: 1,
+  },
+  itemMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  metaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  metaText: { fontSize: 12, color: "#666", fontFamily: "WorkSansRegular" },
+  itemDesc: {
+    fontSize: 13,
+    fontFamily: "WorkSansRegular",
+    color: "#666",
+    lineHeight: 20,
+    marginTop: 4,
+  },
+
+  techRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 },
+  techChip: {
+    backgroundColor: "#e8f5f2",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#c8e8e0",
+  },
+  techChipText: {
+    fontSize: 12,
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  skillCategory: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#f5f5f5",
+  },
+  skillCatLabel: {
+    fontSize: 10,
+    fontFamily: "WorkSansBold",
+    color: "#aaa",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  skillChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  skillChip: {
+    backgroundColor: "#F4F1DE",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  skillChipText: {
+    fontSize: 13,
+    color: "#3D405B",
     fontFamily: "WorkSansRegular",
   },
-});
 
-export default ReviewStep;
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f5f5f5",
+  },
+  linkLabel: {
+    fontSize: 11,
+    color: "#aaa",
+    fontFamily: "WorkSansSemiBold",
+    letterSpacing: 0.3,
+  },
+  linkValue: {
+    fontSize: 13,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+    marginTop: 1,
+  },
+
+  // Empty state
+  emptyBlock: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#bbb",
+    fontFamily: "WorkSansRegular",
+    fontStyle: "italic",
+  },
+  emptyAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#e8f5f2",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  emptyAddText: {
+    fontSize: 12,
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+  },
+
+  // Bottom generate button
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  generateBtn: {
+    backgroundColor: "#3BBFAD",
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  generateBtnLoading: { backgroundColor: "#81B29A" },
+  generateBtnInner: { flexDirection: "row", alignItems: "center", gap: 12 },
+  generateIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  generateBtnLabel: {
+    fontSize: 16,
+    fontFamily: "WorkSansSemiBold",
+    color: "#fff",
+  },
+  generateBtnSub: {
+    fontSize: 12,
+    fontFamily: "WorkSansRegular",
+    color: "rgba(255,255,255,0.75)",
+    marginTop: 1,
+  },
+  generateBtnText: {
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#fff",
+    marginLeft: 10,
+  },
+});

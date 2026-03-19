@@ -1,18 +1,18 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Switch,
+  View,
   Text,
   TextInput,
+  StyleSheet,
   TouchableOpacity,
-  View,
+  ScrollView,
+  Modal,
+  SafeAreaView,
+  FlatList,
+  StatusBar,
 } from "react-native";
-import { callGeminiAPI } from "@/api/gemini";
-import CustomLoader from "../appcomp/CustomLoader";
+import { Ionicons } from "@expo/vector-icons";
+
 interface WorkExperienceStepProps {
   data: any;
   addExperience: any;
@@ -20,7 +20,372 @@ interface WorkExperienceStepProps {
   removeExperience: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
+
+// ─── Static Data ───────────────────────────────────────────────
+const jobTitleSuggestions = [
+  "Backend Developer",
+  "Backend Developer Intern",
+  "Django Backend Developer",
+  "Frontend Developer",
+  "Frontend Engineer",
+  "React Frontend Developer",
+  "Full Stack Developer",
+  "Full Stack Engineer",
+  "Mobile App Developer",
+  "Android Developer",
+  "iOS Developer",
+  "React Native Developer",
+  "Flutter Developer",
+  "Business Development Manager",
+  "Sales Manager",
+  "Product Manager",
+  "Project Manager",
+  "UI/UX Designer",
+  "Graphic Designer",
+  "Data Scientist",
+  "Data Analyst",
+  "Machine Learning Engineer",
+  "DevOps Engineer",
+  "Cloud Engineer",
+  "Software Engineer",
+  "QA Engineer",
+  "Scrum Master",
+  "Digital Marketing Manager",
+  "SEO Specialist",
+  "Content Writer",
+  "HR Manager",
+  "Finance Analyst",
+  "Cybersecurity Engineer",
+  "System Administrator",
+  "Network Engineer",
+  "Technical Lead",
+  "Engineering Manager",
+  "CTO",
+];
+
+const companySuggestions = [
+  "Google",
+  "Microsoft",
+  "Amazon",
+  "Apple",
+  "Meta",
+  "Netflix",
+  "Uber",
+  "Airbnb",
+  "Twitter",
+  "LinkedIn",
+  "Infosys",
+  "TCS",
+  "Wipro",
+  "HCL Technologies",
+  "Tech Mahindra",
+  "Accenture",
+  "IBM",
+  "Cognizant",
+  "Capgemini",
+  "Deloitte",
+  "Flipkart",
+  "Zomato",
+  "Swiggy",
+  "Paytm",
+  "BYJU'S",
+  "Razorpay",
+  "CRED",
+  "PhonePe",
+  "Ola",
+  "Meesho",
+  "Startup",
+  "Freelance",
+  "Self Employed",
+];
+
+const months = [
+  { label: "Jan", value: "01" },
+  { label: "Feb", value: "02" },
+  { label: "Mar", value: "03" },
+  { label: "Apr", value: "04" },
+  { label: "May", value: "05" },
+  { label: "Jun", value: "06" },
+  { label: "Jul", value: "07" },
+  { label: "Aug", value: "08" },
+  { label: "Sep", value: "09" },
+  { label: "Oct", value: "10" },
+  { label: "Nov", value: "11" },
+  { label: "Dec", value: "12" },
+];
+const years = Array.from({ length: 30 }, (_, i) => (2025 - i).toString());
+
+// ─── Search Modal ───────────────────────────────────────────────
+interface SearchModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSelect: (value: string) => void;
+  suggestions: string[];
+  placeholder: string;
+}
+
+const SearchModal: React.FC<SearchModalProps> = ({
+  visible,
+  onClose,
+  onSelect,
+  suggestions,
+  placeholder,
+}) => {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!visible) setQuery("");
+  }, [visible]);
+
+  const filtered = query.trim()
+    ? suggestions.filter((s) => s.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
+  const handleSelect = (value: string) => {
+    onSelect(value);
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} animationType="fade" statusBarTranslucent>
+      <SafeAreaView style={modalStyles.container}>
+        <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
+
+        {/* Search Bar */}
+        <View style={modalStyles.searchRow}>
+          <Ionicons
+            name="search-outline"
+            size={18}
+            color="#555"
+            style={{ marginRight: 8 }}
+          />
+          <TextInput
+            style={modalStyles.searchInput}
+            placeholder={placeholder}
+            placeholderTextColor="#aaa"
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setQuery("")}
+              style={{ marginRight: 10 }}
+            >
+              <Ionicons name="close" size={18} color="#555" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onClose}>
+            <Text style={modalStyles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={modalStyles.divider} />
+
+        {/* Empty State */}
+        {query.trim() === "" && (
+          <View style={modalStyles.emptyState}>
+            <Text style={modalStyles.emptyTitle}>
+              Start typing to search for{"\n"}your {placeholder.toLowerCase()}.
+            </Text>
+            <Text style={modalStyles.emptySubtitle}>
+              This will help us provide you with{"\n"}relevant content.
+            </Text>
+          </View>
+        )}
+
+        {/* Results */}
+        {query.trim().length > 0 && (
+          <ScrollView
+            style={modalStyles.results}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* CUSTOM */}
+            <Text style={modalStyles.sectionHeader}>CUSTOM</Text>
+            <TouchableOpacity
+              style={modalStyles.resultRow}
+              onPress={() => handleSelect(query)}
+            >
+              <Text style={modalStyles.resultText}>{query}</Text>
+            </TouchableOpacity>
+
+            {/* SUGGESTIONS */}
+            {filtered.length > 0 && (
+              <>
+                <Text style={modalStyles.sectionHeader}>SUGGESTIONS</Text>
+                {filtered.map((item, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={modalStyles.resultRow}
+                    onPress={() => handleSelect(item)}
+                  >
+                    <Text style={modalStyles.resultText}>{item}</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </Modal>
+  );
+};
+
+// ─── Date Picker Modal ──────────────────────────────────────────
+interface DatePickerModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (month: string, year: string) => void;
+  initialMonth?: string;
+  initialYear?: string;
+  title: string;
+}
+
+const DatePickerModal: React.FC<DatePickerModalProps> = ({
+  visible,
+  onClose,
+  onConfirm,
+  initialMonth = "",
+  initialYear = "",
+  title,
+}) => {
+  const [tab, setTab] = useState<"month" | "year">("month");
+  const [selMonth, setSelMonth] = useState(initialMonth);
+  const [selYear, setSelYear] = useState(initialYear);
+
+  useEffect(() => {
+    if (visible) {
+      setSelMonth(initialMonth);
+      setSelYear(initialYear);
+      setTab("month");
+    }
+  }, [visible]);
+
+  const preview =
+    selMonth && selYear
+      ? `${months.find((m) => m.value === selMonth)?.label} ${selYear}`
+      : selMonth
+        ? `${months.find((m) => m.value === selMonth)?.label} —`
+        : selYear
+          ? `— ${selYear}`
+          : "Select month and year";
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={dateStyles.overlay}>
+        <View style={dateStyles.sheet}>
+          <Text style={dateStyles.title}>{title}</Text>
+
+          {/* Tabs */}
+          <View style={dateStyles.tabRow}>
+            {(["month", "year"] as const).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[dateStyles.tab, tab === t && dateStyles.tabActive]}
+                onPress={() => setTab(t)}
+              >
+                <Text
+                  style={[
+                    dateStyles.tabText,
+                    tab === t && dateStyles.tabTextActive,
+                  ]}
+                >
+                  {t === "month" ? "Month" : "Year"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Month Grid */}
+          {tab === "month" && (
+            <View style={dateStyles.grid}>
+              {months.map((m) => (
+                <TouchableOpacity
+                  key={m.value}
+                  style={[
+                    dateStyles.gridItem,
+                    selMonth === m.value && dateStyles.gridItemActive,
+                  ]}
+                  onPress={() => {
+                    setSelMonth(m.value);
+                    setTab("year");
+                  }}
+                >
+                  <Text
+                    style={[
+                      dateStyles.gridText,
+                      selMonth === m.value && dateStyles.gridTextActive,
+                    ]}
+                  >
+                    {m.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Year List */}
+          {tab === "year" && (
+            <ScrollView
+              style={{ maxHeight: 220 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={dateStyles.grid}>
+                {years.map((item) => (
+                  <TouchableOpacity
+                    key={item}
+                    style={[
+                      dateStyles.gridItem,
+                      selYear === item && dateStyles.gridItemActive,
+                    ]}
+                    onPress={() => setSelYear(item)}
+                  >
+                    <Text
+                      style={[
+                        dateStyles.gridText,
+                        selYear === item && dateStyles.gridTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+
+          {/* Preview */}
+          <Text style={dateStyles.preview}>{preview}</Text>
+
+          {/* Buttons */}
+          <View style={dateStyles.btnRow}>
+            <TouchableOpacity style={dateStyles.cancelBtn} onPress={onClose}>
+              <Text style={dateStyles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                dateStyles.confirmBtn,
+                (!selMonth || !selYear) && { opacity: 0.5 },
+              ]}
+              onPress={() => {
+                onConfirm(selMonth, selYear);
+                onClose();
+              }}
+              disabled={!selMonth || !selYear}
+            >
+              <Text style={dateStyles.confirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ─── Main Component ─────────────────────────────────────────────
 const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   data,
   addExperience,
@@ -28,590 +393,544 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   removeExperience,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
   const workExperience = data.work_experience || [];
-  const [date, setDate] = useState(new Date());
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingIndex, setGeneratingIndex] = useState(null); // Track which experience is being generated
-  const [showPicker, setShowPicker] = useState<any>({
-    visible: false,
-    field: null,
-    index: null,
-  });
 
-  const formattedMonthYear = (currentDate: any) => {
-    return currentDate.toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const onChange = (event: any, selectedDate: any) => {
-    if (event.type === "dismissed") {
-      setShowPicker({ visible: false, field: null, index: null });
-      return;
+  useEffect(() => {
+    if (workExperience.length === 0) {
+      addExperience({
+        job_title: "",
+        company_name: "",
+        city: "",
+        country: "",
+        start_month: "",
+        start_year: "",
+        end_month: "",
+        end_year: "",
+        is_present: false,
+      });
     }
+  }, []);
 
-    const currentDate = selectedDate || date;
-    setDate(currentDate);
+  const exp = workExperience[0] || {};
+  // Add local state for immediate display
+  const [startMonth, setStartMonth] = useState(exp.start_month || "");
+  const [startYear, setStartYear] = useState(exp.start_year || "");
+  const [endMonth, setEndMonth] = useState(exp.end_month || "");
+  const [endYear, setEndYear] = useState(exp.end_year || "");
 
-    updateExperience(
-      showPicker.index,
-      showPicker.field,
-      formattedMonthYear(currentDate)
-    );
-
-    setShowPicker({ visible: false, field: null, index: null });
+  // Helper
+  const getDateLabel = (month: string, year: string) => {
+    if (!month || !year) return "";
+    const monthObj = months.find((m) => m.value === month);
+    return monthObj ? `${monthObj.label} ${year}` : `${month}/${year}`;
   };
 
-  const handleNext = () => {
-    // if (workExperience.length === 0) {
-    //   Alert.alert(
-    //     "Add Work Experience",
-    //     "Please add at least one work experience to continue",
-    //     [{ text: "OK" }]
-    //   );
-    //   return;
-    // }
+  const startLabel = getDateLabel(startMonth, startYear);
+  const endLabel = getDateLabel(endMonth, endYear);
 
-    const incompleteExperiences = workExperience.some(
-      (exp: any) => !exp.company || !exp.role
-    );
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isPresent, setIsPresent] = useState<boolean>(exp.is_present || false);
 
-    if (incompleteExperiences) {
-      Alert.alert(
-        "Complete Required Fields",
-        "Please fill in Company and Role for all experiences",
-        [{ text: "OK" }]
-      );
-      return;
-    }
+  // Modal visibility
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showStartDate, setShowStartDate] = useState(false);
+  const [showEndDate, setShowEndDate] = useState(false);
 
-    nextStep();
-  };
+  const update = (field: string, value: any) =>
+    updateExperience(0, field, value);
 
-  const handleAddExperience = () => {
-    addExperience({
-      company: "",
-      role: "",
-      year: "",
-      start: "",
-      end: "",
-      experience: "",
-    });
-  };
-
-  const handleRemoveExperience = (index: number) => {
-    if (workExperience.length === 1) {
-      Alert.alert(
-        "Cannot Remove",
-        "You need at least one work experience entry",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    Alert.alert(
-      "Remove Experience",
-      "Are you sure you want to remove this work experience?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => removeExperience(index),
-        },
-      ]
+  const renderTextField = (label: string, key: string) => {
+    const value = exp[key] || "";
+    const isFocused = focusedField === key;
+    return (
+      <View style={styles.fieldContainer}>
+        {value ? (
+          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+        ) : null}
+        <View style={styles.fieldRow}>
+          <TextInput
+            style={styles.fieldInput}
+            placeholder={label}
+            placeholderTextColor="#aaa"
+            value={value}
+            onFocus={() => setFocusedField(key)}
+            onBlur={() => setFocusedField(null)}
+            onChangeText={(val) => update(key, val)}
+          />
+          {value ? (
+            <Ionicons name="checkmark" size={20} color="#3BBFAD" />
+          ) : null}
+        </View>
+        <View
+          style={[styles.underline, isFocused && styles.underlineFocused]}
+        />
+      </View>
     );
   };
 
-  // Fixed generateSummary function with index parameter
-  const generateSummary = async (index: any) => {
-    const experience = workExperience[index];
-
-    if (
-      !experience ||
-      !experience.experience ||
-      experience.experience.length <= 5
-    ) {
-      Alert.alert(
-        "Not enough content",
-        "Please write at least a few words about your experience before polishing it.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    setIsGenerating(true);
-    setGeneratingIndex(index);
-
-    try {
-      const prompt = `Polish the following work experience description by improving grammar, punctuation, readability, and incorporating relevant technical terms where appropriate. 
-Do not shorten , no headings or  expand the overall meaning beyond the original context. 
-Return the polished version strictly as 4 clear and concise bullet points:
-
-"${experience.experience}"`;
-
-      const result = await callGeminiAPI(prompt);
-      updateExperience(index, "experience", result);
-    } catch (error) {
-      console.error("Error generating summary:", error);
-      Alert.alert(
-        "Error",
-        "Failed to polish the experience description. Please try again.",
-        [{ text: "OK" }]
-      );
-    } finally {
-      setIsGenerating(false);
-      setGeneratingIndex(null);
-    }
+  // Tappable search field (Job Title, Company)
+  const renderSearchField = (
+    label: string,
+    key: string,
+    onPress: () => void,
+  ) => {
+    const value = exp[key] || "";
+    return (
+      <TouchableOpacity
+        style={styles.fieldContainer}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        {value ? (
+          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+        ) : null}
+        <View style={styles.fieldRow}>
+          <Text style={[styles.fieldInput, !value && { color: "#aaa" }]}>
+            {value || label}
+          </Text>
+          <Ionicons
+            name={value ? "checkmark" : "search-outline"}
+            size={20}
+            color={value ? "#3BBFAD" : "#aaa"}
+          />
+        </View>
+        <View style={styles.underline} />
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          {/* Progress Indicator */}
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Work Experience</Text>
-          <Text style={styles.subtitle}>
-            Tell us about your professional background
+    <View style={styles.container}>
+      {/* ── Navbar ── */}
+      <StatusBar barStyle={"dark-content"} />
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+          <Ionicons name="arrow-back" size={22} color="#3D405B" />
+        </TouchableOpacity>
+        <View style={styles.centerContent}>
+          <Text style={styles.stepText}>
+            Step {step} of {totalSteps}
           </Text>
+          <Text style={styles.navTitle}>WORK HISTORY</Text>
         </View>
+        <TouchableOpacity style={styles.rightBtn}>
+          <Text style={styles.previewText}>Preview</Text>
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          {workExperience.map((exp: any, index: number) => (
-            <View key={index} style={styles.experienceCard}>
-              <View style={styles.experienceHeader}>
-                <Text style={styles.experienceTitle}>
-                  Experience {index + 1}
-                </Text>
-                {workExperience.length > 1 && (
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleRemoveExperience(index)}
-                  >
-                    <Text style={styles.deleteButtonText}>✕</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+      >
+        <Text style={styles.mainHeading}>
+          Tell us about your most recent job
+        </Text>
+        <Text style={styles.subHeading}>
+          {`We'll start there and work backward.`}
+        </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Company *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.company || ""}
-                onChangeText={(val) => updateExperience(index, "company", val)}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Role *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.role || ""}
-                onChangeText={(val) => updateExperience(index, "role", val)}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Years of experience (e.g., 2 years)"
-                placeholderTextColor="#a9a9a9"
-                value={exp.year || ""}
-                onChangeText={(val) => updateExperience(index, "year", val)}
-              />
-
-              <TextInput
-                style={[styles.input, styles.multilineInput]}
-                placeholder="Write a few words about your experience *"
-                placeholderTextColor="#a9a9a9"
-                value={exp.experience || ""}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                onChangeText={(val) =>
-                  updateExperience(index, "experience", val)
-                }
-              />
-
-              {/* Polish Button */}
-              <TouchableOpacity
-                style={[
-                  styles.polishButton,
-                  isGenerating &&
-                    generatingIndex === index &&
-                    styles.polishButtonLoading,
-                ]}
-                onPress={() => generateSummary(index)}
-                disabled={isGenerating && generatingIndex === index}
-              >
-                {isGenerating && generatingIndex === index ? (
-                  <View style={styles.loadingContent}>
-                    <CustomLoader size={16} color="#ffffff" bars={8} />
-                    <Text style={styles.polishButtonTextLoading}>
-                      Polishing...
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.polishContent}>
-                    <Text style={styles.polishIcon}>✨</Text>
-                    <Text style={styles.polishButtonText}>Polish with AI</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              {/* Start Date */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  Start Date: {exp.start || "Not selected"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "start", index })
-                  }
-                >
-                  <Text style={styles.dateButtonText}>PICK START DATE</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* End Date */}
-              <View style={styles.dateSection}>
-                <Text style={styles.dateLabel}>
-                  End Date: {exp.end || "Not selected"}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.dateButton,
-                    exp.end === "Present" && styles.dateButtonDisabled,
-                  ]}
-                  onPress={() =>
-                    setShowPicker({ visible: true, field: "end", index })
-                  }
-                  disabled={exp.end === "Present"}
-                >
-                  <Text
-                    style={[
-                      styles.dateButtonText,
-                      exp.end === "Present" && styles.dateButtonTextDisabled,
-                    ]}
-                  >
-                    PICK END DATE
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.switchContainer}>
-                  <Switch
-                    value={exp.end === "Present"}
-                    onValueChange={(val) =>
-                      updateExperience(index, "end", val ? "Present" : "")
-                    }
-                    trackColor={{ false: "#d0d0d0", true: "#007AFF" }}
-                    thumbColor={exp.end === "Present" ? "#ffffff" : "#f4f3f4"}
-                  />
-                  <Text style={styles.switchLabel}>Currently working here</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-
-          {/* Add Experience Button */}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={handleAddExperience}
-          >
-            <Text style={styles.addButtonIcon}>+</Text>
-            <Text style={styles.addButtonText}>ADD WORK EXPERIENCE</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* Date Picker */}
-        {showPicker.visible && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="spinner"
-            onChange={onChange}
-          />
+        {/* Job Title — opens modal */}
+        {renderSearchField("Job title", "job_title", () =>
+          setShowJobModal(true),
         )}
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
+        {/* Company Name — opens modal */}
+        {renderSearchField("Company name", "company_name", () =>
+          setShowCompanyModal(true),
+        )}
+
+        {/* City & Country */}
+        {renderTextField("City", "city")}
+        {renderTextField("Country", "country")}
+
+        {/* Date Row */}
+        <View style={styles.dateRow}>
+          {/* Start Date */}
+          {/* Start Date */}
+          <TouchableOpacity
+            style={styles.dateBlock}
+            onPress={() => setShowStartDate(true)}
+          >
+            {startLabel ? (
+              <Text style={styles.floatingLabel}>START DATE</Text>
+            ) : null}
+            <View style={styles.fieldRow}>
+              <Text
+                style={[styles.fieldInput, !startLabel && { color: "#aaa" }]}
+              >
+                {startLabel || "Start date"} {/* ✅ reads from local state */}
+              </Text>
+              <Ionicons
+                name={startLabel ? "checkmark-circle" : "calendar-outline"}
+                size={18}
+                color={startLabel ? "#3BBFAD" : "#aaa"}
+              />
+            </View>
+            <View style={styles.underline} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next →</Text>
+
+          {/* End Date */}
+          <TouchableOpacity
+            style={[styles.dateBlock, isPresent && { opacity: 0.4 }]}
+            onPress={() => !isPresent && setShowEndDate(true)}
+            disabled={isPresent}
+          >
+            {endLabel && !isPresent ? (
+              <Text style={styles.floatingLabel}>END DATE</Text>
+            ) : null}
+            <View style={styles.fieldRow}>
+              <Text
+                style={[
+                  styles.fieldInput,
+                  (!endLabel || isPresent) && { color: "#aaa" },
+                ]}
+              >
+                {isPresent ? "End date" : endLabel || "End date"}{" "}
+                {/* ✅ reads from local state */}
+              </Text>
+              <Ionicons
+                name={
+                  endLabel && !isPresent
+                    ? "checkmark-circle"
+                    : "calendar-outline"
+                }
+                size={18}
+                color={endLabel && !isPresent ? "#3BBFAD" : "#aaa"}
+              />
+            </View>
+            <View style={styles.underline} />
           </TouchableOpacity>
         </View>
-      </View>
-    </>
+
+        {/* Present Checkbox */}
+        <View style={styles.presentRow}>
+          <TouchableOpacity
+            style={[styles.checkbox, isPresent && styles.checkboxActive]}
+            onPress={() => {
+              const next = !isPresent;
+              setIsPresent(next);
+              if (next) {
+                setEndMonth(""); // ✅ clear local state too
+                setEndYear("");
+                update("end_month", "");
+                update("end_year", "");
+              }
+              update("is_present", next);
+            }}
+          >
+            {isPresent && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </TouchableOpacity>
+          <Text style={styles.presentText}>Present</Text>
+        </View>
+      </ScrollView>
+
+      {/* Continue */}
+      <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+        <Text style={styles.continueText}>CONTINUE</Text>
+      </TouchableOpacity>
+
+      {/* ── Modals ── */}
+      <SearchModal
+        visible={showJobModal}
+        onClose={() => setShowJobModal(false)}
+        onSelect={(val) => update("job_title", val)}
+        suggestions={jobTitleSuggestions}
+        placeholder="Search by keyword or job title"
+      />
+
+      <SearchModal
+        visible={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+        onSelect={(val) => update("company_name", val)}
+        suggestions={companySuggestions}
+        placeholder="Search by company name"
+      />
+
+      <DatePickerModal
+        visible={showStartDate}
+        onClose={() => setShowStartDate(false)}
+        onConfirm={(m, y) => {
+          setStartMonth(m); // ✅ local state updates immediately for display
+          setStartYear(y);
+          update("start_month", m); // ✅ also persist to formData
+          update("start_year", y);
+        }}
+        initialMonth={startMonth}
+        initialYear={startYear}
+        title="Select Start Date"
+      />
+
+      <DatePickerModal
+        visible={showEndDate}
+        onClose={() => setShowEndDate(false)}
+        onConfirm={(m, y) => {
+          setEndMonth(m); // ✅ local state updates immediately for display
+          setEndYear(y);
+          update("end_month", m);
+          update("end_year", y);
+        }}
+        initialMonth={endMonth}
+        initialYear={endYear}
+        title="Select End Date"
+      />
+    </View>
   );
 };
 
 export default WorkExperienceStep;
 
+// ─── Styles ─────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
 
-  header: {
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: {
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
+  },
+  previewText: {
+    color: "#3BBFAD",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
   },
 
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
-  stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
+  mainHeading: {
+    marginTop: 10,
     fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+    lineHeight: 36,
+    maxWidth: 300,
+  },
+  subHeading: {
+    marginTop: 6,
+    fontSize: 15,
+    color: "#666",
+    fontFamily: "WorkSansRegular",
+    marginBottom: 8,
   },
 
-  subtitle: {
+  fieldContainer: { marginTop: 20 },
+  floatingLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#3D405B",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  fieldRow: { flexDirection: "row", alignItems: "center" },
+  fieldInput: {
+    flex: 1,
     fontSize: 16,
-    color: "#a9a9a9",
+    color: "#3D405B",
+    paddingVertical: 6,
+    fontFamily: "WorkSansRegular",
+  },
+  underline: { height: 1, backgroundColor: "#ddd", marginTop: 4 },
+  underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
+
+  dateRow: { flexDirection: "row", gap: 16, marginTop: 20 },
+  dateBlock: { flex: 1 },
+
+  presentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 16,
+    gap: 10,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 1.5,
+    borderColor: "#aaa",
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxActive: { backgroundColor: "#3BBFAD", borderColor: "#3BBFAD" },
+  presentText: {
+    fontSize: 15,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+  },
+
+  continueBtn: {
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 18,
+    borderRadius: 32,
+    alignItems: "center",
+  },
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#e8f5f2", paddingTop: 20 },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "#e8f5f2",
+    // marginTop:20
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#3D405B",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#3BBFAD",
+    paddingBottom: 4,
+    marginRight: 8,
+    fontFamily: "WorkSansRegular",
+  },
+  cancelText: {
+    color: "#3D405B",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
+  },
+  divider: { height: 1, backgroundColor: "#cde8e2" },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontFamily: "PlayfairDisplayBold",
+    color: "#3D405B",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "#555",
+    fontFamily: "WorkSansRegular",
     textAlign: "center",
     lineHeight: 24,
-    paddingHorizontal: 20,
-    fontFamily: "WorkSansRegular",
   },
+  results: { backgroundColor: "#fff", flex: 1 },
+  sectionHeader: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#888",
+    letterSpacing: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  resultRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#eee",
+  },
+  resultText: { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+});
 
-  scrollView: {
+const dateStyles = StyleSheet.create({
+  overlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
   },
-
-  experienceCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#3D405B",
     marginBottom: 16,
+    textAlign: "center",
+  },
+  tabRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: "#ddd",
   },
-
-  experienceHeader: {
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  tabActive: { backgroundColor: "#3BBFAD" },
+  tabText: { color: "#888", fontFamily: "WorkSansRegular" },
+  tabTextActive: { color: "#fff", fontFamily: "WorkSansBold" },
+  grid: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
   },
-
-  experienceTitle: {
-    fontSize: 18,
-    color: "#666",
-    fontFamily: "WorkSansMedium",
-  },
-
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  deleteButtonText: {
-    color: "#ff4444",
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-  },
-
-  input: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#d0d0d0",
-    fontFamily: "WorkSansRegular",
-    fontSize: 16,
+  gridItem: {
+    width: "30%",
     paddingVertical: 12,
-    marginBottom: 16,
-    color: "#333",
-  },
-
-  multilineInput: {
-    minHeight: 80,
-  },
-
-  polishButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  polishButtonLoading: {
-    backgroundColor: "#5eb3ff",
-  },
-
-  polishContent: {
-    flexDirection: "row",
+    borderRadius: 8,
     alignItems: "center",
-    justifyContent: "center",
-  },
-
-  loadingContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  polishIcon: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-
-  polishButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-
-  polishButtonTextLoading: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    textAlign: "center",
-    marginLeft: 8,
-  },
-
-  dateSection: {
-    marginBottom: 16,
-  },
-
-  dateLabel: {
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
+    backgroundColor: "#f5f5f5",
     marginBottom: 8,
   },
-
-  dateButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-
-  dateButtonDisabled: {
-    backgroundColor: "#cccccc",
-  },
-
-  dateButtonText: {
-    color: "white",
+  gridItemActive: { backgroundColor: "#3BBFAD" },
+  gridText: { fontSize: 15, color: "#555" },
+  gridTextActive: { color: "#fff", fontWeight: "bold" },
+  preview: {
     textAlign: "center",
-    fontFamily: "WorkSansMedium",
-    fontSize: 16,
+    marginTop: 12,
+    fontSize: 14,
+    color: "#3D405B",
   },
-
-  dateButtonTextDisabled: {
-    color: "#666666",
-  },
-
-  switchContainer: {
-    flexDirection: "row",
+  btnRow: { flexDirection: "row", gap: 12, marginTop: 20 },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "#ddd",
     alignItems: "center",
-    marginTop: 8,
   },
-
-  switchLabel: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-  },
-
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginVertical: 20,
-    flexDirection: "row",
+  cancelText: { color: "#888" },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 30,
+    backgroundColor: "#3BBFAD",
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-
-  addButtonIcon: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-  },
-
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
+  confirmText: { color: "#fff", fontWeight: "bold" },
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,335 +6,289 @@ import {
   StyleSheet,
   StatusBar,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface OtherLinksProps {
   data: any;
   updateOtherLinks: any;
   nextStep: () => void;
   prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
+
 const OtherLinks: React.FC<OtherLinksProps> = ({
   data,
   updateOtherLinks,
   nextStep,
   prevStep,
+  step,
+  totalSteps,
 }) => {
-    const dataLink = data.otherLinks; 
+  const dataLink = data.otherLinks || {};
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const links = [
+    {
+      key: "leetcode",
+      label: "LeetCode",
+      placeholder: "https://leetcode.com/username",
+      icon: "code-slash-outline",
+    },
+    {
+      key: "linkedIn",
+      label: "LinkedIn",
+      placeholder: "https://linkedin.com/in/username",
+      icon: "logo-linkedin",
+    },
+    {
+      key: "github",
+      label: "GitHub",
+      placeholder: "https://github.com/username",
+      icon: "logo-github",
+    },
+    {
+      key: "portfolio",
+      label: "Portfolio",
+      placeholder: "https://yourportfolio.com",
+      icon: "globe-outline",
+    },
+    {
+      key: "twitter",
+      label: "Twitter / X",
+      placeholder: "https://twitter.com/username",
+      icon: "logo-twitter",
+    },
+  ];
+
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          {/* Progress Indicator */}
-          {/* <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>Step 3 of 4</Text>
-          </View> */}
-          <Text style={styles.title}>Other Links</Text>
-          <Text style={styles.subtitle}>
-            Provide your professional platform links
+
+        {/* Navbar */}
+        <View style={styles.navbar}>
+          <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
+            <Ionicons name="arrow-back" size={22} color="#3D405B" />
+          </TouchableOpacity>
+          <View style={styles.centerContent}>
+            <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
+            <Text style={styles.navTitle}>OTHER LINKS</Text>
+          </View>
+          <TouchableOpacity style={styles.rightBtn}>
+            <Text style={styles.previewText}>Preview</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Heading */}
+          <Text style={styles.mainHeading}>Add your online presence</Text>
+          <Text style={styles.subHeading}>
+            Include links to your professional profiles and portfolio to stand out
           </Text>
-        </View>
 
-        {/* LeetCode Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="LeetCode link * "
-          placeholderTextColor="#a9a9a9" 
-          keyboardType="default"
-          value={dataLink.leetcode || ""}
-          onChangeText={(val) => updateOtherLinks("leetcode", val)}
-        />
+          {/* Link Fields */}
+          {links.map(({ key, label, placeholder, icon }) => {
+            const value = dataLink[key] || "";
+            const isFocused = focusedField === key;
 
-        {/* LinkedIn Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="LinkedIn link * "
-          placeholderTextColor="#a9a9a9" 
-          keyboardType="default"
-          value={dataLink.linkedIn || ""}
-          onChangeText={(val) => updateOtherLinks("linkedIn", val)}
-        />
-        {/* LinkedIn Field */}
-        <TextInput
-          style={styles.input}
-          placeholder="github link * "
-          placeholderTextColor="#a9a9a9" 
-          keyboardType="default"
-          value={dataLink.github || ""}
-          onChangeText={(val) => updateOtherLinks("github", val)}
-        />
+            return (
+              <View key={key} style={styles.fieldContainer}>
+                {/* Floating Label */}
+                {(value || isFocused) && (
+                  <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+                )}
 
-        {/* Navigation Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-            <Text style={styles.nextButtonText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
+                <View style={styles.fieldRow}>
+                  {/* Left Icon */}
+                  <Ionicons
+                    name={icon as any}
+                    size={20}
+                    color={isFocused ? "#3BBFAD" : value ? "#3D405B" : "#bbb"}
+                    style={styles.leftFieldIcon}
+                  />
+
+                  {/* Input */}
+                  <TextInput
+                    style={[
+                      styles.input,
+                      isFocused && styles.inputFocused,
+                    ]}
+                    placeholder={isFocused ? placeholder : label}
+                    placeholderTextColor="#aaa"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    value={value}
+                    onFocus={() => setFocusedField(key)}
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={(val) => updateOtherLinks(key, val)}
+                  />
+
+                  {/* ✅ Delete / Clear icon */}
+                  {value ? (
+                    <TouchableOpacity
+                      onPress={() => updateOtherLinks(key, "")}
+                      style={styles.clearBtn}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#e07070" />
+                    </TouchableOpacity>
+                  ) : (
+                    // Green tick when valid URL
+                    value.startsWith("http") && (
+                      <Ionicons name="checkmark-circle" size={20} color="#3BBFAD" />
+                    )
+                  )}
+                </View>
+
+                {/* Underline */}
+                <View
+                  style={[
+                    styles.underline,
+                    isFocused && styles.underlineFocused,
+                    value && !isFocused && styles.underlineFilled,
+                  ]}
+                />
+              </View>
+            );
+          })}
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
+
+        {/* Continue Button */}
+        <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+          <Text style={styles.continueText}>CONTINUE</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
 };
+
+export default OtherLinks;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
   },
 
-  header: {
+  // Navbar
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 20,
   },
-
-  stepIndicator: {
-    backgroundColor: "#f0f8ff",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    // borderRadius: 20,
-    marginBottom: 16,
-  },
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
   stepText: {
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
-    color: "#007AFF",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontSize: 11,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+  },
+  navTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
+  },
+  previewText: {
+    color: "#3BBFAD",
+    fontSize: 15,
+    fontFamily: "WorkSansSemiBold",
   },
 
-  title: {
-    fontFamily: "PlayfairDisplayRegular",
-    fontSize: 28,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#a9a9a9",
-    textAlign: "center",
-    lineHeight: 24,
+  scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+
+  // Heading
+  mainHeading: {
+    fontSize: 28,
+    color: "#3D405B",
+    fontFamily: "PlayfairDisplayBold",
+    lineHeight: 36,
+    marginBottom: 8,
+  },
+  subHeading: {
+    fontSize: 14,
+    color: "#888",
     fontFamily: "WorkSansRegular",
+    lineHeight: 22,
+    marginBottom: 28,
   },
 
-  scrollView: {
-    flex: 1,
+  // Fields
+  fieldContainer: {
+    marginBottom: 24,
   },
-
-  experienceCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  floatingLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#3D405B",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    fontFamily: "WorkSansSemiBold",
   },
-
-  experienceHeader: {
+  fieldRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-
-  experienceTitle: {
-    fontSize: 18,
-    color: "#666",
-    fontFamily: "WorkSansMedium",
-  },
-
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
     alignItems: "center",
   },
-
-  deleteButtonText: {
-    color: "#ff4444",
-    fontSize: 12,
-    fontFamily: "WorkSansMedium",
+  leftFieldIcon: {
+    marginRight: 10,
   },
-
   input: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#d0d0d0",
+    flex: 1,
+    fontSize: 15,
+    color: "#3D405B",
+    paddingVertical: 8,
     fontFamily: "WorkSansRegular",
-    fontSize: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    color: "#333",
   },
-
-  multilineInput: {
-    minHeight: 80,
+  inputFocused: {
+    color: "#3D405B",
   },
-
-  polishButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-
-  polishButtonLoading: {
-    backgroundColor: "#5eb3ff",
-  },
-
-  polishContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  loadingContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  polishIcon: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-
-  polishButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansMedium",
-    textAlign: "center",
-  },
-
-  polishButtonTextLoading: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-    textAlign: "center",
+  clearBtn: {
     marginLeft: 8,
   },
-
-  dateSection: {
-    marginBottom: 16,
+  underline: {
+    height: 1,
+    backgroundColor: "#ddd",
+    marginTop: 4,
+  },
+  underlineFocused: {
+    height: 1.5,
+    backgroundColor: "#3BBFAD",
+  },
+  underlineFilled: {
+    backgroundColor: "#81B29A",
   },
 
-  dateLabel: {
-    fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-    marginBottom: 8,
-  },
-
-  dateButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-
-  dateButtonDisabled: {
-    backgroundColor: "#cccccc",
-  },
-
-  dateButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontFamily: "WorkSansMedium",
-    fontSize: 16,
-  },
-
-  dateButtonTextDisabled: {
-    color: "#666666",
-  },
-
-  switchContainer: {
-    flexDirection: "row",
+  // Continue
+  continueBtn: {
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
+    backgroundColor: "#3BBFAD",
+    paddingVertical: 18,
+    borderRadius: 32,
     alignItems: "center",
-    marginTop: 8,
   },
-
-  switchLabel: {
-    marginLeft: 12,
+  continueText: {
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
-    color: "#333",
-    fontFamily: "WorkSansRegular",
-  },
-
-  addButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginVertical: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-
-  addButtonIcon: {
-    color: "white",
-    fontSize: 20,
-    fontFamily: "WorkSansMedium",
-    marginRight: 8,
-  },
-
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-
-  backButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  backButtonText: {
-    color: "#333",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
-  },
-
-  nextButton: {
-    backgroundColor: "#000000",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    minWidth: 100,
-  },
-
-  nextButtonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontFamily: "WorkSansMedium",
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
   },
 });
-export default OtherLinks;

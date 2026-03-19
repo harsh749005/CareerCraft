@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Modal,
   SafeAreaView,
   StatusBar,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -231,7 +231,6 @@ const jobSkillsMap: { keywords: string[]; skills: string[] }[] = [
   },
 ];
 
-// Default skills shown before any search
 const defaultSkills = [
   "Communication",
   "Teamwork",
@@ -249,9 +248,7 @@ const getSkillsForTitle = (title: string): string[] => {
   if (!title.trim()) return defaultSkills;
   const lower = title.toLowerCase();
   for (const entry of jobSkillsMap) {
-    if (entry.keywords.some((kw) => lower.includes(kw))) {
-      return entry.skills;
-    }
+    if (entry.keywords.some((kw) => lower.includes(kw))) return entry.skills;
   }
   return defaultSkills;
 };
@@ -285,7 +282,6 @@ const SkillsStep: React.FC<Props> = ({
     updateSkill(skill);
   };
 
-  // Filter job title suggestions in modal
   const filteredTitles = modalQuery.trim()
     ? jobTitleSuggestions.filter((t) =>
         t.toLowerCase().includes(modalQuery.toLowerCase()),
@@ -300,7 +296,9 @@ const SkillsStep: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      {/* Navbar */}
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
+
+      {/* ── Navbar ── */}
       <View style={styles.navbar}>
         <TouchableOpacity onPress={prevStep} style={styles.leftIcon}>
           <Ionicons name="arrow-back" size={22} color="#3D405B" />
@@ -309,126 +307,170 @@ const SkillsStep: React.FC<Props> = ({
           <Text style={styles.stepText}>
             Step {step} of {totalSteps}
           </Text>
-          <Text style={styles.title}>SKILL STEP</Text>
+          <Text style={styles.navTitle}>SKILLS SET</Text>
         </View>
         <TouchableOpacity style={styles.rightBtn}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Heading */}
-      <Text style={styles.mainHeading}>
-        Add the skills you want to highlight
-      </Text>
-      <Text style={styles.subHeading}>
-        You can search or add your own skills
-      </Text>
+      {/* ── Heading ── */}
+      <View style={styles.headingBlock}>
+        <Text style={styles.mainHeading}>
+          Add the skills you{"\n"}want to highlight
+        </Text>
+        <Text style={styles.subHeading}>
+          Search by job title to get relevant skill suggestions
+        </Text>
+      </View>
 
-      {/* Skills Tag Box */}
-      <View style={styles.tagBox}>
-        <ScrollView style={{ maxHeight: 130 }}>
+      {/* ── Skills Tag Box — full width top/bottom borders ── */}
+      <View style={styles.tagBoxWrapper}>
+        {selectedSkills.length > 0 && (
+          <Text style={styles.tagBoxLabel}>SELECTED SKILLS</Text>
+        )}
+        <ScrollView
+          style={{ maxHeight: 140 }}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.tagWrapper}>
-            {selectedSkills.map((skill, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{skill}</Text>
-                <TouchableOpacity onPress={() => removeSkill(skill)}>
+            {selectedSkills.length === 0 ? (
+              <View style={styles.tagEmptyState}>
+                <Ionicons name="flash-outline" size={20} color="#ccc" />
+                <Text style={styles.tagPlaceholder}>
+                  Select skills from the list below
+                </Text>
+              </View>
+            ) : (
+              selectedSkills.map((skill, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.tag}
+                  onPress={() => removeSkill(skill)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.tagText}>{skill}</Text>
                   <Ionicons
                     name="close"
-                    size={14}
+                    size={13}
                     color="#fff"
-                    style={{ marginLeft: 4 }}
+                    style={{ marginLeft: 5 }}
                   />
                 </TouchableOpacity>
-              </View>
-            ))}
-            {selectedSkills.length === 0 && (
-              <Text style={styles.tagPlaceholder}>
-                Your selected skills appear here...
-              </Text>
+              ))
             )}
           </View>
         </ScrollView>
+
+        {/* Skills count */}
+        {selectedSkills.length > 0 && (
+          <Text style={styles.skillCount}>
+            {selectedSkills.length} skill{selectedSkills.length > 1 ? "s" : ""}{" "}
+            selected
+          </Text>
+        )}
       </View>
 
-      {/* Continue Button */}
-      <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
-        <Text style={styles.continueText}>CONTINUE</Text>
-      </TouchableOpacity>
-
-      {/* Examples Section Header */}
-      <View style={styles.examplesRow}>
-        <Text style={styles.examplesLabel}>EXAMPLES FROM OUR EXPERTS</Text>
-        <Ionicons name="chevron-up" size={18} color="#3D405B" />
+      {/* ── Continue Button ── */}
+      <View style={styles.continueRow}>
+        <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
+          <Text style={styles.continueText}>CONTINUE</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* ✅ Search Box — tapping opens full screen modal */}
-      <TouchableOpacity
-        style={styles.searchBox}
-        onPress={() => setSearchModalVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name="search-outline"
-          size={18}
-          color="#666"
-          style={{ marginRight: 8 }}
-        />
-        <Text
-          style={jobTitle ? styles.searchActiveText : styles.searchPlaceholder}
+      {/* ── Examples Section ── */}
+      <View style={styles.examplesSection}>
+        {/* Header */}
+        <View style={styles.examplesHeader}>
+          <Text style={styles.examplesLabel}>EXAMPLES FROM OUR EXPERTS</Text>
+          <Ionicons name="chevron-up" size={18} color="#3D405B" />
+        </View>
+
+        {/* Search box — opens modal */}
+        <TouchableOpacity
+          style={styles.searchBox}
+          onPress={() => setSearchModalVisible(true)}
+          activeOpacity={0.8}
         >
-          {jobTitle || "Search by keyword or job title"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Skills List */}
-      <ScrollView
-        style={{ marginTop: 12 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {currentSkills.map((item, index) => {
-          const isSelected = selectedSkills.includes(item);
-          return (
-            <TouchableOpacity
-              key={index}
-              style={[styles.skillBox, isSelected && styles.selectedSkillBox]}
-              onPress={() => toggleSkill(item)}
-              activeOpacity={0.8}
-            >
-              <View
-                style={[
-                  styles.iconCircle,
-                  isSelected && styles.selectedIconCircle,
-                ]}
-              >
-                <Ionicons
-                  name={isSelected ? "checkmark" : "add"}
-                  size={16}
-                  color="#fff"
-                />
-              </View>
-              <Text
-                style={[
-                  styles.skillText,
-                  isSelected && styles.selectedSkillText,
-                ]}
-              >
-                {item}
-              </Text>
+          <Ionicons
+            name="search-outline"
+            size={18}
+            color={jobTitle ? "#3BBFAD" : "#aaa"}
+            style={{ marginRight: 8 }}
+          />
+          <Text
+            style={
+              jobTitle ? styles.searchActiveText : styles.searchPlaceholder
+            }
+          >
+            {jobTitle || "Search by keyword or job title"}
+          </Text>
+          {jobTitle && (
+            <TouchableOpacity onPress={() => setJobTitle("")}>
+              <Ionicons name="close-circle" size={18} color="#aaa" />
             </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+          )}
+        </TouchableOpacity>
 
-      {/* ✅ Full Screen Search Modal */}
+        {/* Skills List */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.skillsList}
+        >
+          {currentSkills.map((item, index) => {
+            const isSelected = selectedSkills.includes(item);
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[styles.skillBox, isSelected && styles.selectedSkillBox]}
+                onPress={() => toggleSkill(item)}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.iconCircle,
+                    isSelected && styles.selectedIconCircle,
+                  ]}
+                >
+                  <Ionicons
+                    name={isSelected ? "checkmark" : "add"}
+                    size={16}
+                    color="#fff"
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.skillText,
+                    isSelected && styles.selectedSkillText,
+                  ]}
+                >
+                  {item}
+                </Text>
+                {isSelected && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color="#3BBFAD"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      </View>
+
+      {/* ── Full Screen Search Modal ── */}
       <Modal
         visible={searchModalVisible}
         animationType="fade"
         statusBarTranslucent
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#e8f5f2" }}>
           <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
 
-          {/* Modal Search Bar */}
+          {/* Search bar */}
           <View style={styles.modalSearchRow}>
             <Ionicons
               name="search-outline"
@@ -445,13 +487,11 @@ const SkillsStep: React.FC<Props> = ({
               autoFocus
             />
             {modalQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setModalQuery("")}>
-                <Ionicons
-                  name="close"
-                  size={18}
-                  color="#555"
-                  style={{ marginRight: 8 }}
-                />
+              <TouchableOpacity
+                onPress={() => setModalQuery("")}
+                style={{ marginRight: 10 }}
+              >
+                <Ionicons name="close" size={18} color="#555" />
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -466,50 +506,56 @@ const SkillsStep: React.FC<Props> = ({
 
           <View style={styles.modalDivider} />
 
-          {/* Empty State */}
-          {modalQuery.trim() === "" && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
-                Start typing to search for{"\n"}your job title.
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                This will help us provide you with{"\n"}relevant content.
-              </Text>
-            </View>
-          )}
+          {/* Wrap in flex:1 view */}
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: modalQuery.trim() ? "#fff" : "#e8f5f2",
+            }}
+          >
+            {/* Empty state */}
+            {modalQuery.trim() === "" && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>
+                  Start typing to search for{"\n"}your job title.
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  This will help us provide you with{"\n"}relevant content.
+                </Text>
+              </View>
+            )}
 
-          {/* Results */}
-          {modalQuery.trim().length > 0 && (
-            <ScrollView
-              style={styles.modalResults}
-              keyboardShouldPersistTaps="handled"
-            >
-              {/* Custom option */}
-              <Text style={styles.sectionHeader}>CUSTOM</Text>
-              <TouchableOpacity
-                style={styles.resultRow}
-                onPress={() => handleSelectTitle(modalQuery)}
+            {/* Results */}
+            {modalQuery.trim().length > 0 && (
+              <ScrollView
+                style={{ flex: 1 }}
+                keyboardShouldPersistTaps="handled"
               >
-                <Text style={styles.resultText}>{modalQuery}</Text>
-              </TouchableOpacity>
+                <Text style={styles.sectionHeader}>CUSTOM</Text>
+                <TouchableOpacity
+                  style={styles.resultRow}
+                  onPress={() => handleSelectTitle(modalQuery)}
+                >
+                  <Text style={styles.resultText}>{modalQuery}</Text>
+                </TouchableOpacity>
 
-              {/* Suggestions */}
-              {filteredTitles.length > 0 && (
-                <>
-                  <Text style={styles.sectionHeader}>SUGGESTIONS</Text>
-                  {filteredTitles.map((title, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.resultRow}
-                      onPress={() => handleSelectTitle(title)}
-                    >
-                      <Text style={styles.resultText}>{title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </>
-              )}
-            </ScrollView>
-          )}
+                {filteredTitles.length > 0 && (
+                  <>
+                    <Text style={styles.sectionHeader}>SUGGESTIONS</Text>
+                    {filteredTitles.map((title, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.resultRow}
+                        onPress={() => handleSelectTitle(title)}
+                      >
+                        <Text style={styles.resultText}>{title}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </>
+                )}
+              </ScrollView>
+            )}
+          </View>
         </SafeAreaView>
       </Modal>
     </View>
@@ -519,74 +565,113 @@ const SkillsStep: React.FC<Props> = ({
 export default SkillsStep;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F4F1DE", paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor: "#fff" },
 
-  navbar: { height: 50, justifyContent: "center" },
-  leftIcon: { position: "absolute", left: 0 },
-  rightBtn: { position: "absolute", right: 0 },
-  centerContent: {
-    position: "absolute",
-    left: 0,
-    right: 0,
+  // Navbar
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
-  stepText: { fontFamily: "WorkSansRegular", fontSize: 12, color: "#3D405B" },
-  previewText: { color: "#81B29A", fontFamily: "WorkSansSemiBold" },
-  title: {
-    textAlign: "center",
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: {
     fontSize: 14,
+    fontWeight: "bold",
     letterSpacing: 1,
-    color: "#6c6c6c",
+    color: "#3D405B",
     fontFamily: "WorkSansBold",
   },
+  previewText: {
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+    fontSize: 15,
+  },
 
+  // Heading
+  headingBlock: { paddingHorizontal: 20, paddingTop: 20, marginBottom: 16 },
   mainHeading: {
-    marginTop: 10,
-    fontSize: 30,
+    fontSize: 28,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
+    lineHeight: 36,
+    marginBottom: 6,
   },
   subHeading: {
-    marginTop: 8,
     fontSize: 14,
-    color: "#6c6c6c",
+    color: "#888",
     fontFamily: "WorkSansRegular",
-    marginBottom: 10,
+    lineHeight: 20,
   },
 
-  tagBox: {
-    marginTop: 10,
-    borderWidth: 1.5,
-    borderColor: "#ccc",
-    padding: 10,
-    backgroundColor: "#fff",
+  // ── Tag Box — full width top/bottom borders ──
+  tagBoxWrapper: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fafafa",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 8,
     minHeight: 80,
+  },
+  tagBoxLabel: {
+    fontSize: 10,
+    fontFamily: "WorkSansBold",
+    color: "#3D405B",
+    letterSpacing: 1,
+    marginBottom: 8,
   },
   tagWrapper: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
     alignItems: "center",
+    paddingBottom: 4,
+  },
+  tagEmptyState: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 16,
+  },
+  tagPlaceholder: {
+    color: "#bbb",
+    fontSize: 14,
+    fontFamily: "WorkSansRegular",
   },
   tag: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#81B29A",
+    backgroundColor: "#3BBFAD",
     borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  tagText: { color: "#fff", fontSize: 13, fontWeight: "600" },
-  tagPlaceholder: {
-    color: "#aaa",
+  tagText: {
+    color: "#fff",
     fontSize: 13,
-    fontFamily: "WorkSansRegular",
+    fontFamily: "WorkSansSemiBold",
+  },
+  skillCount: {
+    fontSize: 11,
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+    textAlign: "right",
+    marginTop: 6,
   },
 
+  // Continue
+  continueRow: { paddingHorizontal: 20 },
   continueBtn: {
     backgroundColor: "#3BBFAD",
     paddingVertical: 16,
-    borderRadius: 30,
+    borderRadius: 32,
     alignItems: "center",
     marginTop: 16,
     marginBottom: 8,
@@ -595,27 +680,44 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    fontFamily: "WorkSansBold",
   },
 
-  examplesRow: {
+  // Examples Section
+  examplesSection: {
+    flex: 1,
+    backgroundColor: "#F4F1DE",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#e8e4d0",
+  },
+  examplesHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 16,
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  examplesLabel: { fontSize: 12, fontWeight: "bold", color: "#3D405B" },
+  examplesLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#3D405B",
+    letterSpacing: 1,
+    fontFamily: "WorkSansBold",
+  },
 
+  // Search box
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#e0ddc8",
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     backgroundColor: "#fff",
+    marginBottom: 12,
   },
   searchPlaceholder: {
     flex: 1,
@@ -630,18 +732,23 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
   },
 
+  // Skills list
+  skillsList: { flex: 1 },
   skillBox: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 13,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#e0ddc8",
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
     backgroundColor: "#fff",
   },
-  selectedSkillBox: { borderColor: "#81B29A", backgroundColor: "#f7fbf9" },
+  selectedSkillBox: {
+    borderColor: "#3BBFAD",
+    backgroundColor: "#f0faf8",
+  },
   iconCircle: {
     width: 30,
     height: 30,
@@ -649,22 +756,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#3D405B",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
+    marginRight: 12,
   },
-  selectedIconCircle: { backgroundColor: "#81B29A" },
-  skillText: { fontSize: 15, color: "#333", fontFamily: "WorkSansRegular" },
-  selectedSkillText: { color: "#81B29A", fontWeight: "600" },
+  selectedIconCircle: { backgroundColor: "#3BBFAD" },
+  skillText: {
+    fontSize: 15,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+    flex: 1,
+  },
+  selectedSkillText: {
+    color: "#3BBFAD",
+    fontFamily: "WorkSansSemiBold",
+  },
 
-  // Modal styles
-  modalContainer: { flex: 1, backgroundColor: "#e8f5f2" },
-
+  // Modal
   modalSearchRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     backgroundColor: "#e8f5f2",
-    marginTop: 30,
+    marginTop: 20,
   },
   modalSearchInput: {
     flex: 1,
@@ -681,9 +794,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "WorkSansSemiBold",
   },
-
-  modalDivider: { height: 1, backgroundColor: "#cde8e2", marginBottom: 8 },
-
+  modalDivider: { height: 1, backgroundColor: "#cde8e2" },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -705,8 +816,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
-
-  modalResults: { backgroundColor: "#fff", flex: 1 },
   sectionHeader: {
     fontSize: 11,
     fontWeight: "bold",
@@ -723,5 +832,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#eee",
   },
-  resultText: { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  resultText: {
+    fontSize: 16,
+    color: "#3D405B",
+    fontFamily: "WorkSansRegular",
+  },
 });

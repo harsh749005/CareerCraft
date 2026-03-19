@@ -13,6 +13,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import IndustrySelector from "./TemplateSelector/IndustrySelector";
 import ResumeOptionEnhanced from "./TemplateSelector/ResumeOptionEnhanced";
+import JobDescriptionStep from "./JobDescriptionStep";
 
 export default function BuildReume() {
   //const [option,setOption] = useState("");
@@ -226,6 +227,9 @@ export default function BuildReume() {
   const prevStep = () => setStep((prev) => prev - 1);
   const totalSteps = 9;
   // const progress = step / totalSteps;
+  const goToStep = (stepNumber: number) => {
+    setStep(stepNumber);
+  };
   return (
     <SafeScreen>
       <View style={{ flex: 1 }}>
@@ -310,6 +314,8 @@ export default function BuildReume() {
             removeProjects={removeProjects}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
         {step === 6 && (
@@ -327,24 +333,42 @@ export default function BuildReume() {
             removeExperience={removeExperience}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
         {step === 7 && (
+          <JobDescriptionStep
+          data={formData}
+          // addExperience={addWorkExperience}
+          updateExperience={updateWorkExperience}
+          // removeExperience={removeExperience}
+          nextStep={nextStep}
+          prevStep={prevStep}
+          step={step}
+          totalSteps={totalSteps}
+          />
+        )}
+        {step === 8 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
 
-        {step === 8 && (
+        {step === 9 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
             updateSummary={updateSummary}
             nextStep={nextStep}
             prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
 
@@ -355,7 +379,8 @@ export default function BuildReume() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 10 && <ReviewStep data={formData} prevStep={prevStep} />}
+        {step === 10 && <ReviewStep data={formData} prevStep={prevStep} step={step}
+            totalSteps={totalSteps} goToStep={goToStep}/>}
       </View>
     </SafeScreen>
   );
