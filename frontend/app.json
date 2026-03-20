@@ -1,13 +1,12 @@
 {
   "expo": {
-    "name": "CareerCraft",
-    "slug": "CareerCraft",
+    "name": "careercraft",
+    "slug": "careercraft",
     "version": "2.40.9",
     "orientation": "portrait",
     "icon": "./assets/images/mainLOGO2.png",
     "scheme": "careercraft",
     "userInterfaceStyle": "automatic",
-    // "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.harsh749005.CareerCraft",
@@ -22,7 +21,6 @@
         "backgroundImage": "./assets/images/mainLOGO2.png",
         "monochromeImage": "./assets/images/mainLOGO2.png"
       },
-      // "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.harsh749005.CareerCraft"
     },

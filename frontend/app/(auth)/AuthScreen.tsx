@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,34 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useGoogleAuth } from "../../utils/usegoogleAuth";
+import { useRouter } from "expo-router";
 
 interface AuthScreenProps {
-  onAuthSuccess: () => void; // ✅ called after login/register — returns to PDF export
+  onAuthSuccess: () => void;
   onBack: () => void;
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
+  // const { request, response, promptAsync } = useGoogleAuth();
+  const router = useRouter();
+  const { signInWithGoogle } = useGoogleAuth();
+  // useEffect(() => {
+    // console.log("Response:", response);
+
+  //   if (response?.type === "success") {
+  //     console.log("Login Success ✅");
+
+  //     // 👉 navigate after login
+  //     router.replace("/(root)");
+  //   }
+  // }, [response]);
+  // console.log("Redirect URI used:", request?.redirectUri);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"register" | "login">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,16 +47,50 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
 
   const isEmailValid = email.includes("@") && email.includes(".");
   const isPasswordValid = password.length >= 6;
+  const isConfirmValid = mode === "login" || confirmPassword === password;
+  const canSubmit = isEmailValid && isPasswordValid && isConfirmValid;
 
-  const handleSubmit = () => {
-    // Your auth logic here
-    // On success:
-    onAuthSuccess(); // ✅ returns user to PDF export
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+
+    // Extra check for register mode
+    if (mode === "register" && confirmPassword !== password) {
+      setError("Passwords don't match.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    // const result =
+    //   mode === "register"
+    //     ? await registerWithEmail(email, password)
+    //     : await loginWithEmail(email, password);
+
+    // setIsLoading(false);
+
+    // if (result.success) {
+    //   onAuthSuccess();
+    // } else {
+    //   setError(result.error || "Something went wrong.");
+    // }
   };
 
-  const handleGoogle = () => {
-    // Google auth logic
-    onAuthSuccess();
+  const handleGoogle = async () => {
+    try {
+      setError("");
+      setIsLoading(true);
+      const result = await signInWithGoogle();
+      if (result.success) {
+        router.replace("/(root)");
+      } else {
+        setError("Google sign in failed. Please try again.");
+      }
+    } catch (e) {
+      setError("Google sign in failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,7 +119,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
         >
-          {/* ── Heading ── */}
+          {/* Heading */}
           <View style={styles.headingBlock}>
             <Text style={styles.mainHeading}>
               {mode === "register"
@@ -81,39 +133,52 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
             </Text>
           </View>
 
-          {/* ── Context banner — why auth is needed ── */}
+          {/* Context banner */}
           <View style={styles.contextBanner}>
             <View style={styles.contextIconBox}>
-              <Ionicons
-                name="document-text-outline"
-                size={18}
-                color="#3BBFAD"
-              />
+              <Ionicons name="document-text-outline" size={18} color="#3BBFAD" />
             </View>
             <Text style={styles.contextText}>
               Sign in to export your resume as PDF
             </Text>
           </View>
 
-          {/* ── Google Button ── */}
+          {/* ✅ Error banner */}
+          {error.length > 0 && (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={15} color="#e07070" />
+              <Text style={styles.errorBannerText}>{error}</Text>
+              <TouchableOpacity onPress={() => setError("")}>
+                <Ionicons name="close" size={15} color="#e07070" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Google Button */}
           <TouchableOpacity
-            style={styles.googleBtn}
+            // style={[styles.googleBtn, (!request || isLoading) && { opacity: 0.6 }]}
+            style={[styles.googleBtn, ( isLoading) && { opacity: 0.6 }]}
             onPress={handleGoogle}
+            // disabled={!request || isLoading}
+            disabled={ isLoading}
             activeOpacity={0.85}
           >
             <Text style={styles.googleG}>G</Text>
             <Text style={styles.googleText}>Continue with Google</Text>
           </TouchableOpacity>
 
-          {/* ── Divider ── */}
+          {/* Divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or sign up with email</Text>
+            <Text style={styles.dividerText}>
+              {mode === "register" ? "or sign up with email" : "or sign in with email"}
+            </Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* ── Fields ── */}
+          {/* Fields */}
           <View style={styles.fieldsBlock}>
+
             {/* Email */}
             <View style={styles.fieldContainer}>
               {(email || focusedField === "email") && (
@@ -123,13 +188,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                 <Ionicons
                   name="mail-outline"
                   size={18}
-                  color={
-                    focusedField === "email"
-                      ? "#3BBFAD"
-                      : email
-                        ? "#3D405B"
-                        : "#bbb"
-                  }
+                  color={focusedField === "email" ? "#3BBFAD" : email ? "#3D405B" : "#bbb"}
                   style={styles.fieldIcon}
                 />
                 <TextInput
@@ -141,21 +200,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                   autoCapitalize="none"
                   onFocus={() => setFocusedField("email")}
                   onBlur={() => setFocusedField(null)}
-                  onChangeText={setEmail}
+                  onChangeText={(val) => { setEmail(val); setError(""); }}
                 />
                 {isEmailValid && (
                   <Ionicons name="checkmark-circle" size={20} color="#3BBFAD" />
                 )}
               </View>
-              <View
-                style={[
-                  styles.underline,
-                  focusedField === "email" && styles.underlineFocused,
-                  isEmailValid &&
-                    focusedField !== "email" &&
-                    styles.underlineFilled,
-                ]}
-              />
+              <View style={[
+                styles.underline,
+                focusedField === "email" && styles.underlineFocused,
+                isEmailValid && focusedField !== "email" && styles.underlineFilled,
+              ]} />
             </View>
 
             {/* Password */}
@@ -167,13 +222,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                 <Ionicons
                   name="lock-closed-outline"
                   size={18}
-                  color={
-                    focusedField === "password"
-                      ? "#3BBFAD"
-                      : password
-                        ? "#3D405B"
-                        : "#bbb"
-                  }
+                  color={focusedField === "password" ? "#3BBFAD" : password ? "#3D405B" : "#bbb"}
                   style={styles.fieldIcon}
                 />
                 <TextInput
@@ -184,7 +233,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                   secureTextEntry={!showPassword}
                   onFocus={() => setFocusedField("password")}
                   onBlur={() => setFocusedField(null)}
-                  onChangeText={setPassword}
+                  onChangeText={(val) => { setPassword(val); setError(""); }}
                 />
                 <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
                   <Ionicons
@@ -194,15 +243,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                   />
                 </TouchableOpacity>
               </View>
-              <View
-                style={[
-                  styles.underline,
-                  focusedField === "password" && styles.underlineFocused,
-                  isPasswordValid &&
-                    focusedField !== "password" &&
-                    styles.underlineFilled,
-                ]}
-              />
+              <View style={[
+                styles.underline,
+                focusedField === "password" && styles.underlineFocused,
+                isPasswordValid && focusedField !== "password" && styles.underlineFilled,
+              ]} />
 
               {/* Password strength */}
               {password.length > 0 && (
@@ -214,21 +259,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                         styles.strengthBar,
                         password.length >= i * 2 && {
                           backgroundColor:
-                            password.length < 4
-                              ? "#e07070"
-                              : password.length < 6
-                                ? "#f0a04e"
-                                : "#3BBFAD",
+                            password.length < 4 ? "#e07070" :
+                            password.length < 6 ? "#f0a04e" : "#3BBFAD",
                         },
                       ]}
                     />
                   ))}
                   <Text style={styles.strengthText}>
-                    {password.length < 4
-                      ? "Weak"
-                      : password.length < 6
-                        ? "Fair"
-                        : "Strong"}
+                    {password.length < 4 ? "Weak" : password.length < 6 ? "Fair" : "Strong"}
                   </Text>
                 </View>
               )}
@@ -244,13 +282,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                   <Ionicons
                     name="shield-checkmark-outline"
                     size={18}
-                    color={
-                      focusedField === "confirm"
-                        ? "#3BBFAD"
-                        : confirmPassword
-                          ? "#3D405B"
-                          : "#bbb"
-                    }
+                    color={focusedField === "confirm" ? "#3BBFAD" : confirmPassword ? "#3D405B" : "#bbb"}
                     style={styles.fieldIcon}
                   />
                   <TextInput
@@ -261,7 +293,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                     secureTextEntry={!showConfirm}
                     onFocus={() => setFocusedField("confirm")}
                     onBlur={() => setFocusedField(null)}
-                    onChangeText={setConfirmPassword}
+                    onChangeText={(val) => { setConfirmPassword(val); setError(""); }}
                   />
                   <TouchableOpacity onPress={() => setShowConfirm((v) => !v)}>
                     <Ionicons
@@ -271,25 +303,19 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                     />
                   </TouchableOpacity>
                 </View>
-                <View
-                  style={[
-                    styles.underline,
-                    focusedField === "confirm" && styles.underlineFocused,
-                    confirmPassword &&
-                      confirmPassword === password &&
-                      styles.underlineFilled,
-                  ]}
-                />
+                <View style={[
+                  styles.underline,
+                  focusedField === "confirm" && styles.underlineFocused,
+                  confirmPassword && confirmPassword === password && styles.underlineFilled,
+                ]} />
                 {confirmPassword.length > 0 && confirmPassword !== password && (
-                  <Text
-                    style={styles.errorText}
-                  >{`Passwords don't match`}</Text>
+                  <Text style={styles.errorText}>{`Passwords don't match`}</Text>
                 )}
               </View>
             )}
           </View>
 
-          {/* ── Terms ── */}
+          {/* Terms */}
           <Text style={styles.termsText}>
             By continuing you agree to our{" "}
             <Text style={styles.termsLink}>Terms</Text>
@@ -299,10 +325,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
             <Text style={styles.termsLink}>Contact us</Text>
           </Text>
 
-          {/* ── Mode Switch ── */}
+          {/* Mode Switch */}
           <TouchableOpacity
             style={styles.switchMode}
-            onPress={() => setMode(mode === "register" ? "login" : "register")}
+            onPress={() => {
+              setMode(mode === "register" ? "login" : "register");
+              setError("");
+              setConfirmPassword("");
+            }}
           >
             <Text style={styles.switchModeText}>
               {mode === "register"
@@ -314,25 +344,23 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* ── Submit Button ── */}
+        {/* Submit Button */}
         <TouchableOpacity
-          style={[
-            styles.submitBtn,
-            (!isEmailValid || !isPasswordValid) && styles.submitBtnDisabled,
-          ]}
+          style={[styles.submitBtn, (!canSubmit || isLoading) && styles.submitBtnDisabled]}
           onPress={handleSubmit}
-          disabled={!isEmailValid || !isPasswordValid}
+          disabled={!canSubmit || isLoading}
           activeOpacity={0.88}
         >
-          <Text style={styles.submitBtnText}>
-            {mode === "register" ? "Save & Continue" : "Sign In"}
-          </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={18}
-            color="#fff"
-            style={{ marginLeft: 8 }}
-          />
+          {isLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Text style={styles.submitBtnText}>
+                {mode === "register" ? "Save & Continue" : "Sign In"}
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} />
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -344,7 +372,6 @@ export default AuthScreen;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
 
-  // Navbar
   navbar: {
     height: 56,
     backgroundColor: "#F4F1DE",
@@ -352,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
-  leftIcon: { position: "absolute", left: 20 },
+  leftIcon:      { position: "absolute", left: 20 },
   centerContent: { flex: 1, alignItems: "center" },
   navTitle: {
     fontSize: 14,
@@ -364,7 +391,6 @@ const styles = StyleSheet.create({
 
   scrollContent: { paddingBottom: 20 },
 
-  // Heading
   headingBlock: {
     paddingHorizontal: 24,
     paddingTop: 28,
@@ -387,7 +413,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  // Context banner
   contextBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -416,7 +441,27 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
   },
 
-  // Google
+  // ✅ Error banner
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: "#fff5f5",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#fdd",
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#e07070",
+    fontFamily: "WorkSansRegular",
+  },
+
   googleBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -447,7 +492,6 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
   },
 
-  // Divider
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -455,19 +499,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 10,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#eee",
-  },
-  dividerText: {
-    fontSize: 12,
-    color: "#aaa",
-    fontFamily: "WorkSansRegular",
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#eee" },
+  dividerText: { fontSize: 12, color: "#aaa", fontFamily: "WorkSansRegular" },
 
-  // Fields
-  fieldsBlock: { paddingHorizontal: 20 },
+  fieldsBlock:    { paddingHorizontal: 20 },
   fieldContainer: { marginBottom: 20 },
   floatingLabel: {
     fontSize: 10,
@@ -477,8 +512,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: "WorkSansSemiBold",
   },
-  fieldRow: { flexDirection: "row", alignItems: "center" },
-  fieldIcon: { marginRight: 10 },
+  fieldRow:   { flexDirection: "row", alignItems: "center" },
+  fieldIcon:  { marginRight: 10 },
   fieldInput: {
     flex: 1,
     fontSize: 15,
@@ -486,11 +521,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontFamily: "WorkSansRegular",
   },
-  underline: { height: 1, backgroundColor: "#eee", marginTop: 4 },
+  underline:        { height: 1,   backgroundColor: "#eee", marginTop: 4 },
   underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
-  underlineFilled: { backgroundColor: "#81B29A" },
+  underlineFilled:  { backgroundColor: "#81B29A" },
 
-  // Password strength
   strengthRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -517,7 +551,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Terms
   termsText: {
     fontSize: 12,
     color: "#aaa",
@@ -527,16 +560,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 20,
   },
-  termsLink: {
-    color: "#3BBFAD",
-    fontFamily: "WorkSansSemiBold",
-  },
+  termsLink: { color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
-  // Mode switch
-  switchMode: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
+  switchMode:     { alignItems: "center", paddingVertical: 8 },
   switchModeText: {
     fontSize: 15,
     color: "#3D405B",
@@ -544,7 +570,6 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 
-  // Submit
   submitBtn: {
     position: "absolute",
     bottom: 24,
@@ -557,9 +582,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  submitBtnDisabled: {
-    backgroundColor: "#ccc",
-  },
+  submitBtnDisabled: { backgroundColor: "#ccc" },
   submitBtnText: {
     color: "#fff",
     fontWeight: "bold",

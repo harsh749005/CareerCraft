@@ -1,21 +1,19 @@
-import { useUser } from "@clerk/clerk-expo";
 import { Redirect, Stack } from "expo-router";
+import { useFirebaseAuth } from "@/hooks/useFireBaseAuth";
 
 export default function RootLayout() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isLoggedIn, isLoading } = useFirebaseAuth();
 
-  if (!isLoaded) return null; // wait for Clerk to load
+  if (isLoading) return null;
 
-  // Case 1: Not logged in → show onboarding first
-  if (!isSignedIn) {
-    return <Redirect href={'/OnBoardingScreen'}/>;
+  if (isLoggedIn) {
+    return <Redirect href="/OnBoardingScreen" />;
   }
 
-  // Case 2: Logged in → skip onboarding, go straight to app
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BuildResume" />
-      <Stack.Screen name="Analyze" />
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

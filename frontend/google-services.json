@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "267881864443",
+    "project_id": "careercraft-4c3ad",
+    "storage_bucket": "careercraft-4c3ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267881864443:android:0349266b1c135d5f16645e",
+        "android_client_info": {
+          "package_name": "com.harsh749005.careercraft"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "267881864443-ih5e9ecgfi5m4h06bg0bjjtmf1pngekb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.harsh749005.careercraft",
+            "certificate_hash": "b7e4eef72e58a448201b1781ad9a1aa6d7cb4d4d"
+          }
+        },
+        {
+          "client_id": "267881864443-celfmfg4cbinuaq3lms9tgj4ue5vcn3h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvBkKQzAl0OJmfWZrRS_xn4g6I3NMQWqU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "267881864443-celfmfg4cbinuaq3lms9tgj4ue5vcn3h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
