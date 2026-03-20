@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "careercraft",
-    "slug": "careercraft",
+    "name": "CareerCraft",
+    "slug": "CareerCraft",
     "version": "2.40.9",
     "orientation": "portrait",
     "icon": "./assets/images/mainLOGO2.png",
