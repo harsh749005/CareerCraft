@@ -1,13 +1,13 @@
 import { Redirect, Stack } from "expo-router";
-import { useFirebaseAuth } from "@/hooks/useFireBaseAuth";
+import { useAuth } from "@clerk/clerk-expo";
 
 export default function RootLayout() {
-  const { isLoggedIn, isLoading } = useFirebaseAuth();
+  const { isSignedIn, isLoaded } = useAuth();
 
-  if (isLoading) return null;
+  if (!isLoaded) return null;
 
-  if (isLoggedIn) {
-    return <Redirect href="/OnBoardingScreen" />;
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)" />;
   }
 
   return (
