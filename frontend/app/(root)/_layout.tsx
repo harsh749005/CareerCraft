@@ -1,12 +1,15 @@
-import { Redirect, Stack } from "expo-router";
+import { Redirect, Stack, useSegments } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 
 export default function RootLayout() {
   const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
 
   if (!isLoaded) return null;
 
-  if (!isSignedIn) {
+  // Keep dashboard screens protected, but allow resume builder from onboarding.
+  const isBuildResumeRoute = segments[1] === "BuildResume";
+  if (!isSignedIn && !isBuildResumeRoute) {
     return <Redirect href="/(auth)" />;
   }
 
