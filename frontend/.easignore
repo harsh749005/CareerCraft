@@ -1,0 +1,15 @@
+# Android build cache
+android/.gradle
+android/build
+android/app/build
+android/.kotlin
+
+# Node
+node_modules
+
+# Expo cache
+.expo
+
+# Backend (not needed for mobile build)
+../backend
+../api
