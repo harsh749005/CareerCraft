@@ -7,8 +7,7 @@ import { View, ActivityIndicator } from "react-native";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 
-const CLERK_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
-
+// Token cache for Clerk
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -29,8 +28,7 @@ function RootNavigator() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
-  // ✅ Capture fontError too — fonts can fail in production builds
-  const [fontsLoaded, fontError] = useFonts({
+  const [fontsLoaded] = useFonts({
     Inter: require("../assets/fonts/Inter-VariableFont_opsz,wght.ttf"),
     PlayfairDisplayRegular: require("../assets/fonts/PlayfairDisplay-Regular.ttf"),
     PlayfairDisplayMedium: require("../assets/fonts/PlayfairDisplay-Medium.ttf"),
@@ -59,15 +57,13 @@ function RootNavigator() {
     return () => unsubscribe();
   }, []);
 
-  // ✅ Hide splash whether fonts loaded OR errored
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  // Show loader while any of these 3 are still resolving
-  if (isChecking || !isLoaded || (!fontsLoaded && !fontError)) {
+  if (!isChecking && isConnected === false) return <NoInternetScreen />;
+
+  if (!isLoaded || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F4F1DE" }}>
         <ActivityIndicator color="#3BBFAD" size="large" />
@@ -75,12 +71,6 @@ function RootNavigator() {
     );
   }
 
-  // ✅ No internet — shown AFTER loading resolves
-  if (isConnected === false) {
-    return <NoInternetScreen />;
-  }
-
-  // ✅ Simple Stack — no useRouter/useSegments (caused the crash)
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {isSignedIn ? (
@@ -95,7 +85,7 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <ClerkProvider
-      publishableKey={CLERK_KEY}
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
       tokenCache={tokenCache}
     >
       <RootNavigator />

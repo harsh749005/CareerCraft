@@ -20,7 +20,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
-    "expo": "55.0.0",
+    "expo": "~55.0.5",
     "expo-application": "~55.0.10",
     "expo-auth-session": "~55.0.9",
     "expo-build-properties": "~55.0.10",
@@ -48,8 +48,8 @@
     "firebase": "^12.11.0",
     "lottie-react-native": "~7.3.1",
     "lucide-react-native": "^0.577.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-native": "0.83.2",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-reanimated": "4.2.1",
@@ -65,9 +65,9 @@
     "utf-8-validate": "^5.0.10"
   },
   "devDependencies": {
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.2.10",
     "eslint": "^9.25.0",
-    "eslint-config-expo": "~10.0.0",
+    "eslint-config-expo": "~55.0.0",
     "typescript": "~5.9.2"
   },
   "private": true
