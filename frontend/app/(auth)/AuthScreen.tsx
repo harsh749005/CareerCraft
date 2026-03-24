@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGoogleAuth } from "../../utils/usegoogleAuth";
-import { useRouter } from "expo-router";
 
 interface AuthScreenProps {
   onAuthSuccess: () => void;
@@ -21,20 +20,7 @@ interface AuthScreenProps {
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
-  // const { request, response, promptAsync } = useGoogleAuth();
-  const router = useRouter();
   const { signInWithGoogle } = useGoogleAuth();
-  // useEffect(() => {
-    // console.log("Response:", response);
-
-  //   if (response?.type === "success") {
-  //     console.log("Login Success ✅");
-
-  //     // 👉 navigate after login
-  //     router.replace("/(root)");
-  //   }
-  // }, [response]);
-  // console.log("Redirect URI used:", request?.redirectUri);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"register" | "login">("register");
@@ -82,11 +68,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
       setIsLoading(true);
       const result = await signInWithGoogle();
       if (result.success) {
-        router.replace("/(root)");
+        onAuthSuccess();
       } else {
         setError("Google sign in failed. Please try again.");
+        console.log("Errror", result);
       }
-    } catch (e) {
+    } catch {
       setError("Google sign in failed.");
     } finally {
       setIsLoading(false);

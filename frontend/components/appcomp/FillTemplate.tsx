@@ -1,49 +1,92 @@
-export function fillTemplate(template:any, formData:any) {
-const formatSkills = () => { 
-  const skillsArray = []; 
-   
-  // Programming Languages 
-  if (formData.skills?.languages?.length > 0) { 
-    skillsArray.push( 
-      `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
-        <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">Programming Languages:</strong>  
-        <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${formData.skills.languages.join(', ')}</span> 
-      </div>` 
-    ); 
-  } 
-   
-  // Web Development (combine frameworks and tools) 
-  const webDevSkills = [ 
-    ...(formData.skills?.frameworks || []), 
-    ...(formData.skills?.tools || []) 
-  ]; 
-  if (webDevSkills.length > 0) { 
-    skillsArray.push( 
-      `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
-        <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">Web Development:</strong>  
-        <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${webDevSkills.join(', ')}</span> 
-      </div>` 
-    ); 
-  } 
-   
-  // Database 
-  if (formData.skills?.databases?.length > 0) { 
-    skillsArray.push( 
-      `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
-        <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">Database:</strong>  
-        <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${formData.skills.databases.join(', ')}</span> 
-      </div>` 
-    ); 
-  } 
- 
-  // Wrap all inside one parent div with minimal spacing
-  return ` 
-    <div style="display:flex;flex-direction:column;gap:2px;margin:0;padding:0;line-height:1.2;"> 
-      ${skillsArray.join('')} 
-    </div> 
-  `; 
-};
+import { TEMPLATE_CONFIGS, SkillsDisplayMode } from "../../config/templateConfig";
 
+export function fillTemplate(template:any, formData:any) {
+// const formatSkills = () => { 
+//   const skillsArray = []; 
+   
+//   // Programming Languages 
+//   if (formData.skills?.categorized?.length > 0) { 
+//     skillsArray.push( 
+//       `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
+//         <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${formData.skills.categorized[0]}</strong>  
+//         <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${formData.skills.categorized[0].join(', ')}</span> 
+//       </div>` 
+//     ); 
+//   } 
+   
+//   // Web Development (combine frameworks and tools) 
+//   const webDevSkills = [ 
+//     ...(formData.skills?.frameworks || []), 
+//     ...(formData.skills?.tools || []) 
+//   ]; 
+//   if (webDevSkills.length > 0) { 
+//     skillsArray.push( 
+//       `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
+//         <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">Web Development:</strong>  
+//         <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${webDevSkills.join(', ')}</span> 
+//       </div>` 
+//     ); 
+//   } 
+   
+//   // Database 
+//   if (formData.skills?.databases?.length > 0) { 
+//     skillsArray.push( 
+//       `<div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;"> 
+//         <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">Database:</strong>  
+//         <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">${formData.skills.databases.join(', ')}</span> 
+//       </div>` 
+//     ); 
+//   } 
+ 
+//   // Wrap all inside one parent div with minimal spacing
+//   return ` 
+//     <div style="display:flex;flex-direction:column;gap:2px;margin:0;padding:0;line-height:1.2;"> 
+//       ${skillsArray.join('')} 
+//     </div> 
+//   `; 
+// };
+const formatSkills = () => {
+  const skillsMode: SkillsDisplayMode =
+    TEMPLATE_CONFIGS?.[formData.selected_template]?.skills?.mode ?? "uncategorized";
+
+  const categorized: Record<string, string[]> = formData.skills?.categorized ?? {};
+  const uncategorized: string[] = formData.skills?.uncategorized ?? [];
+
+  // ── CATEGORIZED template ──────────────────────────────
+  const categorizedHTML = Object.entries(categorized)
+    .filter(([_, skills]) => skills.length > 0)   // skip empty categories
+    .map(([category, skills]) => `
+      <div style="display:flex;gap:8px;align-items:baseline;margin:0;padding:0;">
+        <strong style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">
+          ${category}:
+        </strong>
+        <span style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">
+          ${skills.join(', ')}
+        </span>
+      </div>
+    `)
+    .join('');
+
+  // ── UNCATEGORIZED template ────────────────────────────
+  const uncategorizedHTML = uncategorized.length > 0
+    ? `<div style="font-family:'Times New Roman';font-size:10px;margin:0;padding:0;">
+        ${uncategorized.join(', ')}
+      </div>`
+    : '';
+
+  const finalSkillsHTML =
+    skillsMode === "categorized"
+      ? categorizedHTML
+      : skillsMode === "both"
+      ? `${categorizedHTML}${uncategorizedHTML}`
+      : uncategorizedHTML;
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:2px;margin:0;padding:0;line-height:1.2;">
+      ${finalSkillsHTML}
+    </div>
+  `;
+};
 
 const formatExperience = () => {
   return formData.work_experience

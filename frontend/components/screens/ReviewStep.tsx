@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import { Ionicons } from "@expo/vector-icons";
 import CustomLoader from "../appcomp/CustomLoader";
 import { generatePDF } from "../generator/GeneratePDF";
 import AuthScreen from "../../app/(auth)/AuthScreen";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
+import { useAuth } from "@clerk/clerk-expo";
 
 interface ReviewStepProps {
   data: any;
@@ -40,25 +40,12 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   step,
   totalSteps,
 }) => {
+  const { isSignedIn } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    checkLoginStatus();
-  }, []);
-
-  const checkLoginStatus = async () => {
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      setIsLoggedIn(!!token);
-    } catch {
-      setIsLoggedIn(false);
-    }
-  };
 
   const handleSubmit = async () => {
-    if (!isLoggedIn) {
+    if (!isSignedIn) {
       setShowAuth(true);
       return;
     }
@@ -69,7 +56,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     setIsGenerating(true);
     try {
       setTimeout(async () => {
-        console.log("Final Form Data:", data);
+        console.log("Final Form Data:\n", JSON.stringify(data, null, 2));
         await generatePDF(data);
         setIsGenerating(false);
       }, 3000);
@@ -80,7 +67,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   const handleAuthSuccess = () => {
-    setIsLoggedIn(true);
     setShowAuth(false);
     generate();
   };
@@ -514,11 +500,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 <View>
                   <Text style={styles.generateBtnLabel}>Generate Resume</Text>
                   <Text style={styles.generateBtnSub}>
-                    {isLoggedIn ? "Export as PDF" : "Sign in to export"}
+                    {isSignedIn ? "Export as PDF" : "Sign in to export"}
                   </Text>
                 </View>
                 <Ionicons
-                  name={isLoggedIn ? "arrow-forward" : "lock-closed-outline"}
+                  name={isSignedIn ? "arrow-forward" : "lock-closed-outline"}
                   size={18}
                   color="#fff"
                   style={{ marginLeft: "auto" }}

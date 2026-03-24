@@ -313,6 +313,7 @@ export default function BuildReume() {
               // nextStep();        // call it as a function, not a prop
             }}
             nextStep={nextStep}
+            prevStep={prevStep}
           // prevStep={prevStep}
           />
         )}

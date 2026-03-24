@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/clerk-expo";
 export default function RootLayout() {
   const { isSignedIn, isLoaded } = useAuth();
   const segments = useSegments();
+  console.log("root layout",isSignedIn)
 
   if (!isLoaded) return null;
 

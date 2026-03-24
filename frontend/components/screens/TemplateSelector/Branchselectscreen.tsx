@@ -19,13 +19,15 @@ import {
   getBranchOption,
   BranchOption,
 } from "../../../utils/branchUtils";
+import { router } from "expo-router";
 
 interface BranchSelectScreenProps {
   onNext: (branch: string) => void;  // passes BranchOption.value e.g. "CSE", "IT"
   nextStep: () => void;
+  prevStep:() => void;
 }
 
-const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextStep }) => {
+const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextStep,prevStep }) => {
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,7 +57,19 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
-
+      {/* ── Navbar ── */}
+      <View style={styles.navbar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.leftIcon}>
+          <Ionicons name="arrow-back" size={22} color="#3D405B" />
+        </TouchableOpacity>
+        <View style={styles.centerContent}>
+          {/* <Text style={styles.stepText}>Step {step} of {totalSteps}</Text> */}
+          <Text style={styles.navTitle}>EDUCATION</Text>
+        </View>
+        <TouchableOpacity style={styles.rightBtn}>
+          <Text style={styles.previewText}>Preview</Text>
+        </TouchableOpacity>
+      </View>
       {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={styles.title}>{`What's your field of study?`}</Text>
@@ -231,6 +245,19 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "android" ? 36 : 52,
   },
 
+  navbar: {
+    height: 56,
+    backgroundColor: "#F4F1DE",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  leftIcon:     { position: "absolute", left: 20 },
+  rightBtn:     { position: "absolute", right: 20 },
+  centerContent:{ flex: 1, alignItems: "center" },
+  stepText:     { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle:     { fontSize: 14, fontWeight: "bold", letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
+  previewText:  { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
   // Header
   header: {
     marginBottom: 28,
