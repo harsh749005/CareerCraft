@@ -14,17 +14,19 @@ import { StyleSheet, View } from "react-native";
 import IndustrySelector from "./TemplateSelector/IndustrySelector";
 import ResumeOptionEnhanced from "./TemplateSelector/ResumeOptionEnhanced";
 import JobDescriptionStep from "./JobDescriptionStep";
+import BranchSelectScreen from "./TemplateSelector/Branchselectscreen";
 
 export default function BuildReume() {
-  //const [option,setOption] = useState("");
-  const [selectedIndustry, setSelectedIndustry] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("");
+  // const [option,setOption] = useState("");
+  // const [selectedIndustry, setSelectedIndustry] = useState("");
+  // const [selectedTemplate, setSelectedTemplate] = useState("");
   // const updateSelectedIndustry = (industry: string) => {
   //   setSelectedIndustry(industry);
   // };
   // const handleOption = (e:string) =>{
   //   setOption(e);
   // }
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<{
     personal_info: Record<string, any>;
@@ -33,10 +35,8 @@ export default function BuildReume() {
     projects: any[];
     education: any[];
     skills: {
-      languages: string[];
-      frameworks: string[];
-      tools: string[];
-      databases: string[];
+      categorized: Record<string, string[]>;  // { "Frontend": ["HTML", "CSS"], "Backend": ["MySQL"] }
+      uncategorized: string[];                // ["HTML", "CSS", "MySQL"] — for flat templates
     };
     // certifications: string[];
     // languages: string[];
@@ -51,17 +51,32 @@ export default function BuildReume() {
     // Ensure we always have an initial object to write into.
     education: [{}],
     skills: {
-      languages: [],
-      frameworks: [],
-      tools: [],
-      databases: [],
+      categorized: {
+        Languages: [],
+        Frameworks: [],
+        Tools: [],
+        Databases: [],
+      },
+      uncategorized: [],
     },
     // certifications: [],
     // languages: [],
     selected_template: "",
     otherLinks: {},
   });
-
+  const setBranch = (branch: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      personal_info: { ...prev.personal_info, branch },
+    }));
+  };
+  const setTemplate = (templateId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      selected_template: templateId,   // ✅ matches your formData shape exactly
+    }));
+    // setStep(3);                        // move to forms
+  };
   // 🔹 Update Personal Info (nested object)
   const updatePersonalInfo = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -151,15 +166,15 @@ export default function BuildReume() {
   ) => {
     const updated = formData.education.map((edu, i) => {
       if (i !== index) return edu;
-  
+
       // 🔥 Handle object update
       if (typeof field === "object") {
         return { ...edu, ...field };
       }
-  
+
       return { ...edu, [field]: value };
     });
-  
+
     setFormData({ ...formData, education: updated });
   };
   const handleRemoveEducationExperience = (index: number) => {
@@ -191,18 +206,57 @@ export default function BuildReume() {
 
   // Your updateSkill function:
   type SkillCategory = "languages" | "frameworks" | "tools" | "databases";
-  const updateSkill = (category: SkillCategory, skill: string) => {
+  // For categorized templates — toggles skill inside a named category
+  const updateCategorizedSkill = (category: string, skill: string) => {
     setFormData((prev) => {
-      const currentSkills = prev.skills[category] || [];
+      const currentSkills = prev.skills.categorized[category] || [];
       const alreadySelected = currentSkills.includes(skill);
 
       return {
         ...prev,
         skills: {
           ...prev.skills,
-          [category]: alreadySelected
-            ? currentSkills.filter((item: string) => item !== skill)
+          categorized: {
+            ...prev.skills.categorized,
+            [category]: alreadySelected
+              ? currentSkills.filter((s) => s !== skill)
+              : [...currentSkills, skill],
+          },
+        },
+      };
+    });
+  };
+
+  // For uncategorized templates — toggles skill in flat list
+  const updateUncategorizedSkill = (skill: string) => {
+    setFormData((prev) => {
+      const currentSkills = prev.skills.uncategorized;
+      const alreadySelected = currentSkills.includes(skill);
+
+      return {
+        ...prev,
+        skills: {
+          ...prev.skills,
+          uncategorized: alreadySelected
+            ? currentSkills.filter((s) => s !== skill)
             : [...currentSkills, skill],
+        },
+      };
+    });
+  };
+
+  // Optional: add a new category dynamically
+  const addSkillCategory = (categoryName: string) => {
+    setFormData((prev) => {
+      if (prev.skills.categorized[categoryName]) return prev; // already exists
+      return {
+        ...prev,
+        skills: {
+          ...prev.skills,
+          categorized: {
+            ...prev.skills.categorized,
+            [categoryName]: [],
+          },
         },
       };
     });
@@ -233,8 +287,8 @@ export default function BuildReume() {
   return (
     <SafeScreen>
       <View style={{ flex: 1 }}>
-      {/* 🔹 Progress Bar */}
-      {/* <View style={styles.progressContainer}>
+        {/* 🔹 Progress Bar */}
+        {/* <View style={styles.progressContainer}>
         <View
           style={[
             styles.progressFill,
@@ -253,21 +307,32 @@ export default function BuildReume() {
               )
         } */}
         {step === 1 && (
+          <BranchSelectScreen
+            onNext={(branch) => {
+              setBranch(branch);
+              // nextStep();        // call it as a function, not a prop
+            }}
+            nextStep={nextStep}
+          // prevStep={prevStep}
+          />
+        )}
+        {step === 2 && (
           // <IndustrySelector nextStep={nextStep} updateSelectedIndustry={setSelectedIndustry} />
           <ResumeOptions
-          nextStep={nextStep}
-          prevStep={prevStep}
-          updateSelectedTemplate={updateSelectedTemplate}
-          step={step}
-          totalSteps={totalSteps}
-        />
-      
+            branch={formData.personal_info.branch}    // ✅ pass branch for filtering
+            updateSelectedTemplate={updateSelectedTemplate}  // ✅ matches the interface
+            nextStep={nextStep}
+            prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
+          />
+
         )}
         {/* {step === 2 && (
           <ResumeOptionEnhanced nextStep={nextStep} updateSelectedTemplate={setSelectedTemplate} selectedIndustry={selectedIndustry} />
         )} */}
 
-        {step === 2 && (
+        {step === 3 && (
           <PersonalInfoStep
             data={formData.personal_info}
             updatePersonalInfo={updatePersonalInfo}
@@ -278,7 +343,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <EducationStep
             data={formData}
             addEducation={addEducation}
@@ -290,7 +355,7 @@ export default function BuildReume() {
             totalSteps={totalSteps}
           />
         )}
-        {step === 4 && (
+        {step === 5 && (
           // <LanguagesStep
           //   data={formData}
           //   handleLanguage={handleLanguage}
@@ -299,14 +364,16 @@ export default function BuildReume() {
           // />
           <SkillsStep
             data={formData}
-            updateSkill={updateSkill}
+            updateCategorizedSkill={updateCategorizedSkill}
+            updateUncategorizedSkill={updateUncategorizedSkill}
+            addSkillCategory={addSkillCategory}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
             totalSteps={totalSteps}
           />
         )}
-        {step === 5 && (
+        {step === 6 && (
           <Projects
             data={formData}
             addProjects={addProjects}
@@ -318,7 +385,7 @@ export default function BuildReume() {
             totalSteps={totalSteps}
           />
         )}
-        {step === 6 && (
+        {step === 7 && (
           // <CertificationsStep
           //   data={formData}
           //   addCertification={addCertification}
@@ -337,19 +404,19 @@ export default function BuildReume() {
             totalSteps={totalSteps}
           />
         )}
-        {step === 7 && (
+        {step === 8 && (
           <JobDescriptionStep
-          data={formData}
-          // addExperience={addWorkExperience}
-          updateExperience={updateWorkExperience}
-          // removeExperience={removeExperience}
-          nextStep={nextStep}
-          prevStep={prevStep}
-          step={step}
-          totalSteps={totalSteps}
+            data={formData}
+            // addExperience={addWorkExperience}
+            updateExperience={updateWorkExperience}
+            // removeExperience={removeExperience}
+            nextStep={nextStep}
+            prevStep={prevStep}
+            step={step}
+            totalSteps={totalSteps}
           />
         )}
-        {step === 8 && (
+        {step === 9 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
@@ -360,7 +427,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 9 && (
+        {step === 10 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
@@ -379,8 +446,8 @@ export default function BuildReume() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 10 && <ReviewStep data={formData} prevStep={prevStep} step={step}
-            totalSteps={totalSteps} goToStep={goToStep}/>}
+        {step === 11 && <ReviewStep data={formData} prevStep={prevStep} step={step}
+          totalSteps={totalSteps} goToStep={goToStep} />}
       </View>
     </SafeScreen>
   );

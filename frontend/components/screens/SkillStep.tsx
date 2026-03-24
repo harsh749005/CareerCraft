@@ -11,10 +11,13 @@ import {
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
 
 interface Props {
   data: any;
-  updateSkill: any;
+  updateCategorizedSkill: (category: string, skill: string) => void;
+  updateUncategorizedSkill: (skill: string) => void;
+  addSkillCategory: (categoryName: string) => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -58,190 +61,80 @@ const jobSkillsMap: { keywords: string[]; skills: string[] }[] = [
   {
     keywords: ["backend", "back end", "back-end", "server", "api developer"],
     skills: [
-      "Node.js",
-      "Express.js",
-      "Apache Server",
-      "MongoDB",
-      "PostgreSQL",
-      "REST API",
-      "Docker",
-      "Redis",
-      "GraphQL",
-      "Nginx",
+      "Node.js", "Express.js", "Apache Server", "MongoDB", "PostgreSQL",
+      "REST API", "Docker", "Redis", "GraphQL", "Nginx",
     ],
   },
   {
-    keywords: [
-      "frontend",
-      "front end",
-      "front-end",
-      "ui developer",
-      "web developer",
-    ],
+    keywords: ["frontend", "front end", "front-end", "ui developer", "web developer"],
     skills: [
-      "HTML",
-      "CSS",
-      "React",
-      "JavaScript",
-      "TypeScript",
-      "Tailwind CSS",
-      "Vue.js",
-      "SASS",
-      "Webpack",
-      "Figma",
+      "HTML", "CSS", "React", "JavaScript", "TypeScript",
+      "Tailwind CSS", "Vue.js", "SASS", "Webpack", "Figma",
     ],
   },
   {
-    keywords: [
-      "mobile",
-      "android",
-      "ios",
-      "flutter",
-      "react native",
-      "app developer",
-    ],
+    keywords: ["mobile", "android", "ios", "flutter", "react native", "app developer"],
     skills: [
-      "React Native",
-      "Flutter",
-      "Android Studio",
-      "Java",
-      "Kotlin",
-      "Swift",
-      "Xcode",
-      "Firebase",
-      "Expo",
-      "Dart",
+      "React Native", "Flutter", "Android Studio", "Java", "Kotlin",
+      "Swift", "Xcode", "Firebase", "Expo", "Dart",
     ],
   },
   {
-    keywords: [
-      "business development",
-      "bd manager",
-      "sales manager",
-      "growth manager",
-    ],
+    keywords: ["business development", "bd manager", "sales manager", "growth manager"],
     skills: [
-      "Sales Proposal Documentation",
-      "Contract Management",
-      "ROI Evaluation",
-      "CRM Tools",
-      "Lead Generation",
-      "Market Research",
-      "Negotiation",
-      "KPI Tracking",
-      "B2B Sales",
-      "Strategic Planning",
+      "Sales Proposal Documentation", "Contract Management", "ROI Evaluation",
+      "CRM Tools", "Lead Generation", "Market Research", "Negotiation",
+      "KPI Tracking", "B2B Sales", "Strategic Planning",
     ],
   },
   {
     keywords: ["fullstack", "full stack", "full-stack"],
     skills: [
-      "React",
-      "Node.js",
-      "MongoDB",
-      "Express.js",
-      "PostgreSQL",
-      "TypeScript",
-      "Docker",
-      "AWS",
-      "GraphQL",
-      "Redis",
+      "React", "Node.js", "MongoDB", "Express.js", "PostgreSQL",
+      "TypeScript", "Docker", "AWS", "GraphQL", "Redis",
     ],
   },
   {
-    keywords: [
-      "data scientist",
-      "data analyst",
-      "machine learning",
-      "ml engineer",
-      "ai engineer",
-    ],
+    keywords: ["data scientist", "data analyst", "machine learning", "ml engineer", "ai engineer"],
     skills: [
-      "Python",
-      "TensorFlow",
-      "Pandas",
-      "NumPy",
-      "SQL",
-      "Scikit-learn",
-      "Matplotlib",
-      "Power BI",
-      "Tableau",
-      "Jupyter",
+      "Python", "TensorFlow", "Pandas", "NumPy", "SQL",
+      "Scikit-learn", "Matplotlib", "Power BI", "Tableau", "Jupyter",
     ],
   },
   {
     keywords: ["devops", "cloud engineer", "infrastructure", "sre"],
     skills: [
-      "Docker",
-      "Kubernetes",
-      "AWS",
-      "CI/CD",
-      "Terraform",
-      "Linux",
-      "Jenkins",
-      "GitHub Actions",
-      "Azure",
-      "GCP",
+      "Docker", "Kubernetes", "AWS", "CI/CD", "Terraform",
+      "Linux", "Jenkins", "GitHub Actions", "Azure", "GCP",
     ],
   },
   {
     keywords: ["ui", "ux", "designer", "product designer", "graphic"],
     skills: [
-      "Figma",
-      "Adobe XD",
-      "Sketch",
-      "Prototyping",
-      "Wireframing",
-      "User Research",
-      "Illustrator",
-      "Photoshop",
-      "Design Systems",
-      "Accessibility",
+      "Figma", "Adobe XD", "Sketch", "Prototyping", "Wireframing",
+      "User Research", "Illustrator", "Photoshop", "Design Systems", "Accessibility",
     ],
   },
   {
     keywords: ["seo", "digital marketing", "content", "social media"],
     skills: [
-      "SEO",
-      "Google Analytics",
-      "Content Writing",
-      "Social Media Management",
-      "Email Marketing",
-      "Copywriting",
-      "WordPress",
-      "Canva",
-      "Meta Ads",
-      "Google Ads",
+      "SEO", "Google Analytics", "Content Writing", "Social Media Management",
+      "Email Marketing", "Copywriting", "WordPress", "Canva", "Meta Ads", "Google Ads",
     ],
   },
   {
     keywords: ["project manager", "scrum master", "product manager", "agile"],
     skills: [
-      "Agile",
-      "Scrum",
-      "JIRA",
-      "Trello",
-      "Risk Management",
-      "Stakeholder Management",
-      "Roadmapping",
-      "Sprint Planning",
-      "Confluence",
-      "MS Project",
+      "Agile", "Scrum", "JIRA", "Trello", "Risk Management",
+      "Stakeholder Management", "Roadmapping", "Sprint Planning", "Confluence", "MS Project",
     ],
   },
 ];
 
 const defaultSkills = [
-  "Communication",
-  "Teamwork",
-  "Problem Solving",
-  "Time Management",
-  "Leadership",
-  "Critical Thinking",
-  "Adaptability",
-  "Microsoft Office",
-  "Project Management",
-  "Customer Service",
+  "Communication", "Teamwork", "Problem Solving", "Time Management",
+  "Leadership", "Critical Thinking", "Adaptability", "Microsoft Office",
+  "Project Management", "Customer Service",
 ];
 
 const getSkillsForTitle = (title: string): string[] => {
@@ -253,9 +146,18 @@ const getSkillsForTitle = (title: string): string[] => {
   return defaultSkills;
 };
 
+// ─── Helper: get all currently selected skills as a flat array ───────────────
+const getAllSelectedSkills = (skills: any): string[] => {
+  const fromCategorized = Object.values(skills?.categorized || {}).flat() as string[];
+  const fromUncategorized = skills?.uncategorized || [];
+  return [...new Set([...fromCategorized, ...fromUncategorized])];
+};
+
 const SkillsStep: React.FC<Props> = ({
   data,
-  updateSkill,
+  updateCategorizedSkill,
+  updateUncategorizedSkill,
+  addSkillCategory,
   nextStep,
   prevStep,
   step,
@@ -264,27 +166,64 @@ const SkillsStep: React.FC<Props> = ({
   const [jobTitle, setJobTitle] = useState("");
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [modalQuery, setModalQuery] = useState("");
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(
-    data.skills?.languages || [],
-  );
+  const [activeCategoryTab, setActiveCategoryTab] = useState<string>(""); // for categorized mode
+
+  // ─── Derive template mode from config ────────────────────────────────────
+  const templateConfig = TEMPLATE_CONFIGS[data.selected_template];
+  const skillsMode = templateConfig?.skills?.mode ?? "uncategorized";
+
+  const showCategorized = skillsMode === "categorized" || skillsMode === "both";
+  const showUncategorized = skillsMode === "uncategorized" || skillsMode === "both";
+
+  // ─── Derive current category list ────────────────────────────────────────
+  const categories = Object.keys(data.skills?.categorized || {});
+
+  // Auto-select first category tab if not set
+  const activeCategory = activeCategoryTab || categories[0] || "";
+
+  // ─── All selected skills as flat list (for tag display) ──────────────────
+  const allSelectedSkills = getAllSelectedSkills(data.skills);
 
   const currentSkills = getSkillsForTitle(jobTitle);
 
+  // ─── Toggle skill based on template mode ─────────────────────────────────
   const toggleSkill = (skill: string) => {
-    setSelectedSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
-    );
-    updateSkill(skill);
+    if (showCategorized && !showUncategorized) {
+      // Categorized only — add/remove from active category tab
+      updateCategorizedSkill(activeCategory, skill);
+    } else if (showUncategorized && !showCategorized) {
+      // Uncategorized only — flat list
+      updateUncategorizedSkill(skill);
+    } else {
+      // Both — add to uncategorized by default, user can re-categorize later
+      updateUncategorizedSkill(skill);
+    }
   };
 
+  // ─── Remove skill from wherever it lives ─────────────────────────────────
   const removeSkill = (skill: string) => {
-    setSelectedSkills((prev) => prev.filter((s) => s !== skill));
-    updateSkill(skill);
+    // Check uncategorized first
+    if (data.skills?.uncategorized?.includes(skill)) {
+      updateUncategorizedSkill(skill);
+      return;
+    }
+    // Check each category
+    for (const category of categories) {
+      if (data.skills?.categorized?.[category]?.includes(skill)) {
+        updateCategorizedSkill(category, skill);
+        return;
+      }
+    }
+  };
+
+  // ─── Is skill selected (checks both categorized + uncategorized) ──────────
+  const isSkillSelected = (skill: string): boolean => {
+    return allSelectedSkills.includes(skill);
   };
 
   const filteredTitles = modalQuery.trim()
     ? jobTitleSuggestions.filter((t) =>
-        t.toLowerCase().includes(modalQuery.toLowerCase()),
+        t.toLowerCase().includes(modalQuery.toLowerCase())
       )
     : [];
 
@@ -292,6 +231,18 @@ const SkillsStep: React.FC<Props> = ({
     setJobTitle(title);
     setModalQuery("");
     setSearchModalVisible(false);
+  };
+
+  // ─── New category modal state ─────────────────────────────────────────────
+  const [newCategoryModal, setNewCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    addSkillCategory(newCategoryName.trim());
+    setActiveCategoryTab(newCategoryName.trim());
+    setNewCategoryName("");
+    setNewCategoryModal(false);
   };
 
   return (
@@ -304,9 +255,7 @@ const SkillsStep: React.FC<Props> = ({
           <Ionicons name="arrow-back" size={22} color="#3D405B" />
         </TouchableOpacity>
         <View style={styles.centerContent}>
-          <Text style={styles.stepText}>
-            Step {step} of {totalSteps}
-          </Text>
+          <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>SKILLS SET</Text>
         </View>
         <TouchableOpacity style={styles.rightBtn}>
@@ -320,21 +269,20 @@ const SkillsStep: React.FC<Props> = ({
           Add the skills you{"\n"}want to highlight
         </Text>
         <Text style={styles.subHeading}>
-          Search by job title to get relevant skill suggestions
+          {showCategorized
+            ? "Skills will be grouped by category in your resume"
+            : "Search by job title to get relevant skill suggestions"}
         </Text>
       </View>
 
-      {/* ── Skills Tag Box — full width top/bottom borders ── */}
+      {/* ── Selected Skills Tag Box ── */}
       <View style={styles.tagBoxWrapper}>
-        {selectedSkills.length > 0 && (
+        {allSelectedSkills.length > 0 && (
           <Text style={styles.tagBoxLabel}>SELECTED SKILLS</Text>
         )}
-        <ScrollView
-          style={{ maxHeight: 140 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={{ maxHeight: 140 }} showsVerticalScrollIndicator={false}>
           <View style={styles.tagWrapper}>
-            {selectedSkills.length === 0 ? (
+            {allSelectedSkills.length === 0 ? (
               <View style={styles.tagEmptyState}>
                 <Ionicons name="flash-outline" size={20} color="#ccc" />
                 <Text style={styles.tagPlaceholder}>
@@ -342,7 +290,7 @@ const SkillsStep: React.FC<Props> = ({
                 </Text>
               </View>
             ) : (
-              selectedSkills.map((skill, index) => (
+              allSelectedSkills.map((skill, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.tag}
@@ -350,26 +298,56 @@ const SkillsStep: React.FC<Props> = ({
                   activeOpacity={0.8}
                 >
                   <Text style={styles.tagText}>{skill}</Text>
-                  <Ionicons
-                    name="close"
-                    size={13}
-                    color="#fff"
-                    style={{ marginLeft: 5 }}
-                  />
+                  <Ionicons name="close" size={13} color="#fff" style={{ marginLeft: 5 }} />
                 </TouchableOpacity>
               ))
             )}
           </View>
         </ScrollView>
-
-        {/* Skills count */}
-        {selectedSkills.length > 0 && (
+        {allSelectedSkills.length > 0 && (
           <Text style={styles.skillCount}>
-            {selectedSkills.length} skill{selectedSkills.length > 1 ? "s" : ""}{" "}
-            selected
+            {allSelectedSkills.length} skill{allSelectedSkills.length > 1 ? "s" : ""} selected
           </Text>
         )}
       </View>
+
+      {/* ── Category Tabs (only for categorized / both mode) ── */}
+      {showCategorized && (
+        <View style={styles.categoryTabsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryTabs}>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.categoryTab, activeCategory === cat && styles.categoryTabActive]}
+                onPress={() => setActiveCategoryTab(cat)}
+              >
+                <Text style={[styles.categoryTabText, activeCategory === cat && styles.categoryTabTextActive]}>
+                  {cat}
+                  {data.skills?.categorized?.[cat]?.length > 0 && (
+                    <Text style={styles.categoryCount}>
+                      {" "}({data.skills.categorized[cat].length})
+                    </Text>
+                  )}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            {/* Add new category button */}
+            <TouchableOpacity
+              style={styles.addCategoryTab}
+              onPress={() => setNewCategoryModal(true)}
+            >
+              <Ionicons name="add" size={16} color="#3BBFAD" />
+              <Text style={styles.addCategoryText}>New</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Active category label */}
+          <Text style={styles.activeCategoryHint}>
+            Adding skills to: <Text style={{ color: "#3BBFAD" }}>{activeCategory}</Text>
+          </Text>
+        </View>
+      )}
 
       {/* ── Continue Button ── */}
       <View style={styles.continueRow}>
@@ -380,13 +358,12 @@ const SkillsStep: React.FC<Props> = ({
 
       {/* ── Examples Section ── */}
       <View style={styles.examplesSection}>
-        {/* Header */}
         <View style={styles.examplesHeader}>
           <Text style={styles.examplesLabel}>EXAMPLES FROM OUR EXPERTS</Text>
           <Ionicons name="chevron-up" size={18} color="#3D405B" />
         </View>
 
-        {/* Search box — opens modal */}
+        {/* Search box */}
         <TouchableOpacity
           style={styles.searchBox}
           onPress={() => setSearchModalVisible(true)}
@@ -398,11 +375,7 @@ const SkillsStep: React.FC<Props> = ({
             color={jobTitle ? "#3BBFAD" : "#aaa"}
             style={{ marginRight: 8 }}
           />
-          <Text
-            style={
-              jobTitle ? styles.searchActiveText : styles.searchPlaceholder
-            }
-          >
+          <Text style={jobTitle ? styles.searchActiveText : styles.searchPlaceholder}>
             {jobTitle || "Search by keyword or job title"}
           </Text>
           {jobTitle && (
@@ -413,12 +386,9 @@ const SkillsStep: React.FC<Props> = ({
         </TouchableOpacity>
 
         {/* Skills List */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.skillsList}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.skillsList}>
           {currentSkills.map((item, index) => {
-            const isSelected = selectedSkills.includes(item);
+            const isSelected = isSkillSelected(item);
             return (
               <TouchableOpacity
                 key={index}
@@ -426,24 +396,10 @@ const SkillsStep: React.FC<Props> = ({
                 onPress={() => toggleSkill(item)}
                 activeOpacity={0.8}
               >
-                <View
-                  style={[
-                    styles.iconCircle,
-                    isSelected && styles.selectedIconCircle,
-                  ]}
-                >
-                  <Ionicons
-                    name={isSelected ? "checkmark" : "add"}
-                    size={16}
-                    color="#fff"
-                  />
+                <View style={[styles.iconCircle, isSelected && styles.selectedIconCircle]}>
+                  <Ionicons name={isSelected ? "checkmark" : "add"} size={16} color="#fff" />
                 </View>
-                <Text
-                  style={[
-                    styles.skillText,
-                    isSelected && styles.selectedSkillText,
-                  ]}
-                >
+                <Text style={[styles.skillText, isSelected && styles.selectedSkillText]}>
                   {item}
                 </Text>
                 {isSelected && (
@@ -461,23 +417,12 @@ const SkillsStep: React.FC<Props> = ({
         </ScrollView>
       </View>
 
-      {/* ── Full Screen Search Modal ── */}
-      <Modal
-        visible={searchModalVisible}
-        animationType="fade"
-        statusBarTranslucent
-      >
+      {/* ── Job Title Search Modal ── */}
+      <Modal visible={searchModalVisible} animationType="fade" statusBarTranslucent>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#e8f5f2" }}>
           <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
-
-          {/* Search bar */}
           <View style={styles.modalSearchRow}>
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color="#555"
-              style={{ marginRight: 8 }}
-            />
+            <Ionicons name="search-outline" size={18} color="#555" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.modalSearchInput}
               placeholder="Search by keyword or job title"
@@ -487,33 +432,18 @@ const SkillsStep: React.FC<Props> = ({
               autoFocus
             />
             {modalQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setModalQuery("")}
-                style={{ marginRight: 10 }}
-              >
+              <TouchableOpacity onPress={() => setModalQuery("")} style={{ marginRight: 10 }}>
                 <Ionicons name="close" size={18} color="#555" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={() => {
-                setSearchModalVisible(false);
-                setModalQuery("");
-              }}
-            >
+            <TouchableOpacity onPress={() => { setSearchModalVisible(false); setModalQuery(""); }}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.modalDivider} />
 
-          {/* Wrap in flex:1 view */}
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: modalQuery.trim() ? "#fff" : "#e8f5f2",
-            }}
-          >
-            {/* Empty state */}
+          <View style={{ flex: 1, backgroundColor: modalQuery.trim() ? "#fff" : "#e8f5f2" }}>
             {modalQuery.trim() === "" && (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyTitle}>
@@ -525,20 +455,12 @@ const SkillsStep: React.FC<Props> = ({
               </View>
             )}
 
-            {/* Results */}
             {modalQuery.trim().length > 0 && (
-              <ScrollView
-                style={{ flex: 1 }}
-                keyboardShouldPersistTaps="handled"
-              >
+              <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
                 <Text style={styles.sectionHeader}>CUSTOM</Text>
-                <TouchableOpacity
-                  style={styles.resultRow}
-                  onPress={() => handleSelectTitle(modalQuery)}
-                >
+                <TouchableOpacity style={styles.resultRow} onPress={() => handleSelectTitle(modalQuery)}>
                   <Text style={styles.resultText}>{modalQuery}</Text>
                 </TouchableOpacity>
-
                 {filteredTitles.length > 0 && (
                   <>
                     <Text style={styles.sectionHeader}>SUGGESTIONS</Text>
@@ -557,6 +479,34 @@ const SkillsStep: React.FC<Props> = ({
             )}
           </View>
         </SafeAreaView>
+      </Modal>
+
+      {/* ── New Category Modal ── */}
+      <Modal visible={newCategoryModal} animationType="fade" transparent statusBarTranslucent>
+        <View style={styles.newCategoryOverlay}>
+          <View style={styles.newCategoryBox}>
+            <Text style={styles.newCategoryTitle}>Add Category</Text>
+            <TextInput
+              style={styles.newCategoryInput}
+              placeholder="e.g. Frontend, Cloud, Soft Skills"
+              placeholderTextColor="#aaa"
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              autoFocus
+            />
+            <View style={styles.newCategoryActions}>
+              <TouchableOpacity
+                style={styles.newCategoryCancel}
+                onPress={() => { setNewCategoryModal(false); setNewCategoryName(""); }}
+              >
+                <Text style={styles.newCategoryCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.newCategoryConfirm} onPress={handleAddCategory}>
+                <Text style={styles.newCategoryConfirmText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -586,11 +536,7 @@ const styles = StyleSheet.create({
     color: "#3D405B",
     fontFamily: "WorkSansBold",
   },
-  previewText: {
-    color: "#3BBFAD",
-    fontFamily: "WorkSansSemiBold",
-    fontSize: 15,
-  },
+  previewText: { color: "#3BBFAD", fontFamily: "WorkSansSemiBold", fontSize: 15 },
 
   // Heading
   headingBlock: { paddingHorizontal: 20, paddingTop: 20, marginBottom: 16 },
@@ -601,14 +547,9 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     marginBottom: 6,
   },
-  subHeading: {
-    fontSize: 14,
-    color: "#888",
-    fontFamily: "WorkSansRegular",
-    lineHeight: 20,
-  },
+  subHeading: { fontSize: 14, color: "#888", fontFamily: "WorkSansRegular", lineHeight: 20 },
 
-  // ── Tag Box — full width top/bottom borders ──
+  // Tag Box
   tagBoxWrapper: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -640,11 +581,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
   },
-  tagPlaceholder: {
-    color: "#bbb",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-  },
+  tagPlaceholder: { color: "#bbb", fontSize: 14, fontFamily: "WorkSansRegular" },
   tag: {
     flexDirection: "row",
     alignItems: "center",
@@ -653,17 +590,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  tagText: {
-    color: "#fff",
-    fontSize: 13,
-    fontFamily: "WorkSansSemiBold",
-  },
+  tagText: { color: "#fff", fontSize: 13, fontFamily: "WorkSansSemiBold" },
   skillCount: {
     fontSize: 11,
     color: "#3BBFAD",
     fontFamily: "WorkSansSemiBold",
     textAlign: "right",
     marginTop: 6,
+  },
+
+  // Category Tabs
+  categoryTabsWrapper: {
+    paddingTop: 10,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  categoryTabs: { paddingHorizontal: 16 },
+  categoryTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    marginRight: 8,
+  },
+  categoryTabActive: { backgroundColor: "#3BBFAD" },
+  categoryTabText: { fontSize: 13, color: "#3D405B", fontFamily: "WorkSansSemiBold" },
+  categoryTabTextActive: { color: "#fff" },
+  categoryCount: { fontSize: 11, opacity: 0.8 },
+  addCategoryTab: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#3BBFAD",
+    marginRight: 8,
+    gap: 4,
+  },
+  addCategoryText: { fontSize: 13, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
+  activeCategoryHint: {
+    fontSize: 12,
+    color: "#888",
+    fontFamily: "WorkSansRegular",
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 2,
   },
 
   // Continue
@@ -719,18 +692,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginBottom: 12,
   },
-  searchPlaceholder: {
-    flex: 1,
-    color: "#aaa",
-    fontSize: 14,
-    fontFamily: "WorkSansRegular",
-  },
-  searchActiveText: {
-    flex: 1,
-    color: "#3D405B",
-    fontSize: 14,
-    fontFamily: "WorkSansSemiBold",
-  },
+  searchPlaceholder: { flex: 1, color: "#aaa", fontSize: 14, fontFamily: "WorkSansRegular" },
+  searchActiveText: { flex: 1, color: "#3D405B", fontSize: 14, fontFamily: "WorkSansSemiBold" },
 
   // Skills list
   skillsList: { flex: 1 },
@@ -745,10 +708,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "#fff",
   },
-  selectedSkillBox: {
-    borderColor: "#3BBFAD",
-    backgroundColor: "#f0faf8",
-  },
+  selectedSkillBox: { borderColor: "#3BBFAD", backgroundColor: "#f0faf8" },
   iconCircle: {
     width: 30,
     height: 30,
@@ -759,18 +719,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   selectedIconCircle: { backgroundColor: "#3BBFAD" },
-  skillText: {
-    fontSize: 15,
-    color: "#3D405B",
-    fontFamily: "WorkSansRegular",
-    flex: 1,
-  },
-  selectedSkillText: {
-    color: "#3BBFAD",
-    fontFamily: "WorkSansSemiBold",
-  },
+  skillText: { fontSize: 15, color: "#3D405B", fontFamily: "WorkSansRegular", flex: 1 },
+  selectedSkillText: { color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
-  // Modal
+  // Job Title Modal
   modalSearchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -789,11 +741,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     marginRight: 8,
   },
-  cancelText: {
-    color: "#3D405B",
-    fontSize: 15,
-    fontFamily: "WorkSansSemiBold",
-  },
+  cancelText: { color: "#3D405B", fontSize: 15, fontFamily: "WorkSansSemiBold" },
   modalDivider: { height: 1, backgroundColor: "#cde8e2" },
   emptyState: {
     flex: 1,
@@ -832,9 +780,55 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: "#eee",
   },
-  resultText: {
-    fontSize: 16,
-    color: "#3D405B",
-    fontFamily: "WorkSansRegular",
+  resultText: { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+
+  // New Category Modal
+  newCategoryOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
   },
+  newCategoryBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+  },
+  newCategoryTitle: {
+    fontSize: 18,
+    fontFamily: "PlayfairDisplayBold",
+    color: "#3D405B",
+    marginBottom: 16,
+  },
+  newCategoryInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    marginBottom: 20,
+  },
+  newCategoryActions: { flexDirection: "row", gap: 12 },
+  newCategoryCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+  },
+  newCategoryCancelText: { color: "#888", fontFamily: "WorkSansSemiBold", fontSize: 15 },
+  newCategoryConfirm: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#3BBFAD",
+    alignItems: "center",
+  },
+  newCategoryConfirmText: { color: "#fff", fontFamily: "WorkSansBold", fontSize: 15 },
 });

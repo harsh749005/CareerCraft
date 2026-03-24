@@ -10,9 +10,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import CustomLoader from "../appcomp/CustomLoader";
 import { generatePDF } from "../generator/GeneratePDF";
-// ── Add these imports at the top of ReviewStep ──
-import AuthScreen from "../../app/(auth)/AuthScreen"; // adjust path
-import AsyncStorage from "@react-native-async-storage/async-storage"; // or your auth state
+import AuthScreen from "../../app/(auth)/AuthScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
+
 interface ReviewStepProps {
   data: any;
   prevStep: () => void;
@@ -21,13 +22,11 @@ interface ReviewStepProps {
   totalSteps: number;
 }
 
-// ── Map each section to its step number ──
-// Adjust these numbers to match YOUR actual step order in BuildResume
 const STEP_MAP = {
   personal: 1,
   summary: 2,
-  work: 3, // WorkExperienceStep (basic info)
-  workDesc: 4, // JobDescriptionStep
+  work: 3,
+  workDesc: 4,
   education: 5,
   skills: 6,
   projects: 7,
@@ -42,18 +41,15 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   totalSteps,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showAuth, setShowAuth] = useState(false); // ✅ controls auth screen
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // ✅ track auth state
+  const [showAuth, setShowAuth] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ✅ Check login status on mount
   useEffect(() => {
     checkLoginStatus();
   }, []);
 
   const checkLoginStatus = async () => {
     try {
-      // Replace with your actual auth check
-      // e.g. AsyncStorage, Supabase session, Firebase currentUser, etc.
       const token = await AsyncStorage.getItem("userToken");
       setIsLoggedIn(!!token);
     } catch {
@@ -62,14 +58,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   const handleSubmit = async () => {
-    // try {
-    // ✅ Gate: show auth if not logged in
     if (!isLoggedIn) {
       setShowAuth(true);
       return;
     }
     generate();
   };
+
   const generate = async () => {
     setIsGenerating(true);
     try {
@@ -83,13 +78,13 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       console.error("Error generating PDF:", err);
     }
   };
-  // ✅ Called after successful login/register
+
   const handleAuthSuccess = () => {
     setIsLoggedIn(true);
     setShowAuth(false);
-    generate(); // ✅ auto-trigger PDF after auth
+    generate();
   };
-  // ✅ Show AuthScreen as full overlay if not logged in
+
   if (showAuth) {
     return (
       <AuthScreen
@@ -98,7 +93,8 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       />
     );
   }
-  // ── Section wrapper with Edit button ──
+
+  // ── Section wrapper ──
   const Section = ({
     icon,
     title,
@@ -118,7 +114,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </View>
           <Text style={styles.sectionTitle}>{title}</Text>
         </View>
-        {/* ✅ Edit button */}
         <TouchableOpacity
           style={styles.editBtn}
           onPress={() => goToStep(STEP_MAP[stepKey])}
@@ -149,6 +144,84 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
       </Text>
     </View>
   );
+
+  // ── Skills rendering ──────────────────────────────────────────────────────
+
+  const templateConfig = TEMPLATE_CONFIGS[data.selected_template];
+  const skillsMode = templateConfig?.skills?.mode ?? "uncategorized";
+
+  const categorized: Record<string, string[]> = data.skills?.categorized || {};
+  const uncategorized: string[] = data.skills?.uncategorized || [];
+
+  const getFlatSkills = (): string[] => {
+    const fromCategorized = Object.values(categorized).flat();
+    return [...new Set([...fromCategorized, ...uncategorized])];
+  };
+
+  const SkillChips = ({ skills }: { skills: string[] }) => (
+    <View style={styles.skillChips}>
+      {skills.map((skill, i) => (
+        <View key={i} style={styles.skillChip}>
+          <Text style={styles.skillChipText}>{skill}</Text>
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderSkills = () => {
+    // ── Categorized: one labeled group per category ──
+    if (skillsMode === "categorized") {
+      return Object.entries(categorized).map(([category, skills], i) => {
+        if (!skills || skills.length === 0) return null;
+        return (
+          <View key={i} style={styles.skillCategory}>
+            <Text style={styles.skillCatLabel}>{category.toUpperCase()}</Text>
+            <SkillChips skills={skills} />
+          </View>
+        );
+      });
+    }
+
+    // ── Uncategorized: flat chip list ──
+    if (skillsMode === "uncategorized") {
+      const flat = getFlatSkills();
+      if (flat.length === 0) return null;
+      return (
+        <View style={styles.skillCategory}>
+          <SkillChips skills={flat} />
+        </View>
+      );
+    }
+
+    // ── Both: category groups + "Other" for uncategorized ──
+    if (skillsMode === "both") {
+      return (
+        <>
+          {Object.entries(categorized).map(([category, skills], i) => {
+            if (!skills || skills.length === 0) return null;
+            return (
+              <View key={i} style={styles.skillCategory}>
+                <Text style={styles.skillCatLabel}>
+                  {category.toUpperCase()}
+                </Text>
+                <SkillChips skills={skills} />
+              </View>
+            );
+          })}
+          {uncategorized.length > 0 && (
+            <View style={styles.skillCategory}>
+              <Text style={styles.skillCatLabel}>OTHER</Text>
+              <SkillChips skills={uncategorized} />
+            </View>
+          )}
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -189,6 +262,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             <InfoRow label="Full Name" value={data.personal_info?.name} />
             <InfoRow label="Email" value={data.personal_info?.email} />
             <InfoRow label="Phone" value={data.personal_info?.number} />
+            <InfoRow label="Branch/" value={data.personal_info?.branch} />
             {data.personal_info?.city && (
               <InfoRow label="City" value={data.personal_info.city} />
             )}
@@ -226,7 +300,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     <Text style={styles.itemTitle}>
                       {exp.job_title || exp.role || "—"}
                     </Text>
-                    {/* Per-item edit */}
                     <TouchableOpacity
                       style={styles.itemEditBtn}
                       onPress={() => goToStep(STEP_MAP.work)}
@@ -237,11 +310,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   <View style={styles.itemMeta}>
                     {(exp.company_name || exp.company) && (
                       <View style={styles.metaChip}>
-                        <Ionicons
-                          name="business-outline"
-                          size={12}
-                          color="#888"
-                        />
+                        <Ionicons name="business-outline" size={12} color="#888" />
                         <Text style={styles.metaText}>
                           {exp.company_name || exp.company}
                         </Text>
@@ -249,11 +318,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     )}
                     {(exp.start_month || exp.start) && (
                       <View style={styles.metaChip}>
-                        <Ionicons
-                          name="calendar-outline"
-                          size={12}
-                          color="#888"
-                        />
+                        <Ionicons name="calendar-outline" size={12} color="#888" />
                         <Text style={styles.metaText}>
                           {exp.start_month
                             ? `${exp.start_month}/${exp.start_year}`
@@ -269,11 +334,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     )}
                     {(exp.city || exp.country) && (
                       <View style={styles.metaChip}>
-                        <Ionicons
-                          name="location-outline"
-                          size={12}
-                          color="#888"
-                        />
+                        <Ionicons name="location-outline" size={12} color="#888" />
                         <Text style={styles.metaText}>
                           {[exp.city, exp.country].filter(Boolean).join(", ")}
                         </Text>
@@ -319,13 +380,11 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   </View>
                   {proj.technologies && (
                     <View style={styles.techRow}>
-                      {proj.technologies
-                        .split(",")
-                        .map((t: string, j: number) => (
-                          <View key={j} style={styles.techChip}>
-                            <Text style={styles.techChipText}>{t.trim()}</Text>
-                          </View>
-                        ))}
+                      {proj.technologies.split(",").map((t: string, j: number) => (
+                        <View key={j} style={styles.techChip}>
+                          <Text style={styles.techChipText}>{t.trim()}</Text>
+                        </View>
+                      ))}
                     </View>
                   )}
                   {proj.description && (
@@ -333,11 +392,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   )}
                   {proj.liveUrl && (
                     <View style={[styles.metaChip, { marginTop: 6 }]}>
-                      <Ionicons
-                        name="globe-outline"
-                        size={12}
-                        color="#3BBFAD"
-                      />
+                      <Ionicons name="globe-outline" size={12} color="#3BBFAD" />
                       <Text style={[styles.metaText, { color: "#3BBFAD" }]}>
                         {proj.liveUrl}
                       </Text>
@@ -373,11 +428,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 <View style={styles.itemMeta}>
                   {edu.institution && (
                     <View style={styles.metaChip}>
-                      <Ionicons
-                        name="business-outline"
-                        size={12}
-                        color="#888"
-                      />
+                      <Ionicons name="business-outline" size={12} color="#888" />
                       <Text style={styles.metaText}>{edu.institution}</Text>
                     </View>
                   )}
@@ -394,24 +445,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
 
           {/* ── Skills ── */}
           <Section icon="flash-outline" title="Skills" stepKey="skills">
-            {Object.entries(data.skills).map(([category, skills], i) => {
-              const typedSkills = skills as string[];
-              if (!typedSkills || typedSkills.length === 0) return null;
-              return (
-                <View key={i} style={styles.skillCategory}>
-                  <Text style={styles.skillCatLabel}>
-                    {category.toUpperCase()}
-                  </Text>
-                  <View style={styles.skillChips}>
-                    {typedSkills.map((skill, j) => (
-                      <View key={j} style={styles.skillChip}>
-                        <Text style={styles.skillChipText}>{skill}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              );
-            })}
+            {renderSkills()}
           </Section>
 
           {/* ── Other Links ── */}
@@ -461,7 +495,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
               styles.generateBtn,
               isGenerating && styles.generateBtnLoading,
             ]}
-            onPress={handleSubmit} // ✅ now goes through auth gate
+            onPress={handleSubmit}
             disabled={isGenerating}
             activeOpacity={0.88}
           >
@@ -538,7 +572,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Section
   sectionCard: {
     backgroundColor: "#fff",
     marginHorizontal: 20,
@@ -573,8 +606,6 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
     color: "#3D405B",
   },
-
-  // ✅ Edit button in section header
   editBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -591,8 +622,6 @@ const styles = StyleSheet.create({
     color: "#3BBFAD",
     fontFamily: "WorkSansSemiBold",
   },
-
-  // ✅ Per-item pencil icon
   itemEditBtn: {
     width: 26,
     height: 26,
@@ -602,7 +631,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: "auto",
   },
-
   sectionDivider: { height: 1, backgroundColor: "#f0f0f0", marginBottom: 4 },
 
   infoRow: {
@@ -745,7 +773,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  // Empty state
   emptyBlock: {
     flexDirection: "row",
     alignItems: "center",
@@ -774,7 +801,6 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
   },
 
-  // Bottom generate button
   bottomBar: {
     position: "absolute",
     bottom: 0,
