@@ -15,6 +15,7 @@ import IndustrySelector from "./TemplateSelector/IndustrySelector";
 import ResumeOptionEnhanced from "./TemplateSelector/ResumeOptionEnhanced";
 import JobDescriptionStep from "./JobDescriptionStep";
 import BranchSelectScreen from "./TemplateSelector/Branchselectscreen";
+import WorkExperienceSummaryStep from "./WorkExperienceSummaryStep";
 
 export default function BuildReume() {
   // const [option,setOption] = useState("");
@@ -28,6 +29,8 @@ export default function BuildReume() {
   // }
 
   const [step, setStep] = useState(1);
+  /** Which `work_experience` entry WorkExperience + JobDescription steps edit (not always index 0). */
+  const [activeWorkExperienceIndex, setActiveWorkExperienceIndex] = useState(0);
   const [formData, setFormData] = useState<{
     personal_info: Record<string, any>;
     professional_summary: string;
@@ -93,21 +96,82 @@ export default function BuildReume() {
     }));
   };
 
-  // 🔹 Update Work Experience
+  const EMPTY_WORK_EXPERIENCE = {
+    job_title: "",
+    company_name: "",
+    city: "",
+    country: "",
+    start_month: "",
+    start_year: "",
+    end_month: "",
+    end_year: "",
+    is_present: false,
+    description: "",
+  };
+
+  const isWorkExperienceEmpty = (exp: any) => {
+    if (!exp) return true;
+    const t = (exp.job_title || "").trim();
+    const c = (exp.company_name || "").trim();
+    const d = (exp.description || "").trim();
+    const hasDates =
+      Boolean(exp.start_month) ||
+      Boolean(exp.start_year) ||
+      Boolean(exp.end_month) ||
+      Boolean(exp.end_year) ||
+      Boolean(exp.is_present);
+    return !t && !c && !d && !hasDates;
+  };
+
+  // 🔹 Update Work Experience (functional update avoids stale overwrites)
   const updateWorkExperience = (
     index: number,
     field: string,
-    value: string
+    value: string | boolean
   ) => {
-    const updated = formData.work_experience.map((exp, i) =>
-      i === index ? { ...exp, [field]: value } : exp
-    );
-    setFormData({ ...formData, work_experience: updated });
+    setFormData((prev) => ({
+      ...prev,
+      work_experience: prev.work_experience.map((exp, i) =>
+        i === index ? { ...exp, [field]: value } : exp
+      ),
+    }));
   };
-  // Remove Exprerienc
+
   const removeExperience = (index: number) => {
-    const updated = formData.work_experience.filter((_, i) => i !== index);
-    setFormData({ ...formData, work_experience: updated });
+    setFormData((prev) => ({
+      ...prev,
+      work_experience: prev.work_experience.filter((_, i) => i !== index),
+    }));
+    setActiveWorkExperienceIndex((prev) => {
+      if (index < prev) return prev - 1;
+      if (index === prev) return Math.max(0, prev - 1);
+      return prev;
+    });
+  };
+
+  /** Add a new role, drop prior blank drafts, focus the new slot, go to Work Experience. */
+  const handleAddAnotherPosition = () => {
+    let newIndex = 0;
+    setFormData((prev) => {
+      const cleaned = prev.work_experience.filter((e) => !isWorkExperienceEmpty(e));
+      newIndex = cleaned.length;
+      return {
+        ...prev,
+        work_experience: [...cleaned, { ...EMPTY_WORK_EXPERIENCE }],
+      };
+    });
+    setActiveWorkExperienceIndex(newIndex);
+    setStep(7);
+  };
+
+  const handleEditWorkExperience = (index: number) => {
+    setActiveWorkExperienceIndex(index);
+    setStep(7);
+  };
+
+  const handleGoToJobDescription = (index: number) => {
+    setActiveWorkExperienceIndex(index);
+    setStep(8);
   };
   // add projects
   const addProjects = (pro: any) => {
@@ -399,25 +463,41 @@ export default function BuildReume() {
             addExperience={addWorkExperience}
             updateExperience={updateWorkExperience}
             removeExperience={removeExperience}
+            activeExperienceIndex={activeWorkExperienceIndex}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
             totalSteps={totalSteps}
           />
         )}
+
         {step === 8 && (
           <JobDescriptionStep
             data={formData}
-            // addExperience={addWorkExperience}
             updateExperience={updateWorkExperience}
-            // removeExperience={removeExperience}
+            activeExperienceIndex={activeWorkExperienceIndex}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
             totalSteps={totalSteps}
           />
         )}
-        {step === 9 && (
+        {
+          step === 9 && (
+            <WorkExperienceSummaryStep
+              data={formData}
+              removeExperience={removeExperience}
+              onAddAnotherPosition={handleAddAnotherPosition}
+              onEditExperience={handleEditWorkExperience}
+              onGoToJobDescription={handleGoToJobDescription}
+              nextStep={nextStep}
+              prevStep={prevStep}
+              step={step}
+              totalSteps={totalSteps}
+            />
+          )
+        }
+        {step === 10 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
@@ -428,7 +508,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 10 && (
+        {step === 11 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
@@ -447,7 +527,7 @@ export default function BuildReume() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 11 && <ReviewStep data={formData} prevStep={prevStep} step={step}
+        {step === 12 && <ReviewStep data={formData} prevStep={prevStep} step={step}
           totalSteps={totalSteps} goToStep={goToStep} />}
       </View>
     </SafeScreen>

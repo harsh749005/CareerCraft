@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -286,7 +286,8 @@ const RoleSearchModal: React.FC<{
 // ─── Main Component ──────────────────────────────────────────────
 interface Props {
   data: any;
-  updateExperience: any;
+  updateExperience: (index: number, field: string, value: string | boolean) => void;
+  activeExperienceIndex: number;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -296,11 +297,18 @@ interface Props {
 const JobDescriptionStep: React.FC<Props> = ({
   data,
   updateExperience,
+  activeExperienceIndex,
   nextStep,
   prevStep,
   step,
   totalSteps,
 }) => {
+  const workExperience = data.work_experience || [];
+  const safeIndex = Math.min(
+    Math.max(0, activeExperienceIndex),
+    Math.max(0, workExperience.length - 1)
+  );
+
   // ── Bullet state ──
   const [bullets, setBullets] = useState<BulletPoint[]>([]);
   const [past, setPast] = useState<BulletPoint[][]>([]); // undo stack
@@ -353,8 +361,27 @@ const JobDescriptionStep: React.FC<Props> = ({
 
   const sync = (updated: BulletPoint[]) => {
     const description = updated.map((b) => `• ${b.text}`).join("\n");
-    updateExperience(0, "description", description);
+    updateExperience(safeIndex, "description", description);
   };
+
+  // Load bullets for the selected work experience when switching jobs (index 0 was wrong before).
+  useEffect(() => {
+    const raw = workExperience[safeIndex]?.description ?? "";
+    if (!raw.trim()) {
+      setBullets([]);
+      setPast([]);
+      setFuture([]);
+      return;
+    }
+    const lines = raw.split(/\r?\n/).filter((l) => l.trim());
+    const parsed: BulletPoint[] = lines.map((line, i) => ({
+      id: `loaded-${safeIndex}-${i}`,
+      text: line.replace(/^•\s*/, "").trim(),
+    }));
+    setBullets(parsed);
+    setPast([]);
+    setFuture([]);
+  }, [safeIndex]);
 
   // ── Add from examples ──
   const toggleExample = (text: string) => {

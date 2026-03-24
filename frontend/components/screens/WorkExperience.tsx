@@ -18,6 +18,8 @@ interface WorkExperienceStepProps {
   addExperience: any;
   updateExperience: any;
   removeExperience: any;
+  /** Index in `data.work_experience` this screen edits (must match JobDescription + summary actions). */
+  activeExperienceIndex: number;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -391,6 +393,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   addExperience,
   updateExperience,
   removeExperience,
+  activeExperienceIndex,
   nextStep,
   prevStep,
   step,
@@ -410,11 +413,17 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
         end_month: "",
         end_year: "",
         is_present: false,
+        description: "",
       });
     }
   }, []);
 
-  const exp = workExperience[0] || {};
+  const safeIndex = Math.min(
+    Math.max(0, activeExperienceIndex),
+    Math.max(0, workExperience.length - 1)
+  );
+  const exp = workExperience[safeIndex] || {};
+
   // Add local state for immediate display
   const [startMonth, setStartMonth] = useState(exp.start_month || "");
   const [startYear, setStartYear] = useState(exp.start_year || "");
@@ -434,6 +443,17 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [isPresent, setIsPresent] = useState<boolean>(exp.is_present || false);
 
+  // When switching which entry we edit, sync date fields from form data
+  useEffect(() => {
+    const w = workExperience[safeIndex];
+    if (!w) return;
+    setStartMonth(w.start_month || "");
+    setStartYear(w.start_year || "");
+    setEndMonth(w.end_month || "");
+    setEndYear(w.end_year || "");
+    setIsPresent(Boolean(w.is_present));
+  }, [safeIndex, workExperience.length]);
+
   // Modal visibility
   const [showJobModal, setShowJobModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -441,7 +461,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   const [showEndDate, setShowEndDate] = useState(false);
 
   const update = (field: string, value: any) =>
-    updateExperience(0, field, value);
+    updateExperience(safeIndex, field, value);
 
   const renderTextField = (label: string, key: string) => {
     const value = exp[key] || "";
@@ -544,7 +564,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
         )}
 
         {/* City & Country */}
-        {renderTextField("City", "city")}
+        {/* {renderTextField("City", "city")} */}
         {renderTextField("Country", "country")}
 
         {/* Date Row */}
