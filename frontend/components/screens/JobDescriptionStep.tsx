@@ -756,12 +756,7 @@ const styles = StyleSheet.create({
   rightBtn: { position: "absolute", right: 20 },
   centerContent: { flex: 1, alignItems: "center" },
   stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
-  navTitle: {
-    fontSize: 14,
-    letterSpacing: 1,
-    color: "#3D405B",
-    fontFamily: "WorkSansBold",
-  },
+  navTitle: { fontSize: 14, letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
   previewText: {
     color: "#3BBFAD",
     fontSize: 15,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ interface Props {
     field: string | Record<string, string>,
     value?: string
   ) => void;
+  activeEduExperienceIndex: number;
   removeEducationExperience: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -162,25 +163,61 @@ const DatePickerModal: React.FC<DatePickerProps> = ({
 
 // ─── Main Component ──────────────────────────────────────────────
 const EducationStep: React.FC<Props> = ({
-  data, addEducation, updateEducation,
+  data, addEducation, updateEducation,activeEduExperienceIndex,
   removeEducationExperience, nextStep, prevStep, step, totalSteps,
 }) => {
-  const edu = data.education?.[0] || {};
-
+  const edu = data.education || [];
+  useEffect(() => {
+    if (edu.length === 0) {
+      addEducation({
+        institution: "",
+        degree:"",
+        result:"",
+        start_month: "",
+        start_year: "",
+        end_month: "",
+        end_year: "",
+        is_present: false,
+      });
+    }
+  }, []);
+  const safeIndex = Math.min(
+    Math.max(0, activeEduExperienceIndex),
+    Math.max(0, edu.length - 1)
+  );
+  const eduexp = edu[safeIndex] || {};
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [isPresent, setIsPresent] = useState<boolean>(false);
 
   // Local date state for immediate display
-  const [startMonth, setStartMonth] = useState(edu.start_month || "");
-  const [startYear,  setStartYear]  = useState(edu.start_year  || "");
-  const [endMonth,   setEndMonth]   = useState(edu.end_month   || "");
-  const [endYear,    setEndYear]    = useState(edu.end_year    || "");
+  // const [startMonth, setStartMonth] = useState(eduexp.start_month || "");
+  // const [startYear,  setStartYear]  = useState(eduexp.start_year  || "");
+  // const [endMonth,   setEndMonth]   = useState(eduexp.end_month   || "");
+  // const [endYear,    setEndYear]    = useState(eduexp.end_year    || "");
+  // ✅ Fix — derive directly from edu array using safeIndex
+const currentEdu = data.education?.[safeIndex] || {};
+const [startMonth, setStartMonth] = useState(currentEdu.start_month || "");
+const [startYear,  setStartYear]  = useState(currentEdu.start_year  || "");
+const [endMonth,   setEndMonth]   = useState(currentEdu.end_month   || "");
+const [endYear,    setEndYear]    = useState(currentEdu.end_year    || "");
 
   const [showStartDate, setShowStartDate] = useState(false);
   const [showEndDate,   setShowEndDate]   = useState(false);
+console.log(eduexp.start_month + eduexp.start_year + eduexp.end_month+eduexp.end_year )
+  // When switching which entry we edit, sync date fields from form data
+  useEffect(() => {
+    const e = edu[safeIndex];
+    if (!e) return;
+    setStartMonth(e.start_month || "");
+    setStartYear(e.start_year   || "");
+    setEndMonth(e.end_month     || "");
+    setEndYear(e.end_year       || "");
+    setIsPresent(Boolean(e.is_present));
+  }, [safeIndex]); // ✅ ONLY safeIndex — remove JSON.stringify
+
 
   const update = (field: string, value: string) =>
-    updateEducation(0, field, value);
+    updateEducation(safeIndex, field, value);
 
   const getDateLabel = (month: string, year: string) => {
     if (!month || !year) return "";
@@ -193,7 +230,7 @@ const EducationStep: React.FC<Props> = ({
 
   // ── Field renderer ──
   const renderField = (label: string, key: string) => {
-    const value = edu[key] || "";
+    const value = eduexp[key] || "";
     const isFocused = focusedField === key;
 
     return (
@@ -333,32 +370,36 @@ const EducationStep: React.FC<Props> = ({
 
       {/* ── Date Pickers ── */}
       <DatePickerModal
-        visible={showStartDate}
-        onClose={() => setShowStartDate(false)}
-        title="Select Start Date"
-        initialMonth={startMonth}
-        initialYear={startYear}
-        onConfirm={(m, y) => {
-          setStartMonth(m);
-          setStartYear(y);
-          update("start_month", m);
-          update("start_year", y);
-        }}
-      />
+  visible={showStartDate}
+  onClose={() => setShowStartDate(false)}
+  title="Select Start Date"
+  initialMonth={startMonth}
+  initialYear={startYear}
+  onConfirm={(m, y) => {
+    // ✅ Update local state immediately for instant display
+    setStartMonth(m);
+    setStartYear(y);
+    // ✅ Then persist to formData
+    update("start_month", m);
+    update("start_year", y);
+  }}
+/>
 
-      <DatePickerModal
-        visible={showEndDate}
-        onClose={() => setShowEndDate(false)}
-        title="Select Graduation Date"
-        initialMonth={endMonth}
-        initialYear={endYear}
-        onConfirm={(m, y) => {
-          setEndMonth(m);
-          setEndYear(y);
-          update("end_month", m);
-          update("end_year", y);
-        }}
-      />
+<DatePickerModal
+  visible={showEndDate}
+  onClose={() => setShowEndDate(false)}
+  title="Select Graduation Date"
+  initialMonth={endMonth}
+  initialYear={endYear}
+  onConfirm={(m, y) => {
+    // ✅ Update local state immediately for instant display
+    setEndMonth(m);
+    setEndYear(y);
+    // ✅ Then persist to formData
+    update("end_month", m);
+    update("end_year", y);
+  }}
+/>
     </View>
   );
 };
@@ -380,7 +421,7 @@ const styles = StyleSheet.create({
   rightBtn:     { position: "absolute", right: 20 },
   centerContent:{ flex: 1, alignItems: "center" },
   stepText:     { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
-  navTitle:     { fontSize: 14, fontWeight: "bold", letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
+  navTitle:     { fontSize: 14, letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
   previewText:  { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
 
   scrollContent: { paddingBottom: 100 },

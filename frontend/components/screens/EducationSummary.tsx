@@ -14,9 +14,9 @@ import { Ionicons } from "@expo/vector-icons";
 type WorkExpEntry = { exp: any; index: number };
 
 function isExperienceVisibleInSummary(exp: any) {
-  const t = (exp?.job_title || "").trim();
-  const c = (exp?.company_name || "").trim();
-  const d = (exp?.description || "").trim();
+  const t = (exp?.institution || "").trim();
+  const c = (exp?.degree || "").trim();
+  const d = (exp?.result || "").trim();
   const hasDates =
     Boolean(exp?.start_month) ||
     Boolean(exp?.start_year) ||
@@ -31,26 +31,26 @@ interface Props {
   removeExperience: (index: number) => void;
   onAddAnotherPosition: () => void;
   onEditExperience: (index: number) => void;
-  onGoToJobDescription: (index: number) => void;
+  // onGoToJobDescription: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
   totalSteps: number;
 }
 
-const WorkExperienceSummaryStep: React.FC<Props> = ({
+const EducationSummary: React.FC<Props> = ({
   data,
   removeExperience,
   onAddAnotherPosition,
   onEditExperience,
-  onGoToJobDescription,
+  // onGoToJobDescription,
   nextStep,
   prevStep,
   step,
   totalSteps,
 }) => {
-  const workExperience = data.work_experience || [];
-  const visibleEntries: WorkExpEntry[] = workExperience
+  const EducationExperience = data.education || [];
+  const visibleEntries: WorkExpEntry[] = EducationExperience
     .map((exp: any, index: number) => ({ exp, index }))
     .filter((entry: WorkExpEntry) =>
       isExperienceVisibleInSummary(entry.exp)
@@ -123,7 +123,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
         </TouchableOpacity>
         <View style={styles.centerContent}>
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
-          <Text style={styles.navTitle}>WORK HISTORY</Text>
+          <Text style={styles.navTitle}>EDUCATION HISTORY</Text>
         </View>
         <TouchableOpacity style={styles.rightBtn}>
           <Text style={styles.previewText}>Preview</Text>
@@ -135,15 +135,15 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
       >
         {/* Heading */}
-        <Text style={styles.mainHeading}>Work history summary</Text>
+        <Text style={styles.mainHeading}>Education history summary</Text>
 
         {/* ── Experience Cards ── */}
         {visibleEntries.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="briefcase-outline" size={40} color="#ccc" />
-            <Text style={styles.emptyTitle}>No work experience added</Text>
+            <Text style={styles.emptyTitle}>No education experience added</Text>
             <Text style={styles.emptySubtitle}>
-              Go back and add your work history
+              Go back and add your Education history
             </Text>
           </View>
         ) : (
@@ -165,13 +165,13 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
                       {/* Job title + Company */}
                       <View style={styles.titleRow}>
                         <Text style={styles.jobTitle} numberOfLines={1}>
-                          {exp.job_title || "Untitled Role"}
+                          {exp.institution || "Untitled Role"}
                         </Text>
-                        {exp.company_name && (
+                        {exp.degree && (
                           <>
-                            <Text style={styles.titleSep}> | </Text>
+                            {/* <Text style={styles.titleSep}> | </Text> */}
                             <Text style={styles.companyName} numberOfLines={1}>
-                              {truncate(exp.company_name, 10)}
+                              {truncate(exp.degree, 10)}
                             </Text>
                           </>
                         )}
@@ -215,7 +215,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
                 )}
 
                 {/* No description fallback */}
-                {bullets.length === 0 && (
+                {/* {bullets.length === 0 && (
                   <TouchableOpacity
                     style={styles.addDescBtn}
                     onPress={() => onGoToJobDescription(index)}
@@ -223,7 +223,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
                     <Ionicons name="add" size={14} color="#3BBFAD" />
                     <Text style={styles.addDescText}>Add job description</Text>
                   </TouchableOpacity>
-                )}
+                )} */}
               </View>
             );
           })
@@ -284,15 +284,15 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
             <View style={styles.sheetHandle} />
 
             {/* Selected experience label */}
-            {selectedIndex !== null && workExperience[selectedIndex] && (
+            {selectedIndex !== null && EducationExperience[selectedIndex] && (
               <View style={styles.sheetHeader}>
                 <Text style={styles.sheetTitle} numberOfLines={1}>
-                  {workExperience[selectedIndex]?.job_title?.trim() ||
-                    workExperience[selectedIndex]?.company_name?.trim() ||
-                    "Work experience"}
+                  {EducationExperience[selectedIndex]?.institution?.trim() ||
+                    EducationExperience[selectedIndex]?.degree?.trim() ||
+                    "Education experience"}
                 </Text>
                 <Text style={styles.sheetSubtitle} numberOfLines={1}>
-                  {workExperience[selectedIndex]?.company_name || ""}
+                  {EducationExperience[selectedIndex]?.degree || ""}
                 </Text>
               </View>
             )}
@@ -340,7 +340,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
   );
 };
 
-export default WorkExperienceSummaryStep;
+export default EducationSummary;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },

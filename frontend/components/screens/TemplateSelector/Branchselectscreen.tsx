@@ -11,6 +11,7 @@ import {
   Modal,
   StatusBar,
   Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -24,10 +25,12 @@ import { router } from "expo-router";
 interface BranchSelectScreenProps {
   onNext: (branch: string) => void;  // passes BranchOption.value e.g. "CSE", "IT"
   nextStep: () => void;
-  prevStep:() => void;
+  prevStep: () => void;
+  step: number;
+  totalSteps: number;
 }
 
-const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextStep,prevStep }) => {
+const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextStep, prevStep, step, totalSteps }) => {
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,77 +66,83 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
           <Ionicons name="arrow-back" size={22} color="#3D405B" />
         </TouchableOpacity>
         <View style={styles.centerContent}>
-          {/* <Text style={styles.stepText}>Step {step} of {totalSteps}</Text> */}
-          <Text style={styles.navTitle}>EDUCATION</Text>
+          <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
+          <Text style={styles.navTitle}>BRANCH SELECTION</Text>
         </View>
         <TouchableOpacity style={styles.rightBtn}>
-          <Text style={styles.previewText}>Preview</Text>
+          {/* <Text style={styles.previewText}>Preview</Text> */}
         </TouchableOpacity>
       </View>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Text style={styles.title}>{`What's your field of study?`}</Text>
-        <Text style={styles.subtitle}>
-         {` We'll recommend the best resume templates for your branch`}
+        <Text style={styles.mainHeading}>{`What's your field of study?`}</Text>
+        <Text style={styles.subHeading}>
+          {`We'll recommend the best resume templates for your branch`}
         </Text>
       </View>
-
-      {/* ── Quick Access Chips ── */}
-      <Text style={styles.sectionLabel}>Popular choices</Text>
-      <View style={styles.chipsRow}>
-        {QUICK_ACCESS_BRANCHES.map((branch) => {
-          const isActive = selectedBranch === branch.value;
-          return (
-            <TouchableOpacity
-              key={branch.value}
-              style={[styles.chip, isActive && styles.chipActive]}
-              onPress={() => setSelectedBranch(branch.value)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.chipIcon}>{branch.icon}</Text>
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {branch.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* ── Browse All Button ── */}
-      <TouchableOpacity
-        style={styles.browseBtn}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.85}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
       >
-        <Ionicons name="search" size={16} color="#3D405B" />
-        <Text style={styles.browseBtnText}>
-          {selectedOption && !QUICK_ACCESS_BRANCHES.find(b => b.value === selectedBranch)
-            ? `${selectedOption.icon}  ${selectedOption.label}`
-            : "Browse all branches..."}
-        </Text>
-        <Ionicons name="chevron-down" size={16} color="#3D405B" />
-      </TouchableOpacity>
 
-      {/* ── Selected Info ── */}
-      {selectedOption && (
-        <View style={styles.selectedStrip}>
-          <Text style={styles.selectedIcon}>{selectedOption.icon}</Text>
-          <View>
-            <Text style={styles.selectedLabel}>{selectedOption.label}</Text>
-            <Text style={styles.selectedMeta}>
-              {selectedOption.category === "tech" ? "Tech Branch" : "Non-Tech Branch"}
-              {"  ·  "}
-              <Text style={styles.selectedValue}>{selectedOption.value}</Text>
-            </Text>
-          </View>
-          <Ionicons
-            name="checkmark-circle"
-            size={20}
-            color="#3BBFAD"
-            style={{ marginLeft: "auto" }}
-          />
+        {/* ── Quick Access Chips ── */}
+        <Text style={styles.sectionLabel}>Popular choices</Text>
+        <View style={styles.chipsRow}>
+          {QUICK_ACCESS_BRANCHES.map((branch) => {
+            const isActive = selectedBranch === branch.value;
+            return (
+              <TouchableOpacity
+                key={branch.value}
+                style={[styles.chip, isActive && styles.chipActive]}
+                onPress={() => setSelectedBranch(branch.value)}
+                activeOpacity={0.8}
+              >
+                {/* <Text style={styles.chipIcon}>{branch.icon}</Text> */}
+                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                  {branch.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      )}
+
+        {/* ── Browse All Button ── */}
+        <TouchableOpacity
+          style={styles.browseBtn}
+          onPress={() => setModalVisible(true)}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="search" size={16} color="#3D405B" />
+          <Text style={styles.browseBtnText}>
+            {selectedOption && !QUICK_ACCESS_BRANCHES.find(b => b.value === selectedBranch)
+              ? `${selectedOption.icon}  ${selectedOption.label}`
+              : "Browse all branches..."}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#3D405B" />
+        </TouchableOpacity>
+
+        {/* ── Selected Info ── */}
+        {selectedOption && (
+          <View style={styles.selectedStrip}>
+            {/* <Text style={styles.selectedIcon}>{selectedOption.icon}</Text> */}
+            <View>
+              <Text style={styles.selectedLabel}>{selectedOption.label}</Text>
+              <Text style={styles.selectedMeta}>
+                {selectedOption.category === "tech" ? "Tech Branch" : "Non-Tech Branch"}
+                {"  ·  "}
+                <Text style={styles.selectedValue}>{selectedOption.value}</Text>
+              </Text>
+            </View>
+            <Ionicons
+              name="checkmark-circle"
+              size={20}
+              color="#3BBFAD"
+              style={{ marginLeft: "auto" }}
+            />
+          </View>
+        )}
+      </ScrollView>
 
       {/* ── Continue Button ── */}
       <TouchableOpacity
@@ -145,9 +154,9 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
         <Text style={styles.continueBtnText}>
           {selectedBranch ? "CONTINUE" : "Select your branch"}
         </Text>
-        {selectedBranch && (
+        {/* {selectedBranch && (
           <Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} />
-        )}
+        )} */}
       </TouchableOpacity>
 
       {/* ── Full Branch Modal ── */}
@@ -216,7 +225,7 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
                     onPress={() => handleSelect(item)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.listItemIcon}>{item.icon}</Text>
+                    {/* <Text style={styles.listItemIcon}>{item.icon}</Text> */}
                     <View style={styles.listItemText}>
                       <Text style={[styles.listItemLabel, isSelected && styles.listItemLabelSelected]}>
                         {item.label}
@@ -238,13 +247,7 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F4F1DE",
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? 36 : 52,
-  },
-
+  container: { flex: 1, backgroundColor: "#fff" },
   navbar: {
     height: 56,
     backgroundColor: "#F4F1DE",
@@ -252,28 +255,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
-  leftIcon:     { position: "absolute", left: 20 },
-  rightBtn:     { position: "absolute", right: 20 },
-  centerContent:{ flex: 1, alignItems: "center" },
-  stepText:     { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
-  navTitle:     { fontSize: 14, fontWeight: "bold", letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
-  previewText:  { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: { fontSize: 14, fontWeight: "bold", letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
+  previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
   // Header
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 120 },
   header: {
     marginBottom: 28,
   },
-  title: {
-    fontSize: 28,
+
+  mainHeading: {
+    marginTop: 24,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
-    lineHeight: 36,
-    marginBottom: 8,
+    lineHeight: 38,
+    paddingHorizontal: 20,
   },
-  subtitle: {
+  subHeading: {
+    marginTop: 8,
     fontSize: 14,
     color: "#888",
     fontFamily: "WorkSansRegular",
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
 
   // Quick access
@@ -370,19 +379,16 @@ const styles = StyleSheet.create({
     color: "#3BBFAD",
   },
 
-  // Continue button
+  // Continue
   continueBtn: {
-    flexDirection: "row",
+    position: "absolute",
+    bottom: 24,
+    left: 20,
+    right: 20,
     backgroundColor: "#3BBFAD",
     paddingVertical: 18,
     borderRadius: 32,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: "auto",
-    marginBottom: 24,
-  },
-  continueBtnDisabled: {
-    backgroundColor: "#ccc",
   },
   continueBtnText: {
     color: "#fff",
@@ -391,12 +397,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     fontFamily: "WorkSansBold",
   },
+  continueBtnDisabled: {
+    backgroundColor: "#ccc",
+  },
+
 
   // Modal
   modalContainer: {
     flex: 1,
     backgroundColor: "#F4F1DE",
-    paddingTop: 20,
+    paddingTop: 40,
   },
   modalHeader: {
     flexDirection: "row",
@@ -417,7 +427,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 6,
     marginHorizontal: 20,
     marginBottom: 16,
     borderWidth: 1,

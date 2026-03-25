@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
   navTitle: {
     fontSize: 14,
-    fontWeight: "bold",
+    // fontWeight: "bold",
     letterSpacing: 1,
     color: "#3D405B",
     fontFamily: "WorkSansBold",

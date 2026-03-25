@@ -88,7 +88,7 @@ export default function ResumeOptions({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>TEMPLATES</Text>
         </View>
-        <View style={{ width: 40 }} />
+        {/* <View style={{ width: 40 }} /> */}
       </View>
 
       {/* ── Heading ── */}
@@ -212,7 +212,8 @@ export default function ResumeOptions({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F4F1DE" },
+  container: { flex: 1, backgroundColor: "#fff" },
+
   navbar: {
     height: 56,
     backgroundColor: "#F4F1DE",
@@ -221,12 +222,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
   centerContent: { flex: 1, alignItems: "center" },
   stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
   navTitle: {
-    fontSize: 14, fontWeight: "bold", letterSpacing: 1,
-    color: "#3D405B", fontFamily: "WorkSansBold",
+    fontSize: 14,
+    letterSpacing: 1,
+    color: "#3D405B",
+    fontFamily: "WorkSansBold",
   },
+  // previewText: {
+  //   color: "#3BBFAD",
+  //   fontSize: 15,
+  //   fontFamily: "WorkSansSemiBold",
+  // },
+
+  // scrollContent: { paddingBottom: 20 },
+
   headingBlock: { paddingHorizontal: 20, paddingTop: 8, marginBottom: 4 },
   mainHeading: {
     fontSize: 26, color: "#3D405B", fontFamily: "PlayfairDisplayBold",

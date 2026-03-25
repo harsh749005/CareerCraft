@@ -196,7 +196,6 @@ const styles = StyleSheet.create({
   },
   navTitle: {
     fontSize: 14,
-    fontWeight: "bold",
     letterSpacing: 1,
     color: "#3D405B",
     fontFamily: "WorkSansBold",

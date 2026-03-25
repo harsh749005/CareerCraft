@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
+import { TEMPLATE_CONFIGS, ProjectsDisplayMode } from "@/config/templateConfig";
 import CustomLoader from "../appcomp/CustomLoader";
+import ProjectsSummaryStep from "./ProjectsSummaryStep";
 
 interface ProjectStepProps {
   data: any;
@@ -39,6 +41,41 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  const projectsMode: ProjectsDisplayMode =
+    (TEMPLATE_CONFIGS?.[data.selected_template as string]?.projects?.mode as ProjectsDisplayMode) ??
+    "card";
+
+  // Nocard (single form) mode state
+  const [projectsView, setProjectsView] = useState<"summary" | "edit">(
+    "summary",
+  );
+  const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+  const EMPTY_PROJECT = {
+    title: "",
+    technologies: "",
+    description: "",
+    liveUrl: "",
+  };
+
+  const isProjectEmpty = (p: any) => {
+    if (!p) return true;
+    const t = (p.title || "").trim();
+    const d = (p.description || "").trim();
+    const tech = (p.technologies || "").trim();
+    const url = (p.liveUrl || "").trim();
+    return !t && !d && !tech && !url;
+  };
+
+  const visibleEntries: { exp: any; index: number }[] = projectExperience
+    .map((exp: any, index: number) => ({ exp, index }))
+    .filter((entry: { exp: any; index: number }) => !isProjectEmpty(entry.exp));
+
+  React.useEffect(() => {
+    if (activeProjectIndex > Math.max(0, projectExperience.length - 1)) {
+      setActiveProjectIndex(Math.max(0, projectExperience.length - 1));
+    }
+  }, [projectExperience.length, activeProjectIndex]);
+
   // Ensure at least one project exists
   React.useEffect(() => {
     if (projectExperience.length === 0) {
@@ -47,13 +84,15 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   }, []);
 
   const handleNext = () => {
-    const incompleteProjects = projectExperience.some(
-      (pro: any) => !pro.title || !pro.description
-    );
-    // if (incompleteProjects) {
-    //   Alert.alert("Complete Required Fields", "Please fill in Title and Description for all projects.", [{ text: "OK" }]);
-    //   return;
-    // }
+    if (projectsMode === "nocard") {
+      // if (visibleEntries.length === 0) {
+      //   Alert.alert(
+      //     "Add a project",
+      //     "Please add at least one project (title or description) before continuing."
+      //   );
+      //   return;
+      // }
+    }
     nextStep();
   };
 
@@ -68,6 +107,54 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
     ]);
   };
 
+  const handleEditNoCard = (index: number) => {
+    setActiveProjectIndex(index);
+    setProjectsView("edit");
+  };
+
+  const handleDeleteNoCard = (index: number) => {
+    setActiveProjectIndex((prev) => (index < prev ? Math.max(0, prev - 1) : prev));
+    handleRemoveProject(index);
+  };
+
+  const handleAddAnotherNoCard = () => {
+    // If the last entry is already empty, just edit it instead of adding more blanks.
+    if (
+      projectExperience.length > 0 &&
+      isProjectEmpty(projectExperience[projectExperience.length - 1])
+    ) {
+      setActiveProjectIndex(projectExperience.length - 1);
+      setProjectsView("edit");
+      return;
+    }
+
+    addProjects(EMPTY_PROJECT);
+    setActiveProjectIndex(projectExperience.length); // new index
+    setProjectsView("edit");
+  };
+
+  const normalizeGeminiBullets = (raw: string): string => {
+    const lines = (raw || "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    // Extract likely bullet lines and normalize to "* ..."
+    const bullets = lines
+      .map((line) => {
+        // Remove bullet markers: "*", "-", "•", numbering, etc.
+        const cleaned = line
+          .replace(/^(?:[*•-]\s+|\d+\.\s+|\d+\)\s+)+/g, "")
+          .replace(/^(?:[*•-])\s*/g, "")
+          .trim();
+        return cleaned;
+      })
+      .filter(Boolean);
+
+    const picked = bullets.slice(0, 5);
+    return picked.map((b) => `* ${b}`).join("\n");
+  };
+
   const generateSummary = async (index: number) => {
     const proj = projectExperience[index];
     if (!proj || !proj.title || proj.description.length <= 5) {
@@ -78,9 +165,18 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
     setGeneratingIndex(index);
     try {
       const prompt = `Polish the following project description by improving grammar, punctuation, readability, and incorporating relevant technical terms. 
-Do not shorten or expand the overall meaning. Return strictly 4 clear and concise bullet points:\n\n"${proj.description}"`;
+Do not shorten or expand the overall meaning. Return strictly 4-5 bullet points.
+Rules:
+1) Return ONLY bullet lines (no extra text).
+2) Each bullet line MUST START with "* ".
+3) Provide between 4 and 5 bullets (prefer 5).
+
+Project title: "${proj.title}"
+Original description:
+${proj.description}`;
       const result = await callGeminiAPI(prompt);
-      updateProjects(index, "description", result);
+      const normalized = normalizeGeminiBullets(result);
+      updateProjects(index, "description", normalized || result);
     } catch (error) {
       Alert.alert("Error", "Failed to polish the description. Please try again.", [{ text: "OK" }]);
     } finally {

@@ -2,6 +2,8 @@
 
 export type SkillsDisplayMode = "categorized" | "uncategorized" | "both";
 
+export type ProjectsDisplayMode = "card" | "nocard";
+
 export type TemplateConfig = {
   id: string;
   name: string;
@@ -10,6 +12,9 @@ export type TemplateConfig = {
   image: any;
   skills: {
     mode: SkillsDisplayMode;
+  };
+  projects?: {
+    mode: ProjectsDisplayMode;
   };
 };
 
@@ -21,6 +26,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#3BBFAD",
     image: require("../assets/images/resume/resume1.png"),
     skills: { mode: "uncategorized" },
+    projects: { mode: "nocard" },
   },
   Modern: {
     id: "Modern",
@@ -29,6 +35,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#81B29A",
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
+    projects: { mode: "nocard" },
   },
   Executive: {
     id: "Executive",
@@ -37,6 +44,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#3D405B",
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
+    projects: { mode: "nocard" },
   },
   Creative: {
     id: "Creative",
@@ -45,6 +53,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#E07A5F",
     image: require("../assets/images/resume/resume3.jpg"),
     skills: { mode: "both" },
+    projects: { mode: "nocard" },
   },
 };
 

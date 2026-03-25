@@ -23,14 +23,14 @@ interface ReviewStepProps {
 }
 
 const STEP_MAP = {
-  personal: 1,
-  summary: 2,
-  work: 3,
-  workDesc: 4,
-  education: 5,
-  skills: 6,
+  personal: 3,
+  education: 4,
+  skills: 5,
+  work: 10,
+  workDesc: 4,  
   projects: 7,
-  links: 8,
+  summary: 2,
+  links: 11,
 };
 
 const ReviewStep: React.FC<ReviewStepProps> = ({
@@ -224,7 +224,6 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
             </Text>
             <Text style={styles.navTitle}>REVIEW</Text>
           </View>
-          <View style={{ width: 60 }} />
         </View>
 
         <ScrollView
@@ -286,12 +285,12 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                     <Text style={styles.itemTitle}>
                       {exp.job_title || exp.role || "—"}
                     </Text>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       style={styles.itemEditBtn}
                       onPress={() => goToStep(STEP_MAP.work)}
                     >
                       <Ionicons name="pencil-outline" size={13} color="#aaa" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   <View style={styles.itemMeta}>
                     {(exp.company_name || exp.company) && (
@@ -357,12 +356,12 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                   <View style={styles.itemTitleRow}>
                     <View style={styles.itemDot} />
                     <Text style={styles.itemTitle}>{proj.title || "—"}</Text>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       style={styles.itemEditBtn}
                       onPress={() => goToStep(STEP_MAP.projects)}
                     >
                       <Ionicons name="pencil-outline" size={13} color="#aaa" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </View>
                   {proj.technologies && (
                     <View style={styles.techRow}>
@@ -535,7 +534,6 @@ const styles = StyleSheet.create({
   stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
   navTitle: {
     fontSize: 14,
-    fontWeight: "bold",
     letterSpacing: 1,
     color: "#3D405B",
     fontFamily: "WorkSansBold",
