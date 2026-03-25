@@ -15,11 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface Props {
   data: any;
   addEducation: (edu: any) => void;
-  updateEducation: (
-    index: number,
-    field: string | Record<string, string>,
-    value?: string
-  ) => void;
+  updateEducation: any;
   activeEduExperienceIndex: number;
   removeEducationExperience: (index: number) => void;
   nextStep: () => void;
@@ -28,27 +24,24 @@ interface Props {
   totalSteps: number;
 }
 
-const monthsList = [
-  { label: "January",   value: "01" },
-  { label: "February",  value: "02" },
-  { label: "March",     value: "03" },
-  { label: "April",     value: "04" },
-  { label: "May",       value: "05" },
-  { label: "June",      value: "06" },
-  { label: "July",      value: "07" },
-  { label: "August",    value: "08" },
-  { label: "September", value: "09" },
-  { label: "October",   value: "10" },
-  { label: "November",  value: "11" },
-  { label: "December",  value: "12" },
+const months = [
+  { label: "Jan", value: "01" },
+  { label: "Feb", value: "02" },
+  { label: "Mar", value: "03" },
+  { label: "Apr", value: "04" },
+  { label: "May", value: "05" },
+  { label: "Jun", value: "06" },
+  { label: "Jul", value: "07" },
+  { label: "Aug", value: "08" },
+  { label: "Sep", value: "09" },
+  { label: "Oct", value: "10" },
+  { label: "Nov", value: "11" },
+  { label: "Dec", value: "12" },
 ];
-
-const yearsList = Array.from({ length: 52 }, (_, i) =>
-  (2036 - i).toString()
-);
+const years = Array.from({ length: 30 }, (_, i) => (2025 - i).toString());
 
 // ─── Date Picker Modal ───────────────────────────────────────────
-interface DatePickerProps {
+interface DatePickerModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (month: string, year: string) => void;
@@ -57,14 +50,19 @@ interface DatePickerProps {
   title: string;
 }
 
-const DatePickerModal: React.FC<DatePickerProps> = ({
-  visible, onClose, onConfirm, initialMonth = "", initialYear = "", title,
+const DatePickerModal: React.FC<DatePickerModalProps> = ({
+  visible,
+  onClose,
+  onConfirm,
+  initialMonth = "",
+  initialYear = "",
+  title,
 }) => {
   const [tab, setTab] = useState<"month" | "year">("month");
   const [selMonth, setSelMonth] = useState(initialMonth);
   const [selYear, setSelYear] = useState(initialYear);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       setSelMonth(initialMonth);
       setSelYear(initialYear);
@@ -72,31 +70,35 @@ const DatePickerModal: React.FC<DatePickerProps> = ({
     }
   }, [visible]);
 
-  const monthLabel = monthsList.find((m) => m.value === selMonth)?.label;
   const preview =
     selMonth && selYear
-      ? `${monthLabel} ${selYear}`
+      ? `${months.find((m) => m.value === selMonth)?.label} ${selYear}`
       : selMonth
-      ? `${monthLabel} —`
-      : selYear
-      ? `— ${selYear}`
-      : "Select month and year";
+        ? `${months.find((m) => m.value === selMonth)?.label} —`
+        : selYear
+          ? `— ${selYear}`
+          : "Select month and year";
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={dpStyles.overlay}>
-        <View style={dpStyles.sheet}>
-          <Text style={dpStyles.title}>{title}</Text>
+      <View style={dateStyles.overlay}>
+        <View style={dateStyles.sheet}>
+          <Text style={dateStyles.title}>{title}</Text>
 
           {/* Tabs */}
-          <View style={dpStyles.tabRow}>
+          <View style={dateStyles.tabRow}>
             {(["month", "year"] as const).map((t) => (
               <TouchableOpacity
                 key={t}
-                style={[dpStyles.tab, tab === t && dpStyles.tabActive]}
+                style={[dateStyles.tab, tab === t && dateStyles.tabActive]}
                 onPress={() => setTab(t)}
               >
-                <Text style={[dpStyles.tabText, tab === t && dpStyles.tabTextActive]}>
+                <Text
+                  style={[
+                    dateStyles.tabText,
+                    tab === t && dateStyles.tabTextActive,
+                  ]}
+                >
                   {t === "month" ? "Month" : "Year"}
                 </Text>
               </TouchableOpacity>
@@ -105,33 +107,55 @@ const DatePickerModal: React.FC<DatePickerProps> = ({
 
           {/* Month Grid */}
           {tab === "month" && (
-            <View style={dpStyles.grid}>
-              {monthsList.map((m) => (
+            <View style={dateStyles.grid}>
+              {months.map((m) => (
                 <TouchableOpacity
                   key={m.value}
-                  style={[dpStyles.gridItem, selMonth === m.value && dpStyles.gridItemActive]}
-                  onPress={() => { setSelMonth(m.value); setTab("year"); }}
+                  style={[
+                    dateStyles.gridItem,
+                    selMonth === m.value && dateStyles.gridItemActive,
+                  ]}
+                  onPress={() => {
+                    setSelMonth(m.value);
+                    setTab("year");
+                  }}
                 >
-                  <Text style={[dpStyles.gridText, selMonth === m.value && dpStyles.gridTextActive]}>
-                    {m.label.slice(0, 3)}
+                  <Text
+                    style={[
+                      dateStyles.gridText,
+                      selMonth === m.value && dateStyles.gridTextActive,
+                    ]}
+                  >
+                    {m.label}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
 
-          {/* Year Grid */}
+          {/* Year List */}
           {tab === "year" && (
-            <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-              <View style={dpStyles.grid}>
-                {yearsList.map((y) => (
+            <ScrollView
+              style={{ maxHeight: 220 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={dateStyles.grid}>
+                {years.map((item) => (
                   <TouchableOpacity
-                    key={y}
-                    style={[dpStyles.gridItem, selYear === y && dpStyles.gridItemActive]}
-                    onPress={() => setSelYear(y)}
+                    key={item}
+                    style={[
+                      dateStyles.gridItem,
+                      selYear === item && dateStyles.gridItemActive,
+                    ]}
+                    onPress={() => setSelYear(item)}
                   >
-                    <Text style={[dpStyles.gridText, selYear === y && dpStyles.gridTextActive]}>
-                      {y}
+                    <Text
+                      style={[
+                        dateStyles.gridText,
+                        selYear === item && dateStyles.gridTextActive,
+                      ]}
+                    >
+                      {item}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -140,19 +164,25 @@ const DatePickerModal: React.FC<DatePickerProps> = ({
           )}
 
           {/* Preview */}
-          <Text style={dpStyles.preview}>{preview}</Text>
+          <Text style={dateStyles.preview}>{preview}</Text>
 
           {/* Buttons */}
-          <View style={dpStyles.btnRow}>
-            <TouchableOpacity style={dpStyles.cancelBtn} onPress={onClose}>
-              <Text style={dpStyles.cancelText}>Cancel</Text>
+          <View style={dateStyles.btnRow}>
+            <TouchableOpacity style={dateStyles.cancelBtn} onPress={onClose}>
+              <Text style={dateStyles.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[dpStyles.confirmBtn, (!selMonth || !selYear) && { opacity: 0.4 }]}
-              onPress={() => { onConfirm(selMonth, selYear); onClose(); }}
+              style={[
+                dateStyles.confirmBtn,
+                (!selMonth || !selYear) && { opacity: 0.5 },
+              ]}
+              onPress={() => {
+                onConfirm(selMonth, selYear);
+                onClose();
+              }}
               disabled={!selMonth || !selYear}
             >
-              <Text style={dpStyles.confirmText}>Confirm</Text>
+              <Text style={dateStyles.confirmText}>Confirm</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -163,7 +193,7 @@ const DatePickerModal: React.FC<DatePickerProps> = ({
 
 // ─── Main Component ──────────────────────────────────────────────
 const EducationStep: React.FC<Props> = ({
-  data, addEducation, updateEducation,activeEduExperienceIndex,
+  data, addEducation, updateEducation, activeEduExperienceIndex,
   removeEducationExperience, nextStep, prevStep, step, totalSteps,
 }) => {
   const edu = data.education || [];
@@ -171,8 +201,8 @@ const EducationStep: React.FC<Props> = ({
     if (edu.length === 0) {
       addEducation({
         institution: "",
-        degree:"",
-        result:"",
+        degree: "",
+        result: "",
         start_month: "",
         start_year: "",
         end_month: "",
@@ -186,48 +216,48 @@ const EducationStep: React.FC<Props> = ({
     Math.max(0, edu.length - 1)
   );
   const eduexp = edu[safeIndex] || {};
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [isPresent, setIsPresent] = useState<boolean>(false);
 
   // Local date state for immediate display
-  // const [startMonth, setStartMonth] = useState(eduexp.start_month || "");
-  // const [startYear,  setStartYear]  = useState(eduexp.start_year  || "");
-  // const [endMonth,   setEndMonth]   = useState(eduexp.end_month   || "");
-  // const [endYear,    setEndYear]    = useState(eduexp.end_year    || "");
-  // ✅ Fix — derive directly from edu array using safeIndex
-const currentEdu = data.education?.[safeIndex] || {};
-const [startMonth, setStartMonth] = useState(currentEdu.start_month || "");
-const [startYear,  setStartYear]  = useState(currentEdu.start_year  || "");
-const [endMonth,   setEndMonth]   = useState(currentEdu.end_month   || "");
-const [endYear,    setEndYear]    = useState(currentEdu.end_year    || "");
+  // Add local state for immediate display
+// console.log("Eduexp start month",eduexp.start_month);
+// console.log("Eduexp start year",eduexp.start_year);
+  const [startMonth, setStartMonth] = useState(eduexp.start_month || "");
+  const [startYear, setStartYear] = useState(eduexp.start_year || "");
+  const [endMonth, setEndMonth] = useState(eduexp.end_month || "");
+  const [endYear, setEndYear] = useState(eduexp.end_year || "");
 
-  const [showStartDate, setShowStartDate] = useState(false);
-  const [showEndDate,   setShowEndDate]   = useState(false);
-console.log(eduexp.start_month + eduexp.start_year + eduexp.end_month+eduexp.end_year )
+// console.log("Start month state value",startMonth);
+
+
+  const getDateLabel = (month: string, year: string) => {
+    if (!month || !year) return "";
+    const monthObj = months.find((m) => m.value === month);
+    return monthObj ? `${monthObj.label} ${year}` : `${month}/${year}`;
+  };
+
+  const startLabel = getDateLabel(startMonth, startYear);
+  const endLabel = getDateLabel(endMonth, endYear);
+
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isPresent, setIsPresent] = useState<boolean>(eduexp.is_present || false);
+
   // When switching which entry we edit, sync date fields from form data
   useEffect(() => {
     const e = edu[safeIndex];
     if (!e) return;
     setStartMonth(e.start_month || "");
-    setStartYear(e.start_year   || "");
-    setEndMonth(e.end_month     || "");
-    setEndYear(e.end_year       || "");
+    setStartYear(e.start_year || "");
+    setEndMonth(e.end_month || "");
+    setEndYear(e.end_year || "");
     setIsPresent(Boolean(e.is_present));
-  }, [safeIndex]); // ✅ ONLY safeIndex — remove JSON.stringify
+  }, [safeIndex, edu.length]); //  ONLY safeIndex — remove JSON.stringify
 
+  const [showStartDate, setShowStartDate] = useState(false);
+  const [showEndDate, setShowEndDate] = useState(false);
 
   const update = (field: string, value: string) =>
     updateEducation(safeIndex, field, value);
-
-  const getDateLabel = (month: string, year: string) => {
-    if (!month || !year) return "";
-    const m = monthsList.find((mo) => mo.value === month);
-    return m ? `${m.label.slice(0, 3)} ${year}` : `${month}/${year}`;
-  };
-
-  const startLabel = getDateLabel(startMonth, startYear);
-  const endLabel   = getDateLabel(endMonth,   endYear);
-
+// console.log(startLabel);
   // ── Field renderer ──
   const renderField = (label: string, key: string) => {
     const value = eduexp[key] || "";
@@ -304,7 +334,7 @@ console.log(eduexp.start_month + eduexp.start_year + eduexp.end_month+eduexp.end
               {startLabel ? (
                 <Text style={styles.dateValue}>{startLabel}</Text>
               ) : (
-                <Text style={styles.datePlaceholder}>Select start date</Text>
+                <Text style={styles.dateValue}>Select start Date</Text>
               )}
             </View>
             <Ionicons
@@ -369,37 +399,34 @@ console.log(eduexp.start_month + eduexp.start_year + eduexp.end_month+eduexp.end
       </TouchableOpacity>
 
       {/* ── Date Pickers ── */}
-      <DatePickerModal
-  visible={showStartDate}
-  onClose={() => setShowStartDate(false)}
-  title="Select Start Date"
-  initialMonth={startMonth}
-  initialYear={startYear}
-  onConfirm={(m, y) => {
-    // ✅ Update local state immediately for instant display
-    setStartMonth(m);
-    setStartYear(y);
-    // ✅ Then persist to formData
-    update("start_month", m);
-    update("start_year", y);
-  }}
-/>
 
-<DatePickerModal
-  visible={showEndDate}
-  onClose={() => setShowEndDate(false)}
-  title="Select Graduation Date"
-  initialMonth={endMonth}
-  initialYear={endYear}
-  onConfirm={(m, y) => {
-    // ✅ Update local state immediately for instant display
-    setEndMonth(m);
-    setEndYear(y);
-    // ✅ Then persist to formData
-    update("end_month", m);
-    update("end_year", y);
-  }}
-/>
+      <DatePickerModal
+        visible={showStartDate}
+        onClose={() => setShowStartDate(false)}
+        onConfirm={(m, y) => {
+          setStartMonth(m); //  local state updates immediately for display
+          setStartYear(y);
+          update("start_month", m); //  also persist to formData
+          update("start_year", y);
+        }}
+        initialMonth={startMonth}
+        initialYear={startYear}
+        title="Select Start Date"
+      />
+
+      <DatePickerModal
+        visible={showEndDate}
+        onClose={() => setShowEndDate(false)}
+        onConfirm={(m, y) => {
+          setEndMonth(m); //  local state updates immediately for display
+          setEndYear(y);
+          update("end_month", m);
+          update("end_year", y);
+        }}
+        initialMonth={endMonth}
+        initialYear={endYear}
+        title="Select End Date"
+      />
     </View>
   );
 };
@@ -417,12 +444,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
-  leftIcon:     { position: "absolute", left: 20 },
-  rightBtn:     { position: "absolute", right: 20 },
-  centerContent:{ flex: 1, alignItems: "center" },
-  stepText:     { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
-  navTitle:     { fontSize: 14, letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
-  previewText:  { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
+  leftIcon: { position: "absolute", left: 20 },
+  rightBtn: { position: "absolute", right: 20 },
+  centerContent: { flex: 1, alignItems: "center" },
+  stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  navTitle: { fontSize: 14, letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
+  previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
 
   scrollContent: { paddingBottom: 100 },
 
@@ -455,9 +482,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     fontFamily: "WorkSansSemiBold",
   },
-  fieldRow:   { flexDirection: "row", alignItems: "center" },
+  fieldRow: { flexDirection: "row", alignItems: "center" },
   fieldInput: { flex: 1, fontSize: 16, color: "#3D405B", paddingVertical: 8, fontFamily: "WorkSansRegular" },
-  underline:        { height: 1,   backgroundColor: "#ddd", marginTop: 2 },
+  underline: { height: 1, backgroundColor: "#ddd", marginTop: 2 },
   underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
 
   // ── Date sections — full width top/bottom borders ──
@@ -484,9 +511,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   dateValueBlock: { flex: 1 },
-  dateValue:       { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
-  datePlaceholder: { fontSize: 16, color: "#bbb",    fontFamily: "WorkSansRegular" },
-  datePresent:     { fontSize: 16, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
+  dateValue: { fontSize: 16, color: "#3D405B", fontFamily: "WorkSansRegular" },
+  datePlaceholder: { fontSize: 16, color: "#bbb", fontFamily: "WorkSansRegular" },
+  datePresent: { fontSize: 16, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
   // Present checkbox
   presentRow: {
@@ -537,7 +564,7 @@ const styles = StyleSheet.create({
 });
 
 // ─── DatePicker Styles ───────────────────────────────────────────
-const dpStyles = StyleSheet.create({
+const dateStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -545,8 +572,8 @@ const dpStyles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 24,
   },
   title: {
@@ -555,22 +582,24 @@ const dpStyles = StyleSheet.create({
     color: "#3D405B",
     marginBottom: 16,
     textAlign: "center",
-    fontFamily: "WorkSansBold",
   },
   tabRow: {
     flexDirection: "row",
     marginBottom: 16,
-    borderRadius: 10,
+    borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#ddd",
   },
-  tab:           { flex: 1, paddingVertical: 10, alignItems: "center", backgroundColor: "#f5f5f5" },
-  tabActive:     { backgroundColor: "#3BBFAD" },
-  tabText:       { color: "#888", fontFamily: "WorkSansRegular", fontSize: 14 },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  tabActive: { backgroundColor: "#3BBFAD" },
+  tabText: { color: "#888", fontFamily: "WorkSansRegular" },
   tabTextActive: { color: "#fff", fontFamily: "WorkSansBold" },
-
-  // Grid for both months and years
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -579,22 +608,20 @@ const dpStyles = StyleSheet.create({
   },
   gridItem: {
     width: "30%",
-    paddingVertical: 13,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: "center",
     backgroundColor: "#f5f5f5",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   gridItemActive: { backgroundColor: "#3BBFAD" },
-  gridText:       { fontSize: 14, color: "#555", fontFamily: "WorkSansRegular" },
-  gridTextActive: { color: "#fff", fontWeight: "bold", fontFamily: "WorkSansBold" },
-
+  gridText: { fontSize: 15, color: "#555" },
+  gridTextActive: { color: "#fff", fontWeight: "bold" },
   preview: {
     textAlign: "center",
-    marginTop: 14,
+    marginTop: 12,
     fontSize: 14,
     color: "#3D405B",
-    fontFamily: "WorkSansSemiBold",
   },
   btnRow: { flexDirection: "row", gap: 12, marginTop: 20 },
   cancelBtn: {
@@ -605,7 +632,7 @@ const dpStyles = StyleSheet.create({
     borderColor: "#ddd",
     alignItems: "center",
   },
-  cancelText: { color: "#888", fontFamily: "WorkSansSemiBold" },
+  cancelText: { color: "#888" },
   confirmBtn: {
     flex: 1,
     paddingVertical: 14,
@@ -613,5 +640,5 @@ const dpStyles = StyleSheet.create({
     backgroundColor: "#3BBFAD",
     alignItems: "center",
   },
-  confirmText: { color: "#fff", fontWeight: "bold", fontFamily: "WorkSansBold" },
+  confirmText: { color: "#fff", fontWeight: "bold" },
 });

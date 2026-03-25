@@ -570,7 +570,6 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
         {/* Date Row */}
         <View style={styles.dateRow}>
           {/* Start Date */}
-          {/* Start Date */}
           <TouchableOpacity
             style={styles.dateBlock}
             onPress={() => setShowStartDate(true)}

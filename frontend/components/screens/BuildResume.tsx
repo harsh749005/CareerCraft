@@ -322,21 +322,15 @@ export default function BuildReume() {
   // 🔹 Update Education
   const updateEducation = (
     index: number,
-    field: string | Record<string, string>,
-    value?: string
+    field: string,
+    value: string | boolean
   ) => {
-    const updated = formData.education.map((edu, i) => {
-      if (i !== index) return edu;
-
-      // 🔥 Handle object update
-      if (typeof field === "object") {
-        return { ...edu, ...field };
-      }
-
-      return { ...edu, [field]: value };
-    });
-
-    setFormData({ ...formData, education: updated });
+    setFormData((prev) => ({
+      ...prev,
+      education: prev.education.map((exp, i) =>
+        i === index ? { ...exp, [field]: value } : exp
+      ),
+    }));
   };
   const handleRemoveEducationExperience = (index: number) => {
     const updated = formData.education.filter((_, i) => i !== index);
