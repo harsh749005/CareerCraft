@@ -259,7 +259,7 @@ export default function BuildReume() {
   const handleEditProjects = (index: number) => {
     setActiveProjectIndex(index);
     // Go back to the projects editor (not the summary list).
-    setStep(6);
+    setStep(7);
   };
   // Remove Exprerienc
   const removeProjects = (index: number) => {
@@ -287,7 +287,7 @@ export default function BuildReume() {
       };
     });
     setActiveProjectIndex(newIndex);
-    setStep(6);
+    setStep(7);
   };
 
   // 🔹 Update Summary
@@ -551,12 +551,13 @@ export default function BuildReume() {
             totalSteps={totalSteps}
           />
         )}
-        {step === 6 && (
+        {step === 7 && (
           <Projects
             data={formData}
             addProjects={addProjects}
             updateProjects={updateProjects}
             removeProjects={removeProjects}
+            // activeProjectIndex={activeProjectIndex}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -564,7 +565,7 @@ export default function BuildReume() {
           />
         )}
         {
-          step === 7 && (
+          step === 8 && (
             <ProjectsSummaryStep
               data={formData}
               projects={formData.projects}
@@ -579,7 +580,7 @@ export default function BuildReume() {
             />
           )
         }
-        {step === 8 && (
+        {step === 9 && (
           // <CertificationsStep
           //   data={formData}
           //   addCertification={addCertification}
@@ -600,7 +601,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 9 && (
+        {step === 10 && (
           <JobDescriptionStep
             data={formData}
             updateExperience={updateWorkExperience}
@@ -612,7 +613,7 @@ export default function BuildReume() {
           />
         )}
         {
-          step === 10 && (
+          step === 11 && (
             <WorkExperienceSummaryStep
               data={formData}
               removeExperience={removeExperience}
@@ -626,7 +627,7 @@ export default function BuildReume() {
             />
           )
         }
-        {step === 11 && (
+        {step === 12 && (
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
@@ -637,7 +638,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 12 && (
+        {step === 13 && (
           <SummaryStep
             data={formData}
             summary={formData.professional_summary}
@@ -656,7 +657,7 @@ export default function BuildReume() {
             updateSelectedTemplate={updateSelectedTemplate}
           />
         )} */}
-        {step === 13 && <ReviewStep data={formData} prevStep={prevStep} step={step}
+        {step === 14 && <ReviewStep data={formData} prevStep={prevStep} step={step}
           totalSteps={totalSteps} goToStep={goToStep} />}
       </View>
     </SafeScreen>

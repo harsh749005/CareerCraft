@@ -44,31 +44,31 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   const projectsMode: ProjectsDisplayMode =
     (TEMPLATE_CONFIGS?.[data.selected_template as string]?.projects?.mode as ProjectsDisplayMode) ??
     "card";
-
+  console.log("projectsMode: ", projectsMode);
   // Nocard (single form) mode state
-  const [projectsView, setProjectsView] = useState<"summary" | "edit">(
-    "summary",
-  );
+  // const [projectsView, setProjectsView] = useState<"summary" | "edit">(
+  //   "summary",
+  // );
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
-  const EMPTY_PROJECT = {
-    title: "",
-    technologies: "",
-    description: "",
-    liveUrl: "",
-  };
+  // const EMPTY_PROJECT = {
+  //   title: "",
+  //   technologies: "",
+  //   description: "",
+  //   liveUrl: "",
+  // };
 
-  const isProjectEmpty = (p: any) => {
-    if (!p) return true;
-    const t = (p.title || "").trim();
-    const d = (p.description || "").trim();
-    const tech = (p.technologies || "").trim();
-    const url = (p.liveUrl || "").trim();
-    return !t && !d && !tech && !url;
-  };
+  // const isProjectEmpty = (p: any) => {
+  //   if (!p) return true;
+  //   const t = (p.title || "").trim();
+  //   const d = (p.description || "").trim();
+  //   const tech = (p.technologies || "").trim();
+  //   const url = (p.liveUrl || "").trim();
+  //   return !t && !d && !tech && !url;
+  // };
 
-  const visibleEntries: { exp: any; index: number }[] = projectExperience
-    .map((exp: any, index: number) => ({ exp, index }))
-    .filter((entry: { exp: any; index: number }) => !isProjectEmpty(entry.exp));
+  // const visibleEntries: { exp: any; index: number }[] = projectExperience
+  //   .map((exp: any, index: number) => ({ exp, index }))
+  //   .filter((entry: { exp: any; index: number }) => !isProjectEmpty(entry.exp));
 
   React.useEffect(() => {
     if (activeProjectIndex > Math.max(0, projectExperience.length - 1)) {
@@ -83,18 +83,19 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
     }
   }, []);
 
-  const handleNext = () => {
-    if (projectsMode === "nocard") {
-      // if (visibleEntries.length === 0) {
-      //   Alert.alert(
-      //     "Add a project",
-      //     "Please add at least one project (title or description) before continuing."
-      //   );
-      //   return;
-      // }
-    }
-    nextStep();
-  };
+  // const handleNext = () => {
+  //   // if (projectsMode === "nocard") {
+  //   //   Alert.alert("hi")
+  //   //   // if (visibleEntries.length === 0) {
+  //   //   //   Alert.alert(
+  //   //   //     "Add a project",
+  //   //   //     "Please add at least one project (title or description) before continuing."
+  //   //   //   );
+  //   //   //   return;
+  //   //   // }
+  //   // }
+  //   nextStep();
+  // };
 
   const handleRemoveProject = (index: number) => {
     if (projectExperience.length === 1) {
@@ -107,31 +108,33 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
     ]);
   };
 
-  const handleEditNoCard = (index: number) => {
-    setActiveProjectIndex(index);
-    setProjectsView("edit");
-  };
 
-  const handleDeleteNoCard = (index: number) => {
-    setActiveProjectIndex((prev) => (index < prev ? Math.max(0, prev - 1) : prev));
-    handleRemoveProject(index);
-  };
 
-  const handleAddAnotherNoCard = () => {
-    // If the last entry is already empty, just edit it instead of adding more blanks.
-    if (
-      projectExperience.length > 0 &&
-      isProjectEmpty(projectExperience[projectExperience.length - 1])
-    ) {
-      setActiveProjectIndex(projectExperience.length - 1);
-      setProjectsView("edit");
-      return;
-    }
+  // const handleEditNoCard = (index: number) => {
+  //   setActiveProjectIndex(index);
+  //   setProjectsView("edit");
+  // };
 
-    addProjects(EMPTY_PROJECT);
-    setActiveProjectIndex(projectExperience.length); // new index
-    setProjectsView("edit");
-  };
+  // const handleDeleteNoCard = (index: number) => {
+  //   setActiveProjectIndex((prev) => (index < prev ? Math.max(0, prev - 1) : prev));
+  //   handleRemoveProject(index);
+  // };
+
+  // const handleAddAnotherNoCard = () => {
+  //   // If the last entry is already empty, just edit it instead of adding more blanks.
+  //   if (
+  //     projectExperience.length > 0 &&
+  //     isProjectEmpty(projectExperience[projectExperience.length - 1])
+  //   ) {
+  //     setActiveProjectIndex(projectExperience.length - 1);
+  //     setProjectsView("edit");
+  //     return;
+  //   }
+
+  //   addProjects(EMPTY_PROJECT);
+  //   setActiveProjectIndex(projectExperience.length); // new index
+  //   setProjectsView("edit");
+  // };
 
   const normalizeGeminiBullets = (raw: string): string => {
     const lines = (raw || "")
@@ -237,6 +240,51 @@ ${proj.description}`;
     );
   };
 
+  const renderTextField = (
+    index: number,
+    key: string,
+    label: string,
+    placeholder: string,
+    multiline = false,
+    iconName?: string
+  ) => {
+    const fieldId = `${index}-${key}`;
+    const value = projectExperience[index]?.[key] || "";
+    const isFocused = focusedField === key;
+    return (
+      <View style={styles.fieldContainer}>
+        {value ? (
+          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
+        ) : null}
+        <View style={styles.fieldRow}>
+          <TextInput
+            style={[
+              styles.fieldInput,
+              multiline && styles.multilineInput,
+            ]}
+            placeholder={isFocused ? placeholder : label}
+            multiline={multiline}
+            placeholderTextColor="#bbb"
+            value={value}
+            textAlignVertical={multiline ? "top" : "center"}
+            onFocus={() => setFocusedField(fieldId)}
+            onBlur={() => setFocusedField(null)}
+            onChangeText={(val) => updateProjects(index, key, val)}
+          />
+          {value ? (
+            <Ionicons name="checkmark" size={20} color="#3BBFAD" />
+          ) : null}
+        </View>
+        <View
+          style={[styles.underline, isFocused && styles.underlineFocused]}
+        />
+        {/* Full-width underline for non-multiline, top+bottom for multiline */}
+        {!multiline && (
+          <View style={[styles.underline, isFocused && styles.underlineFocused]} />
+        )}
+      </View>
+    );
+  };
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
@@ -259,10 +307,12 @@ ${proj.description}`;
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={
+            projectsMode === "nocard" ? styles.scrollContentnoCard :
+              styles.scrollContent}
         >
           {/* Heading */}
-          <View style={styles.headingBlock}>
+          <View style={projectsMode === "nocard" ? styles.headingBlockNoCard : styles.headingBlock}>
             <Text style={styles.mainHeading}>Your Projects</Text>
             <Text style={styles.subHeading}>
               Showcase your best work — include live links and tech stack for maximum impact
@@ -270,117 +320,185 @@ ${proj.description}`;
           </View>
 
           {/* ── Project Cards ── */}
-          {projectExperience.map((exp: any, index: number) => (
-            <View key={index} style={styles.projectCard}>
-
-              {/* Card Header */}
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderLeft}>
-                  <View style={styles.projectBadge}>
-                    <Text style={styles.projectBadgeText}>{index + 1}</Text>
+          {
+            projectsMode === "nocard" ? (
+              projectExperience.map((exp: any, index: number) => (
+                <>
+                  {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
+                  {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
+                  {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
+                  {/* ── Description — full width top/bottom borders ── */}
+                  <View style={styles.descriptionWrapper}>
+                    <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
+                    <TextInput
+                      style={styles.descriptionInput}
+                      placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
+                      placeholderTextColor="#bbb"
+                      value={exp.description || ""}
+                      multiline
+                      textAlignVertical="top"
+                      onChangeText={(val) => updateProjects(index, "description", val)}
+                    />
                   </View>
-                  <View>
-                    <Text style={styles.projectLabel}>PROJECT {index + 1}</Text>
-                    {exp.title ? (
-                      <Text style={styles.projectTitlePreview} numberOfLines={1}>
-                        {exp.title}
-                      </Text>
-                    ) : (
-                      <Text style={styles.projectTitleEmpty}>Untitled project</Text>
-                    )}
+                  {/* ── AI Polish Button ── */}
+                  <View style={projectsMode === "nocard" ? styles.aiSectionNoCard : styles.aiSection}>
+                    <TouchableOpacity
+                      style={[
+                        styles.aiBtn,
+                        isGenerating && generatingIndex === index && styles.aiBtnLoading,
+                      ]}
+                      onPress={() => generateSummary(index)}
+                      disabled={isGenerating && generatingIndex === index}
+                      activeOpacity={0.85}
+                    >
+                      {isGenerating && generatingIndex === index ? (
+                        <View style={styles.aiBtnInner}>
+                          <CustomLoader size={18} color="#3BBFAD" bars={12} />
+                          <Text style={styles.aiBtnText}>Polishing description...</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.aiBtnInner}>
+                          <View style={styles.sparkleBox}>
+                            <Text style={styles.sparkle}>✦</Text>
+                          </View>
+                          <View>
+                            <Text style={styles.aiBtnLabel}>Polish with AI</Text>
+                            <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
+                          </View>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={16}
+                            color="#3BBFAD"
+                            style={{ marginLeft: "auto" }}
+                          />
+                        </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
-                </View>
+                </>
+              ))
+            ) : (
 
-                {/* Delete button */}
-                {projectExperience.length > 1 && (
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={() => handleRemoveProject(index)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#e07070" />
-                  </TouchableOpacity>
-                )}
-              </View>
+              projectExperience.map((exp: any, index: number) => (
+                <View key={index} style={styles.projectCard}>
 
-              <View style={styles.cardDivider} />
-
-              {/* Fields */}
-              <View style={styles.cardBody}>
-                {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
-                {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
-                {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
-              </View>
-
-              {/* ── Description — full width top/bottom borders ── */}
-              <View style={styles.descriptionWrapper}>
-                <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
-                <TextInput
-                  style={styles.descriptionInput}
-                  placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
-                  placeholderTextColor="#bbb"
-                  value={exp.description || ""}
-                  multiline
-                  textAlignVertical="top"
-                  onChangeText={(val) => updateProjects(index, "description", val)}
-                />
-              </View>
-
-              {/* ── AI Polish Button ── */}
-              <View style={styles.aiSection}>
-                <TouchableOpacity
-                  style={[
-                    styles.aiBtn,
-                    isGenerating && generatingIndex === index && styles.aiBtnLoading,
-                  ]}
-                  onPress={() => generateSummary(index)}
-                  disabled={isGenerating && generatingIndex === index}
-                  activeOpacity={0.85}
-                >
-                  {isGenerating && generatingIndex === index ? (
-                    <View style={styles.aiBtnInner}>
-                      <CustomLoader size={18} color="#3BBFAD" bars={12} />
-                      <Text style={styles.aiBtnText}>Polishing description...</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.aiBtnInner}>
-                      <View style={styles.sparkleBox}>
-                        <Text style={styles.sparkle}>✦</Text>
+                  {/* Card Header */}
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardHeaderLeft}>
+                      <View style={styles.projectBadge}>
+                        <Text style={styles.projectBadgeText}>{index + 1}</Text>
                       </View>
                       <View>
-                        <Text style={styles.aiBtnLabel}>Polish with AI</Text>
-                        <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
+                        <Text style={styles.projectLabel}>PROJECT {index + 1}</Text>
+                        {exp.title ? (
+                          <Text style={styles.projectTitlePreview} numberOfLines={1}>
+                            {exp.title}
+                          </Text>
+                        ) : (
+                          <Text style={styles.projectTitleEmpty}>Untitled project</Text>
+                        )}
                       </View>
-                      <Ionicons
-                        name="arrow-forward"
-                        size={16}
-                        color="#3BBFAD"
-                        style={{ marginLeft: "auto" }}
-                      />
                     </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+
+                    {/* Delete button */}
+                    {projectExperience.length > 1 && (
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => handleRemoveProject(index)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#e07070" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  <View style={styles.cardDivider} />
+
+                  {/* Fields */}
+                  <View style={styles.cardBody}>
+                    {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
+                    {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
+                    {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
+                  </View>
+
+                  {/* ── Description — full width top/bottom borders ── */}
+                  <View style={styles.descriptionWrapper}>
+                    <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
+                    <TextInput
+                      style={styles.descriptionInput}
+                      placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
+                      placeholderTextColor="#bbb"
+                      value={exp.description || ""}
+                      multiline
+                      textAlignVertical="top"
+                      onChangeText={(val) => updateProjects(index, "description", val)}
+                    />
+                  </View>
+
+                  {/* ── AI Polish Button ── */}
+                  <View style={styles.aiSection}>
+                    <TouchableOpacity
+                      style={[
+                        styles.aiBtn,
+                        isGenerating && generatingIndex === index && styles.aiBtnLoading,
+                      ]}
+                      onPress={() => generateSummary(index)}
+                      disabled={isGenerating && generatingIndex === index}
+                      activeOpacity={0.85}
+                    >
+                      {isGenerating && generatingIndex === index ? (
+                        <View style={styles.aiBtnInner}>
+                          <CustomLoader size={18} color="#3BBFAD" bars={12} />
+                          <Text style={styles.aiBtnText}>Polishing description...</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.aiBtnInner}>
+                          <View style={styles.sparkleBox}>
+                            <Text style={styles.sparkle}>✦</Text>
+                          </View>
+                          <View>
+                            <Text style={styles.aiBtnLabel}>Polish with AI</Text>
+                            <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
+                          </View>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={16}
+                            color="#3BBFAD"
+                            style={{ marginLeft: "auto" }}
+                          />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )
+          }
 
           {/* ── Add Another Project ── */}
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => addProjects({ title: "", technologies: "", description: "", liveUrl: "" })}
-            activeOpacity={0.8}
-          >
-            <View style={styles.addBtnIcon}>
-              <Ionicons name="add" size={20} color="#3BBFAD" />
-            </View>
-            <Text style={styles.addBtnText}>Add another project</Text>
-          </TouchableOpacity>
+          {
+            projectsMode === "card" && (
+
+              <TouchableOpacity
+                style={[
+                  styles.addBtn,
+                  projectsMode === "card" ? { marginHorizontal: 20 } : { marginHorizontal: 0 }
+                ]} onPress={() => addProjects({ title: "", technologies: "", description: "", liveUrl: "" })}
+                activeOpacity={0.8}
+              >
+                <View style={styles.addBtnIcon}>
+                  <Ionicons name="add" size={20} color="#3BBFAD" />
+                </View>
+                <Text style={styles.addBtnText}>Add another project</Text>
+              </TouchableOpacity>
+            )
+          }
 
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* ── Continue ── */}
-        <TouchableOpacity style={styles.continueBtn} onPress={handleNext}>
+        <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
           <Text style={styles.continueText}>CONTINUE</Text>
         </TouchableOpacity>
       </View>
@@ -416,12 +534,14 @@ const styles = StyleSheet.create({
     fontFamily: "WorkSansSemiBold",
   },
 
+  scrollContentnoCard: { paddingHorizontal: 20, paddingBottom: 120 },
   scrollContent: { paddingBottom: 20 },
 
   // Heading
-  headingBlock: { paddingHorizontal: 20,  marginBottom: 20 },
+  headingBlock: { paddingHorizontal: 20, marginBottom: 20 },
+  headingBlockNoCard: { marginBottom: 20 },
   mainHeading: {
-    marginTop:10,
+    marginTop: 10,
     fontSize: 28,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
@@ -558,6 +678,7 @@ const styles = StyleSheet.create({
 
   // AI Button
   aiSection: { padding: 16 },
+  aiSectionNoCard: { paddingTop: 20 },
   aiBtn: {
     borderWidth: 1.5,
     borderColor: "#3BBFAD",
@@ -585,7 +706,7 @@ const styles = StyleSheet.create({
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 20,
+    // marginHorizontal: 20,
     marginBottom: 10,
     paddingVertical: 14,
     borderWidth: 1.5,

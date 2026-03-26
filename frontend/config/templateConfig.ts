@@ -35,7 +35,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#81B29A",
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
-    projects: { mode: "nocard" },
+    projects: { mode: "card" },
   },
   Executive: {
     id: "Executive",
@@ -53,7 +53,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#E07A5F",
     image: require("../assets/images/resume/resume3.jpg"),
     skills: { mode: "both" },
-    projects: { mode: "nocard" },
+    projects: { mode: "card" },
   },
 };
 
