@@ -8,9 +8,9 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import CustomLoader from "../appcomp/CustomLoader";
-import { generatePDF } from "../generator/GeneratePDF";
-import AuthScreen from "../../app/(auth)/AuthScreen";
+import CustomLoader from "../../appcomp/CustomLoader";
+import { generatePDF } from "../../generator/GeneratePDF";
+import AuthScreen from "../../../app/(auth)/AuthScreen";
 import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
 import { useAuth } from "@clerk/clerk-expo";
 

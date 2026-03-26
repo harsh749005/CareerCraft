@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
-import CustomLoader from "../appcomp/CustomLoader";
+import CustomLoader from "../../appcomp/CustomLoader";
 
 interface SummaryStepProps {
   data: any;

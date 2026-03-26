@@ -1,23 +1,23 @@
-import MainScreen from "@/components/screens/ResumeList";
-import EducationStep from "@/components/screens/EducationStep";
-import ResumeOptions from "@/components/screens/ResumeOptions";
-import ReviewStep from "@/components/screens/ReviewStep";
-import SkillsStep from "@/components/screens/SkillStep";
-import SummaryStep from "@/components/screens/SummaryStep";
-import WorkExperienceStep from "@/components/screens/WorkExperience";
-import SafeScreen from "@/components/appcomp/SafeScreen";
-import Projects from "@/components/screens/Projects";
-import PersonalInfoStep from "@/components/screens/PersonalInfoStep";
-import OtherLinks from "@/components/screens/OtherLinks";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import IndustrySelector from "./TemplateSelector/IndustrySelector";
-import ResumeOptionEnhanced from "./TemplateSelector/ResumeOptionEnhanced";
-import JobDescriptionStep from "./JobDescriptionStep";
-import BranchSelectScreen from "./TemplateSelector/Branchselectscreen";
-import WorkExperienceSummaryStep from "./WorkExperienceSummaryStep";
-import ProjectsSummaryStep from "./ProjectsSummaryStep";
-import EducationSummary from "./EducationSummary";
+import {  View } from "react-native";
+import BranchSelectScreen from "./BranchSelector/Branchselectscreen";
+import PersonalInfoStep from "@/components/screens/PersonalInfo/PersonalInfoStep";
+import EducationStep from "@/components/screens/Education/EducationStep";
+import EducationSummary from "@/components/screens/Education/EducationSummary";
+import Projects from "@/components/screens/Project/Projects";
+import ProjectsSummaryStep from "./Project/ProjectsSummaryStep";
+import WorkExperienceStep from "@/components/screens/Work/WorkExperience";
+import JobDescriptionStep from "./Work/JobDescriptionStep";
+import WorkExperienceSummaryStep from "./Work/WorkExperienceSummaryStep";
+import ResumeOptions from "@/components/screens/ResumeOptions/ResumeOptions";
+import SkillsStep from "@/components/screens/Skill/SkillStep";
+import ReviewStep from "@/components/screens/Review/ReviewStep";
+import SummaryStep from "@/components/screens/Summary/SummaryStep";
+import OtherLinks from "@/components/screens/Links/OtherLinks";
+import SafeScreen from "@/components/appcomp/SafeScreen";
+
+// storage filles
+import {saveDraftLocally,loadDraftLocally} from "@/storage/draftStorage";
 
 export default function BuildReume() {
   // const [option,setOption] = useState("");
@@ -72,10 +72,15 @@ export default function BuildReume() {
     otherLinks: {},
   });
   const setBranch = (branch: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      personal_info: { ...prev.personal_info, branch },
-    }));
+    setFormData((prev) => {
+      const updated = {
+
+        ...prev,
+        personal_info: { ...prev.personal_info, branch },
+      }
+      saveDraftLocally(updated);
+      return updated
+    });
   };
   const setTemplate = (templateId: string) => {
     setFormData((prev) => ({
@@ -86,10 +91,15 @@ export default function BuildReume() {
   };
   // 🔹 Update Personal Info (nested object)
   const updatePersonalInfo = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      personal_info: { ...prev.personal_info, [field]: value },
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        personal_info: { ...prev.personal_info, [field]: value },
+      }
+      saveDraftLocally(updated);
+      loadDraftLocally();
+      return updated
+    });
   };
 
   // 🔹 Add Work Experience

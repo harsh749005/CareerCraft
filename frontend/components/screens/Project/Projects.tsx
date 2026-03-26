@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
 import { TEMPLATE_CONFIGS, ProjectsDisplayMode } from "@/config/templateConfig";
-import CustomLoader from "../appcomp/CustomLoader";
+import CustomLoader from '../../appcomp/CustomLoader';
 import ProjectsSummaryStep from "./ProjectsSummaryStep";
 
 interface ProjectStepProps {

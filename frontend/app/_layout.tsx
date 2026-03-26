@@ -6,6 +6,7 @@ import NoInternetScreen from "@/components/appcomp/NoNetworkScreen";
 import { View, ActivityIndicator } from "react-native";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
+import SplashLoader from "@/components/appcomp/SplashLoader/SplashLoader";
 
 // Token cache for Clerk
 const tokenCache = {
@@ -66,7 +67,8 @@ function RootNavigator() {
   if (!isLoaded || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F4F1DE" }}>
-        <ActivityIndicator color="#3BBFAD" size="large" />
+        {/* <ActivityIndicator color="#3BBFAD" size="large" /> */}
+        <SplashLoader/>
       </View>
     );
   }
