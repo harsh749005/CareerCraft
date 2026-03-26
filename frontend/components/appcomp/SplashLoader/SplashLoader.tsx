@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Animated,
   Easing,
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
 
   wordmark: {
     fontFamily: "PlayfairDisplayExtraBold",
-    fontSize: 52,
+    fontSize: 48,
     color: "#3D405B",
     letterSpacing: -1,
     lineHeight: 58,

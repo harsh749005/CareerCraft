@@ -28,6 +28,7 @@ function RootNavigator() {
   const { isLoaded } = useAuth();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [animationDone, setAnimationDone] = useState(false); // 👈 new
 
   const [fontsLoaded] = useFonts({
     Inter: require("../assets/fonts/Inter-VariableFont_opsz,wght.ttf"),
@@ -62,13 +63,18 @@ function RootNavigator() {
     if (fontsLoaded) SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
+  // Determine if everything is ready EXCEPT animation
+  const checksComplete = isLoaded && fontsLoaded && !isChecking;
+
   if (!isChecking && isConnected === false) return <NoInternetScreen />;
 
-  if (!isLoaded || !fontsLoaded) {
+  // Show SplashLoader until BOTH animation is done AND checks are complete
+  if (!animationDone || !checksComplete) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F4F1DE" }}>
-        {/* <ActivityIndicator color="#3BBFAD" size="large" /> */}
-        <SplashLoader/>
+        <SplashLoader
+          onAnimationFinish={() => setAnimationDone(true)} // 👈 new
+        />
       </View>
     );
   }
