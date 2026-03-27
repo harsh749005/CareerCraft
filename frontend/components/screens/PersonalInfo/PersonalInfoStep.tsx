@@ -28,7 +28,6 @@ const PersonalInfoStep: React.FC<Props> = ({
   totalSteps,
 }) => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
-
   const fields = [
     {
       key: "name",

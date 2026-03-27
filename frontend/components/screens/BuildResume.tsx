@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {  View } from "react-native";
 import BranchSelectScreen from "./BranchSelector/Branchselectscreen";
 import PersonalInfoStep from "@/components/screens/PersonalInfo/PersonalInfoStep";
@@ -71,6 +71,30 @@ export default function BuildReume() {
     selected_template: "",
     otherLinks: {},
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    const hydrateFromLocalDraft = async () => {
+      const local = await loadDraftLocally();
+      if (!isMounted || !local) return;
+
+      setFormData((prev) => ({
+        ...prev,
+        ...local,
+        personal_info: { ...prev.personal_info, ...(local.personal_info ?? {}) },
+        otherLinks: { ...prev.otherLinks, ...(local.otherLinks ?? {}) },
+        work_experience: Array.isArray(local.work_experience) ? local.work_experience : prev.work_experience,
+        projects: Array.isArray(local.projects) ? local.projects : prev.projects,
+        education: Array.isArray(local.education) ? local.education : prev.education,
+        skills: local.skills ?? prev.skills,
+      }));
+    };
+
+    hydrateFromLocalDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const setBranch = (branch: string) => {
     setFormData((prev) => {
       const updated = {
@@ -97,7 +121,6 @@ export default function BuildReume() {
         personal_info: { ...prev.personal_info, [field]: value },
       }
       saveDraftLocally(updated);
-      loadDraftLocally();
       return updated
     });
   };
