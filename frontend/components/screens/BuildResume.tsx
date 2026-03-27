@@ -223,7 +223,7 @@ export default function BuildReume() {
       };
     });
     setActiveWorkExperienceIndex(newIndex);
-    setStep(8);
+    setStep(9);
   };
   const handleAddAnotherEduExperience = () => {
     let newIndex = 0;
@@ -240,7 +240,7 @@ export default function BuildReume() {
   };
   const handleEditWorkExperience = (index: number) => {
     setActiveWorkExperienceIndex(index);
-    setStep(8);
+    setStep(9);
   };
   const handleEditEduExperience = (index: number) => {
     setActiveEduExperienceIndex(index);
@@ -248,7 +248,7 @@ export default function BuildReume() {
   };
   const handleGoToJobDescription = (index: number) => {
     setActiveWorkExperienceIndex(index);
-    setStep(9);
+    setStep(10);
   };
   // add projects
   const addProjects = (pro: any) => {

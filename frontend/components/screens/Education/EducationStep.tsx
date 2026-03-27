@@ -334,7 +334,7 @@ const EducationStep: React.FC<Props> = ({
               {startLabel ? (
                 <Text style={styles.dateValue}>{startLabel}</Text>
               ) : (
-                <Text style={styles.dateValue}>Select start Date</Text>
+                <Text style={styles.datePlaceholder}>Select start Date</Text>
               )}
             </View>
             <Ionicons
