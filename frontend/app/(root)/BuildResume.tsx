@@ -6,4 +6,3 @@ const BuildResumeRoute = () => {
 };
 
 export default BuildResumeRoute;
-

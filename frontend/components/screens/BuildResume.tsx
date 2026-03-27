@@ -696,4 +696,3 @@ export default function BuildReume() {
     </SafeScreen>
   );
 }
-
