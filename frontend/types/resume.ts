@@ -13,6 +13,7 @@ export type SkillsData = {
     projects: any[];
     education: any[];
     skills: SkillsData;
+    /** `TemplateConfig.id` (e.g. "Classic", "Modern") from ResumeOptions. */
     selected_template: string;
     otherLinks: Record<string, any>;
   };

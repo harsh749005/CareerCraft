@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,12 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { callGeminiAPI } from "@/api/gemini";
+import { stripBulletLinesFromPolishedText } from "@/utils/polishBulletText";
 // ─── Data ────────────────────────────────────────────────────────
 
 const roleExamples: Record<string, string[]> = {
@@ -313,6 +316,7 @@ const JobDescriptionStep: React.FC<Props> = ({
   const [bullets, setBullets] = useState<BulletPoint[]>([]);
   const [past, setPast] = useState<BulletPoint[][]>([]); // undo stack
   const [future, setFuture] = useState<BulletPoint[][]>([]); // redo stack
+  const [isPolishing, setIsPolishing] = useState(false);
 
   // ── Format state ──
   const [fmt, setFmt] = useState<FormatState>({
@@ -373,8 +377,8 @@ const JobDescriptionStep: React.FC<Props> = ({
       setFuture([]);
       return;
     }
-    const lines = raw.split(/\r?\n/).filter((l) => l.trim());
-    const parsed: BulletPoint[] = lines.map((line, i) => ({
+    const lines = raw.split(/\r?\n/).filter((l:any) => l.trim());
+    const parsed: BulletPoint[] = lines.map((line:any, i:any) => ({
       id: `loaded-${safeIndex}-${i}`,
       text: line.replace(/^•\s*/, "").trim(),
     }));
@@ -429,7 +433,64 @@ const JobDescriptionStep: React.FC<Props> = ({
   const toggleFmt = (key: keyof FormatState) => {
     setFmt((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+  const normalizeGeminiBullets = (raw: string): string => {
+    const lines = (raw || "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
 
+    // Extract likely bullet lines and normalize to "* ..."
+    const bullets = lines
+      .map((line) => {
+        // Remove bullet markers: "*", "-", "•", numbering, etc.
+        const cleaned = line
+          .replace(/^(?:[*•-]\s+|\d+\.\s+|\d+\)\s+)+/g, "")
+          .replace(/^(?:[*•-])\s*/g, "")
+          .trim();
+        return cleaned;
+      })
+      .filter(Boolean);
+
+    const picked = bullets.slice(0, 5);
+    return picked.map((b) => `* ${b}`).join("\n");
+  };
+  const polishWithAI = async () => {
+    if (bullets.length === 0) {
+      Alert.alert(
+        "Nothing to polish",
+        "Please add at least one bullet point before polishing.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+  
+    const currentText = bullets.map((b) => `• ${b.text}`).join("\n");
+  
+    setIsPolishing(true);
+    try {
+      const prompt = `Polish these job description bullet points. Improve grammar, punctuation, readability, and impact. Use strong action verbs. Keep the same number of bullets. Return ONLY bullet lines, each starting with "• ".
+
+Original bullets:
+${currentText}`;
+      const result = await callGeminiAPI(prompt);
+      const normalized = normalizeGeminiBullets(result);
+      const lineTexts = stripBulletLinesFromPolishedText(normalized || result);
+      if (lineTexts.length === 0) {
+        throw new Error("Empty response");
+      }
+      const newBullets: BulletPoint[] = lineTexts.map((text, i) => ({
+        id: `polish-${safeIndex}-${Date.now()}-${i}`,
+        text,
+      }));
+      commit(newBullets, bullets);
+    } catch {
+      Alert.alert("Error", "Failed to polish. Please try again.", [
+        { text: "OK" },
+      ]);
+    } finally {
+      setIsPolishing(false);
+    }
+  };
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -544,92 +605,74 @@ const JobDescriptionStep: React.FC<Props> = ({
           </ScrollView>
 
           {/* Toolbar */}
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              onPress={() => toggleFmt("bullet")}
-              style={[styles.toolBtn, fmt.bullet && styles.toolBtnActive]}
-            >
-              <Ionicons
-                name="list"
-                size={20}
-                color={fmt.bullet ? "#3BBFAD" : "#555"}
-              />
-            </TouchableOpacity>
+         {/* Toolbar */}
+<View style={styles.toolbar}>
+  <TouchableOpacity
+    onPress={() => toggleFmt("bullet")}
+    style={[styles.toolBtn, fmt.bullet && styles.toolBtnActive]}
+  >
+    <Ionicons name="list" size={20} color={fmt.bullet ? "#3BBFAD" : "#555"} />
+  </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => toggleFmt("bold")}
-              style={[styles.toolBtn, fmt.bold && styles.toolBtnActive]}
-            >
-              <Text
-                style={[
-                  styles.toolText,
-                  { fontFamily: "WorkSansBold" },
-                  fmt.bold && styles.toolTextActive,
-                ]}
-              >
-                B
-              </Text>
-            </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => toggleFmt("bold")}
+    style={[styles.toolBtn, fmt.bold && styles.toolBtnActive]}
+  >
+    <Text style={[styles.toolText, { fontFamily: "WorkSansBold" }, fmt.bold && styles.toolTextActive]}>
+      B
+    </Text>
+  </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => toggleFmt("italic")}
-              style={[styles.toolBtn, fmt.italic && styles.toolBtnActive]}
-            >
-              <Text
-                style={[
-                  styles.toolText,
-                  { fontStyle: "italic" },
-                  fmt.italic && styles.toolTextActive,
-                ]}
-              >
-                I
-              </Text>
-            </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => toggleFmt("italic")}
+    style={[styles.toolBtn, fmt.italic && styles.toolBtnActive]}
+  >
+    <Text style={[styles.toolText, { fontStyle: "italic" }, fmt.italic && styles.toolTextActive]}>
+      I
+    </Text>
+  </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => toggleFmt("underline")}
-              style={[styles.toolBtn, fmt.underline && styles.toolBtnActive]}
-            >
-              <Text
-                style={[
-                  styles.toolText,
-                  { textDecorationLine: "underline" },
-                  fmt.underline && styles.toolTextActive,
-                ]}
-              >
-                U
-              </Text>
-            </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => toggleFmt("underline")}
+    style={[styles.toolBtn, fmt.underline && styles.toolBtnActive]}
+  >
+    <Text style={[styles.toolText, { textDecorationLine: "underline" }, fmt.underline && styles.toolTextActive]}>
+      U
+    </Text>
+  </TouchableOpacity>
 
-            {/* Undo */}
-            <TouchableOpacity
-              onPress={undo}
-              style={[styles.toolBtn, past.length > 0 && styles.toolBtnActive]}
-              disabled={past.length === 0}
-            >
-              <Ionicons
-                name="arrow-undo"
-                size={20}
-                color={past.length > 0 ? "#3BBFAD" : "#ccc"}
-              />
-            </TouchableOpacity>
+  {/* Undo */}
+  <TouchableOpacity
+    onPress={undo}
+    style={[styles.toolBtn, past.length > 0 && styles.toolBtnActive]}
+    disabled={past.length === 0}
+  >
+    <Ionicons name="arrow-undo" size={20} color={past.length > 0 ? "#3BBFAD" : "#ccc"} />
+  </TouchableOpacity>
 
-            {/* Redo */}
-            <TouchableOpacity
-              onPress={redo}
-              style={[
-                styles.toolBtn,
-                future.length > 0 && styles.toolBtnActive,
-              ]}
-              disabled={future.length === 0}
-            >
-              <Ionicons
-                name="arrow-redo"
-                size={20}
-                color={future.length > 0 ? "#3BBFAD" : "#ccc"}
-              />
-            </TouchableOpacity>
-          </View>
+  {/* Redo */}
+  <TouchableOpacity
+    onPress={redo}
+    style={[styles.toolBtn, future.length > 0 && styles.toolBtnActive]}
+    disabled={future.length === 0}
+  >
+    <Ionicons name="arrow-redo" size={20} color={future.length > 0 ? "#3BBFAD" : "#ccc"} />
+  </TouchableOpacity>
+
+  {/* ── AI Polish Button ── */}
+  <TouchableOpacity
+    onPress={polishWithAI}
+    disabled={isPolishing || bullets.length === 0}
+    style={[styles.toolBtn, styles.aiPolishBtn, isPolishing && styles.aiPolishBtnLoading]}
+    activeOpacity={0.8}
+  >
+    {isPolishing ? (
+      <ActivityIndicator size="small" color="#3BBFAD" />
+    ) : (
+      <Text style={styles.sparkle}>✦</Text>
+    )}
+  </TouchableOpacity>
+</View>
 
           {/* Continue */}
           <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
@@ -859,7 +902,19 @@ const styles = StyleSheet.create({
   toolBtnActive: { backgroundColor: "#e8f5f2" },
   toolText: { fontSize: 17, color: "#555", fontFamily: "WorkSansRegular" },
   toolTextActive: { color: "#3BBFAD" },
-
+// ── ADD to the styles StyleSheet ──
+aiPolishBtn: {
+  backgroundColor: "#e8f5f2",
+  borderWidth: 1,
+  borderColor: "#3BBFAD",
+},
+aiPolishBtnLoading: {
+  opacity: 0.6,
+},
+sparkle: {
+  fontSize: 16,
+  color: "#3BBFAD",
+},
   // Continue
   continueBtn: {
     backgroundColor: "#3BBFAD",

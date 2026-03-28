@@ -24,13 +24,12 @@ interface ReviewStepProps {
 
 const STEP_MAP = {
   personal: 3,
-  education: 4,
-  skills: 5,
-  work: 10,
-  workDesc: 4,  
-  projects: 7,
-  summary: 2,
-  links: 11,
+  education_summary: 5,
+  skills: 6,
+  projects_summary: 8,
+  work_summary: 11,
+  links: 12,
+  summary: 13,
 };
 
 const ReviewStep: React.FC<ReviewStepProps> = ({
@@ -272,7 +271,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           <Section
             icon="briefcase-outline"
             title="Work Experience"
-            stepKey="work"
+            stepKey="work_summary"
           >
             {data.work_experience?.length > 0 ? (
               data.work_experience.map((exp: any, i: number) => (
@@ -336,7 +335,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 <Text style={styles.emptyText}>No work experience added</Text>
                 <TouchableOpacity
                   style={styles.emptyAddBtn}
-                  onPress={() => goToStep(STEP_MAP.work)}
+                  onPress={() => goToStep(STEP_MAP.work_summary)}
                 >
                   <Ionicons name="add" size={14} color="#3BBFAD" />
                   <Text style={styles.emptyAddText}>Add now</Text>
@@ -346,7 +345,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </Section>
 
           {/* ── Projects ── */}
-          <Section icon="folder-outline" title="Projects" stepKey="projects">
+          <Section icon="folder-outline" title="Projects" stepKey="projects_summary">
             {data.projects?.length > 0 ? (
               data.projects.map((proj: any, i: number) => (
                 <View
@@ -390,7 +389,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
                 <Text style={styles.emptyText}>No projects added</Text>
                 <TouchableOpacity
                   style={styles.emptyAddBtn}
-                  onPress={() => goToStep(STEP_MAP.projects)}
+                  onPress={() => goToStep(STEP_MAP.projects_summary)}
                 >
                   <Ionicons name="add" size={14} color="#3BBFAD" />
                   <Text style={styles.emptyAddText}>Add now</Text>
@@ -400,7 +399,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
           </Section>
 
           {/* ── Education ── */}
-          <Section icon="school-outline" title="Education" stepKey="education">
+          <Section icon="school-outline" title="Education" stepKey="education_summary">
             {data.education?.map((edu: any, i: number) => (
               <View
                 key={i}

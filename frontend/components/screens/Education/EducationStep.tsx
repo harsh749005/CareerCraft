@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  FlatList,
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,7 +16,6 @@ interface Props {
   addEducation: (edu: any) => void;
   updateEducation: any;
   activeEduExperienceIndex: number;
-  removeEducationExperience: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -194,7 +192,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
 // ─── Main Component ──────────────────────────────────────────────
 const EducationStep: React.FC<Props> = ({
   data, addEducation, updateEducation, activeEduExperienceIndex,
-  removeEducationExperience, nextStep, prevStep, step, totalSteps,
+   nextStep, prevStep, step, totalSteps,
 }) => {
   const edu = data.education || [];
   useEffect(() => {

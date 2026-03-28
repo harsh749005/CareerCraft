@@ -82,17 +82,17 @@ export const template = `
 
 
 
-    <!-- Experience -->
+    <!-- Experience (each job is a block with its own inner list; outer wrapper must not be ul) -->
     <h2>Experience</h2>
-    <ul>
+    <div>
       {{experience}}
-    </ul>
+    </div>
 
-    <!-- Projects -->
+    <!-- Projects (each project is a block with its own list; outer wrapper is a div, not ul) -->
     <h2>Projects</h2>
-    <ul>
+    <div>
       {{projects}}
-    </ul>
+    </div>
 
     <!-- Skills -->
     <h2>Skills</h2>
@@ -103,9 +103,9 @@ export const template = `
     <p>{{summary}}</p>
     <!-- Education -->
     <h2>Education</h2>
-    <ul>
+    <div>
       {{education}}
-    </ul>
+    </div>
   </body>
 </html>
 

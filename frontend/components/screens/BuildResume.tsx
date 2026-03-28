@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {  View } from "react-native";
+import { View } from "react-native";
 import BranchSelectScreen from "./BranchSelector/Branchselectscreen";
 import PersonalInfoStep from "@/components/screens/PersonalInfo/PersonalInfoStep";
 import EducationStep from "@/components/screens/Education/EducationStep";
@@ -17,18 +17,11 @@ import OtherLinks from "@/components/screens/Links/OtherLinks";
 import SafeScreen from "@/components/appcomp/SafeScreen";
 
 // storage filles
-import {saveDraftLocally,loadDraftLocally} from "@/storage/draftStorage";
+import { saveDraftLocally, loadDraftLocally,removeDraftLocally } from "@/storage/draftStorage";
 
+import { syncDraft,loadDraft } from "@/storage/draftManager";
 export default function BuildReume() {
-  // const [option,setOption] = useState("");
-  // const [selectedIndustry, setSelectedIndustry] = useState("");
-  // const [selectedTemplate, setSelectedTemplate] = useState("");
-  // const updateSelectedIndustry = (industry: string) => {
-  //   setSelectedIndustry(industry);
-  // };
-  // const handleOption = (e:string) =>{
-  //   setOption(e);
-  // }
+
 
   const [step, setStep] = useState(1);
   const [activeEduExperienceIndex, setActiveEduExperienceIndex] = useState(0);
@@ -72,29 +65,97 @@ export default function BuildReume() {
     otherLinks: {},
   });
 
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const hydrateFromLocalDraft = async () => {
+  //     const local = await loadDraftLocally();
+  //     if (!isMounted || !local) return;
+
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       ...local,
+  //       personal_info: { ...prev.personal_info, ...(local.personal_info ?? {}) },
+  //       otherLinks: { ...prev.otherLinks, ...(local.otherLinks ?? {}) },
+  //       work_experience: Array.isArray(local.work_experience) ? local.work_experience : prev.work_experience,
+  //       projects: Array.isArray(local.projects) ? local.projects : prev.projects,
+  //       education: Array.isArray(local.education) ? local.education : prev.education,
+  //       skills: local.skills ?? prev.skills,
+  //     }));
+  //   };
+
+  //   hydrateFromLocalDraft();
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []);
+  
   useEffect(() => {
     let isMounted = true;
+  
     const hydrateFromLocalDraft = async () => {
-      const local = await loadDraftLocally();
+      const local = await loadDraft();
       if (!isMounted || !local) return;
-
+  
       setFormData((prev) => ({
         ...prev,
-        ...local,
-        personal_info: { ...prev.personal_info, ...(local.personal_info ?? {}) },
-        otherLinks: { ...prev.otherLinks, ...(local.otherLinks ?? {}) },
-        work_experience: Array.isArray(local.work_experience) ? local.work_experience : prev.work_experience,
-        projects: Array.isArray(local.projects) ? local.projects : prev.projects,
-        education: Array.isArray(local.education) ? local.education : prev.education,
-        skills: local.skills ?? prev.skills,
+  
+        professional_summary: local.professional_summary ?? prev.professional_summary,
+        selected_template: local.selected_template ?? prev.selected_template,
+  
+        personal_info: {
+          ...prev.personal_info,
+          ...(local.personal_info ?? {}),
+        },
+  
+        otherLinks: {
+          ...prev.otherLinks,
+          ...(local.otherLinks ?? {}),
+        },
+  
+        work_experience: Array.isArray(local.work_experience)
+          ? local.work_experience
+          : prev.work_experience,
+  
+        projects: Array.isArray(local.projects)
+          ? local.projects
+          : prev.projects,
+  
+        education: Array.isArray(local.education)
+          ? local.education
+          : prev.education,
+  
+        skills: {
+          categorized: {
+            Languages:
+              local.skills?.categorized?.Languages ??
+              prev.skills.categorized.Languages,
+  
+            Frameworks:
+              local.skills?.categorized?.Frameworks ??
+              prev.skills.categorized.Frameworks,
+  
+            Tools:
+              local.skills?.categorized?.Tools ??
+              prev.skills.categorized.Tools,
+  
+            Databases:
+              local.skills?.categorized?.Databases ??
+              prev.skills.categorized.Databases,
+          },
+          uncategorized:
+            local.skills?.uncategorized ??
+            prev.skills.uncategorized,
+        },
       }));
     };
-
+  
     hydrateFromLocalDraft();
+  
     return () => {
       isMounted = false;
     };
   }, []);
+  
   const setBranch = (branch: string) => {
     setFormData((prev) => {
       const updated = {
@@ -102,7 +163,7 @@ export default function BuildReume() {
         ...prev,
         personal_info: { ...prev.personal_info, branch },
       }
-      saveDraftLocally(updated);
+      syncDraft(updated);
       return updated
     });
   };
@@ -120,17 +181,21 @@ export default function BuildReume() {
         ...prev,
         personal_info: { ...prev.personal_info, [field]: value },
       }
-      saveDraftLocally(updated);
+      syncDraft(updated);
       return updated
     });
   };
 
   // 🔹 Add Work Experience
   const addWorkExperience = (exp: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      work_experience: [...prev.work_experience, exp],
-    }));
+    setFormData((prev: any) => {
+      const updated = {
+        ...prev,
+        work_experience: [...prev.work_experience, exp],
+      }
+      syncDraft(updated);
+      return updated;
+    });
   };
 
   const EMPTY_WORK_EXPERIENCE = {
@@ -153,8 +218,8 @@ export default function BuildReume() {
   };
   const EMPTY_EDU_EXPERIENCE = {
     institution: "",
-    degree:"",
-    result:"",
+    degree: "",
+    result: "",
     start_month: "",
     start_year: "",
     end_month: "",
@@ -203,30 +268,53 @@ export default function BuildReume() {
     field: string,
     value: string | boolean
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.map((exp, i) =>
-        i === index ? { ...exp, [field]: value } : exp
-      ),
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        work_experience: prev.work_experience.map((exp, i) =>
+          i === index ? { ...exp, [field]: value } : exp
+        ),
+      };
+      syncDraft(updated);
+      return updated;
+    });
   };
 
   const removeExperience = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.filter((_, i) => i !== index),
-    }));
-    setActiveWorkExperienceIndex((prev) => {
+    setFormData((prev: any) => {
+      const updatedWorkExp = prev.work_experience.filter(
+        (_: any, i: number) => i !== index
+      );
+  
+      const updated = {
+        ...prev,
+        work_experience: updatedWorkExp,
+      };
+  
+      syncDraft(updated); // 🔥 only line needed
+  
+      return updated;
+    });
+  
+    setActiveWorkExperienceIndex((prev: number) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
       return prev;
     });
   };
   const removeEduExperience = (index: number) => {
-    setFormData((prev) => ({
+    setFormData((prev:any) => {
+    const updatedEduExp = {  ...prev,
+      education: prev.education.filter((_: any, i: number) => i !== index),
+    };
+    const updated = {
       ...prev,
-      education: prev.education.filter((_, i) => i !== index),
-    }));
+      education:updatedEduExp,
+    };
+    syncDraft(updated);
+    return updated;
+    });
+
     setActiveEduExperienceIndex((prev) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
@@ -237,26 +325,34 @@ export default function BuildReume() {
   /** Add a new role, drop prior blank drafts, focus the new slot, go to Work Experience. */
   const handleAddAnotherPosition = () => {
     let newIndex = 0;
-    setFormData((prev) => {
-      const cleaned = prev.work_experience.filter((e) => !isWorkExperienceEmpty(e));
+    setFormData((prev: any) => {
+      const cleaned = prev.work_experience.filter(
+        (e: any) => !isWorkExperienceEmpty(e)
+      );
       newIndex = cleaned.length;
-      return {
+      const updated = {
         ...prev,
         work_experience: [...cleaned, { ...EMPTY_WORK_EXPERIENCE }],
       };
+      // ✅ Save draft just like addWorkExperience
+      syncDraft(updated);
+      return updated;
     });
+
     setActiveWorkExperienceIndex(newIndex);
     setStep(9);
   };
   const handleAddAnotherEduExperience = () => {
     let newIndex = 0;
     setFormData((prev) => {
-      const cleaned = prev.education.filter((e) => !isEduExperienceEmpty(e));
+      const cleaned = prev.education.filter((e: any) => !isEduExperienceEmpty(e));
       newIndex = cleaned.length;
-      return {
+      const updated = {
         ...prev,
         education: [...cleaned, { ...EMPTY_EDU_EXPERIENCE }],
       };
+      syncDraft(updated);
+      return updated;
     });
     setActiveEduExperienceIndex(newIndex);
     setStep(4);
@@ -275,20 +371,29 @@ export default function BuildReume() {
   };
   // add projects
   const addProjects = (pro: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      projects: [...prev.projects, pro],
-    }));
+    setFormData((prev: any) => {
+      const updated = {
+        ...prev,
+        projects: [...prev.projects, pro],
+      }
+      syncDraft(updated);
+      return updated;
+    });
   };
   // update project
   const updateProjects = (index: number, field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      projects: prev.projects.map((pro, i) =>
-        i === index ? { ...pro, [field]: value } : pro
-      ),
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        projects: prev.projects.map((pro, i) =>
+          i === index ? { ...pro, [field]: value } : pro
+        ),
+      };
+      syncDraft(updated);
+      return updated;
+    });
   };
+
   const handleEditProjects = (index: number) => {
     setActiveProjectIndex(index);
     // Go back to the projects editor (not the summary list).
@@ -298,10 +403,19 @@ export default function BuildReume() {
   const removeProjects = (index: number) => {
     // const updated = formData.projects.filter((_, i) => i !== index);
     // setFormData({ ...formData, projects: updated });
-    setFormData((prev) => ({
+    setFormData((prev:any) => {
+      const updatedProject = {
       ...prev,
-      projects: prev.projects.filter((_, i) => i !== index),
-    }));
+      projects: prev.projects.filter((_:any, i:number) => i !== index),
+      };
+      const updated = {
+        ...prev,
+        projects:updatedProject,
+      };
+      syncDraft(updated);
+      return updated;
+    });
+
     setActiveProjectIndex((prev) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
@@ -314,10 +428,12 @@ export default function BuildReume() {
     setFormData((prev) => {
       const cleaned = prev.projects.filter((e) => !isProjectEmpty(e));
       newIndex = cleaned.length;
-      return {
+      const updated = {
         ...prev,
         projects: [...cleaned, { ...EMPTY_PROJECT }],
       };
+      syncDraft(updated);
+      return updated;
     });
     setActiveProjectIndex(newIndex);
     setStep(7);
@@ -325,7 +441,12 @@ export default function BuildReume() {
 
   // 🔹 Update Summary
   const updateSummary = (value: string) => {
-    setFormData((prev) => ({ ...prev, professional_summary: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, professional_summary: value }
+      syncDraft(updated);
+      return updated;
+    }
+    );
   };
 
   // add Certification
@@ -346,10 +467,14 @@ export default function BuildReume() {
 
   // add Education
   const addEducation = (edu: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      education: [...prev.education, edu],
-    }));
+    setFormData((prev: any) => {
+      const updated = {
+        ...prev,
+        education: [...prev.education, edu],
+      };
+      syncDraft(updated);
+      return updated;
+    });
   };
 
   // 🔹 Update Education
@@ -358,17 +483,18 @@ export default function BuildReume() {
     field: string,
     value: string | boolean
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      education: prev.education.map((exp, i) =>
-        i === index ? { ...exp, [field]: value } : exp
-      ),
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        education: prev.education.map((exp, i) =>
+          i === index ? { ...exp, [field]: value } : exp
+        )
+      }
+      syncDraft(updated);
+      return updated;
+    });
   };
-  const handleRemoveEducationExperience = (index: number) => {
-    const updated = formData.education.filter((_, i) => i !== index);
-    setFormData({ ...formData, education: updated });
-  };
+
 
   // 🔹 Add & Remove Languages
   // const handleLanguage = (lang:string) => {
@@ -393,14 +519,14 @@ export default function BuildReume() {
   // };
 
   // Your updateSkill function:
-  type SkillCategory = "languages" | "frameworks" | "tools" | "databases";
+
   // For categorized templates — toggles skill inside a named category
   const updateCategorizedSkill = (category: string, skill: string) => {
     setFormData((prev) => {
       const currentSkills = prev.skills.categorized[category] || [];
       const alreadySelected = currentSkills.includes(skill);
 
-      return {
+      const updated = {
         ...prev,
         skills: {
           ...prev.skills,
@@ -412,6 +538,9 @@ export default function BuildReume() {
           },
         },
       };
+      syncDraft(updated)
+      return updated;
+
     });
   };
 
@@ -421,7 +550,7 @@ export default function BuildReume() {
       const currentSkills = prev.skills.uncategorized;
       const alreadySelected = currentSkills.includes(skill);
 
-      return {
+      const updated = {
         ...prev,
         skills: {
           ...prev.skills,
@@ -430,6 +559,8 @@ export default function BuildReume() {
             : [...currentSkills, skill],
         },
       };
+      syncDraft(updated);
+      return updated;
     });
   };
 
@@ -437,7 +568,7 @@ export default function BuildReume() {
   const addSkillCategory = (categoryName: string) => {
     setFormData((prev) => {
       if (prev.skills.categorized[categoryName]) return prev; // already exists
-      return {
+      const updated = {
         ...prev,
         skills: {
           ...prev.skills,
@@ -447,21 +578,32 @@ export default function BuildReume() {
           },
         },
       };
+      syncDraft(updated);
+      return updated;
     });
   };
 
-  // 🔹 Update Selected Template
+  // 🔹 Update Selected Template (`value` = TemplateConfig.id from ResumeOptions)
   const updateSelectedTemplate = (value: string) => {
     console.log("Selected Template in Index:", value);
-    setFormData((prev) => ({ ...prev, selected_template: value }));
+    setFormData((prev) => {
+      const updated =
+        { ...prev, selected_template: value }
+      syncDraft(updated);
+      return updated;
+    });
   };
 
   // 🔹 Update updateOtherLinks (nested object)
   const updateOtherLinks = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      otherLinks: { ...prev.otherLinks, [field]: value },
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        otherLinks: { ...prev.otherLinks, [field]: value },
+      }
+      syncDraft(updated);
+      return updated;
+    });
   };
 
   // 🔹 Navigation
@@ -480,30 +622,11 @@ export default function BuildReume() {
   return (
     <SafeScreen>
       <View style={{ flex: 1 }}>
-        {/* 🔹 Progress Bar */}
-        {/* <View style={styles.progressContainer}>
-        <View
-          style={[
-            styles.progressFill,
-            { flex: step, backgroundColor: "#81B29A" },
-          ]}
-        />
-        <View style={{ flex: totalSteps - step, backgroundColor: "#eee" }} />
-      </View> */}
-        {/* <Text style={styles.header}>Step {step} / {totalSteps}</Text> */}
-        {/* Step Counter */}
-        {/* <Text style={{ fontSize: 18, marginBottom: 10 }}>Step {step}/9</Text> */}
 
-        {/* {
-              step === 1 && (
-                <MainScreen></MainScreen>
-              )
-        } */}
         {step === 1 && (
           <BranchSelectScreen
             onNext={(branch) => {
               setBranch(branch);
-              // nextStep();        // call it as a function, not a prop
             }}
             nextStep={nextStep}
             prevStep={prevStep}
@@ -512,7 +635,6 @@ export default function BuildReume() {
           />
         )}
         {step === 2 && (
-          // <IndustrySelector nextStep={nextStep} updateSelectedIndustry={setSelectedIndustry} />
           <ResumeOptions
             branch={formData.personal_info.branch}    // ✅ pass branch for filtering
             updateSelectedTemplate={updateSelectedTemplate}  // ✅ matches the interface
@@ -523,9 +645,6 @@ export default function BuildReume() {
           />
 
         )}
-        {/* {step === 2 && (
-          <ResumeOptionEnhanced nextStep={nextStep} updateSelectedTemplate={setSelectedTemplate} selectedIndustry={selectedIndustry} />
-        )} */}
 
         {step === 3 && (
           <PersonalInfoStep
@@ -543,7 +662,6 @@ export default function BuildReume() {
             data={formData}
             addEducation={addEducation}
             updateEducation={updateEducation}
-            removeEducationExperience={handleRemoveEducationExperience}
             activeEduExperienceIndex={activeEduExperienceIndex}
             nextStep={nextStep}
             prevStep={prevStep}
@@ -552,17 +670,16 @@ export default function BuildReume() {
           />
         )}
         {
-          step === 5 &&  (
+          step === 5 && (
             <EducationSummary
-            data={formData}
-            removeExperience={removeEduExperience}
-            onAddAnotherPosition={handleAddAnotherEduExperience}
-            onEditExperience={handleEditEduExperience}
-            // onGoToJobDescription={handleGoToJobDescription}
-            nextStep={nextStep}
-            prevStep={prevStep}
-            step={step}
-            totalSteps={totalSteps}
+              data={formData}
+              removeExperience={removeEduExperience}
+              onAddAnotherPosition={handleAddAnotherEduExperience}
+              onEditExperience={handleEditEduExperience}
+              nextStep={nextStep}
+              prevStep={prevStep}
+              step={step}
+              totalSteps={totalSteps}
             />
           )
         }
@@ -590,7 +707,7 @@ export default function BuildReume() {
             addProjects={addProjects}
             updateProjects={updateProjects}
             removeProjects={removeProjects}
-            // activeProjectIndex={activeProjectIndex}
+            activeProjectIndex={activeProjectIndex}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -683,13 +800,6 @@ export default function BuildReume() {
           />
         )}
 
-        {/* {step === 6 && (
-          <ResumeOptions
-            nextStep={nextStep}
-            prevStep={prevStep}
-            updateSelectedTemplate={updateSelectedTemplate}
-          />
-        )} */}
         {step === 14 && <ReviewStep data={formData} prevStep={prevStep} step={step}
           totalSteps={totalSteps} goToStep={goToStep} />}
       </View>

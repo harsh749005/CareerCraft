@@ -4,8 +4,13 @@ export type SkillsDisplayMode = "categorized" | "uncategorized" | "both";
 
 export type ProjectsDisplayMode = "card" | "nocard";
 
+/** Which PDF HTML shell (`template1.js` vs `template2.js`) to use in GeneratePDF. */
+export type PdfTemplateLayout = "classic" | "modern";
+
 export type TemplateConfig = {
+  /** Stable key stored in `formData.selected_template` (must match `TEMPLATE_CONFIGS` record keys). */
   id: string;
+  /** Display label in the UI (may differ from `id` later). */
   name: string;
   tag: string;
   tagColor: string;
@@ -16,6 +21,8 @@ export type TemplateConfig = {
   projects?: {
     mode: ProjectsDisplayMode;
   };
+  /** PDF export layout; mapped from `selected_template` id. */
+  pdfLayout: PdfTemplateLayout;
 };
 
 export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
@@ -27,6 +34,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     image: require("../assets/images/resume/resume1.png"),
     skills: { mode: "uncategorized" },
     projects: { mode: "nocard" },
+    pdfLayout: "classic",
   },
   Modern: {
     id: "Modern",
@@ -36,6 +44,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
     projects: { mode: "card" },
+    pdfLayout: "modern",
   },
   Executive: {
     id: "Executive",
@@ -45,6 +54,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
     projects: { mode: "nocard" },
+    pdfLayout: "classic",
   },
   Creative: {
     id: "Creative",
@@ -54,6 +64,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     image: require("../assets/images/resume/resume3.jpg"),
     skills: { mode: "both" },
     projects: { mode: "card" },
+    pdfLayout: "modern",
   },
 };
 
@@ -106,3 +117,17 @@ export const getTemplatesForBranch = (branch: string | undefined): TemplateConfi
     .map((id) => TEMPLATE_CONFIGS[id])
     .filter(Boolean) as TemplateConfig[];
 };
+
+/**
+ * Resolves which PDF HTML shell to use from `formData.selected_template` (template id).
+ * Falls back to `"classic"` if unknown or empty.
+ */
+export function resolvePdfLayoutFromTemplateId(
+  selectedTemplateId: string | undefined | null
+): PdfTemplateLayout {
+  if (!selectedTemplateId) return "classic";
+  const config = TEMPLATE_CONFIGS[selectedTemplateId];
+  if (config?.pdfLayout) return config.pdfLayout;
+  const byName = Object.values(TEMPLATE_CONFIGS).find((c) => c.name === selectedTemplateId);
+  return byName?.pdfLayout ?? "classic";
+}

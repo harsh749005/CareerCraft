@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
+import { stripBulletMarkersFromPolishedText } from "@/utils/polishBulletText";
 import CustomLoader from "../../appcomp/CustomLoader";
 
 interface SummaryStepProps {
@@ -49,18 +50,18 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
 - Highlight achievements, problem-solving ability, and technical expertise.  
 - Keep it professional and results-oriented.`;
         const result = await callGeminiAPI(prompt);
-        updateSummary(result);
+        updateSummary(stripBulletMarkersFromPolishedText(result));
       } else if (summary.length > 5) {
         const prompt = `Polish the following resume summary. Do not shorten or expand beyond original context. Return strictly 3 clear bullet points:\n\n"${summary}"`;
         const result = await callGeminiAPI(prompt);
-        updateSummary(result);
+        updateSummary(stripBulletMarkersFromPolishedText(result));
       }
     } catch (error) {
       console.error("Error generating summary:", error);
     } finally {
       setIsGenerating(false);
     }
-  };
+  }; 
 
   const isEmpty = summary.length === 0;
 

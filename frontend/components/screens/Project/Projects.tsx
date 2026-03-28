@@ -12,14 +12,16 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
 import { TEMPLATE_CONFIGS, ProjectsDisplayMode } from "@/config/templateConfig";
+import { stripBulletMarkersFromPolishedText } from "@/utils/polishBulletText";
 import CustomLoader from '../../appcomp/CustomLoader';
-import ProjectsSummaryStep from "./ProjectsSummaryStep";
 
 interface ProjectStepProps {
   data: any;
   addProjects: any;
   updateProjects: any;
   removeProjects: any;
+  /** Index in `data.projects` this screen edits (summary / add-another must stay in sync). */
+  activeProjectIndex: number;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -31,12 +33,17 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   addProjects,
   updateProjects,
   removeProjects,
+  activeProjectIndex,
   nextStep,
   prevStep,
   step,
   totalSteps,
 }) => {
   const projectExperience = data.projects || [];
+  const projectIndex = Math.min(
+    Math.max(0, activeProjectIndex),
+    Math.max(0, projectExperience.length - 1)
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -44,12 +51,10 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   const projectsMode: ProjectsDisplayMode =
     (TEMPLATE_CONFIGS?.[data.selected_template as string]?.projects?.mode as ProjectsDisplayMode) ??
     "card";
-  console.log("projectsMode: ", projectsMode);
   // Nocard (single form) mode state
   // const [projectsView, setProjectsView] = useState<"summary" | "edit">(
   //   "summary",
   // );
-  const [activeProjectIndex, setActiveProjectIndex] = useState(0);
   // const EMPTY_PROJECT = {
   //   title: "",
   //   technologies: "",
@@ -70,12 +75,6 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   //   .map((exp: any, index: number) => ({ exp, index }))
   //   .filter((entry: { exp: any; index: number }) => !isProjectEmpty(entry.exp));
 
-  React.useEffect(() => {
-    if (activeProjectIndex > Math.max(0, projectExperience.length - 1)) {
-      setActiveProjectIndex(Math.max(0, projectExperience.length - 1));
-    }
-  }, [projectExperience.length, activeProjectIndex]);
-
   // Ensure at least one project exists
   React.useEffect(() => {
     if (projectExperience.length === 0) {
@@ -83,30 +82,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
     }
   }, []);
 
-  // const handleNext = () => {
-  //   // if (projectsMode === "nocard") {
-  //   //   Alert.alert("hi")
-  //   //   // if (visibleEntries.length === 0) {
-  //   //   //   Alert.alert(
-  //   //   //     "Add a project",
-  //   //   //     "Please add at least one project (title or description) before continuing."
-  //   //   //   );
-  //   //   //   return;
-  //   //   // }
-  //   // }
-  //   nextStep();
-  // };
 
-  const handleRemoveProject = (index: number) => {
-    if (projectExperience.length === 1) {
-      Alert.alert("Cannot Remove", "You need at least one project entry.", [{ text: "OK" }]);
-      return;
-    }
-    Alert.alert("Remove Project", "Are you sure you want to remove this project?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => removeProjects(index) },
-    ]);
-  };
 
 
 
@@ -160,7 +136,8 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
 
   const generateSummary = async (index: number) => {
     const proj = projectExperience[index];
-    if (!proj || !proj.title || proj.description.length <= 5) {
+    const desc = (proj?.description || "").trim();
+    if (!proj || !(proj.title || "").trim() || desc.length <= 5) {
       Alert.alert("Not enough content", "Please write at least a few words about your project before polishing.", [{ text: "OK" }]);
       return;
     }
@@ -176,11 +153,12 @@ Rules:
 
 Project title: "${proj.title}"
 Original description:
-${proj.description}`;
+${desc}`;
       const result = await callGeminiAPI(prompt);
       const normalized = normalizeGeminiBullets(result);
-      updateProjects(index, "description", normalized || result);
-    } catch (error) {
+      const display = stripBulletMarkersFromPolishedText(normalized || result);
+      updateProjects(index, "description", display);
+    } catch {
       Alert.alert("Error", "Failed to polish the description. Please try again.", [{ text: "OK" }]);
     } finally {
       setIsGenerating(false);
@@ -214,6 +192,7 @@ ${proj.description}`;
               style={{ marginRight: 8, marginTop: multiline ? 6 : 0 }}
             />
           )}
+                  
           <TextInput
             style={[
               styles.fieldInput,
@@ -240,51 +219,6 @@ ${proj.description}`;
     );
   };
 
-  const renderTextField = (
-    index: number,
-    key: string,
-    label: string,
-    placeholder: string,
-    multiline = false,
-    iconName?: string
-  ) => {
-    const fieldId = `${index}-${key}`;
-    const value = projectExperience[index]?.[key] || "";
-    const isFocused = focusedField === key;
-    return (
-      <View style={styles.fieldContainer}>
-        {value ? (
-          <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
-        ) : null}
-        <View style={styles.fieldRow}>
-          <TextInput
-            style={[
-              styles.fieldInput,
-              multiline && styles.multilineInput,
-            ]}
-            placeholder={isFocused ? placeholder : label}
-            multiline={multiline}
-            placeholderTextColor="#bbb"
-            value={value}
-            textAlignVertical={multiline ? "top" : "center"}
-            onFocus={() => setFocusedField(fieldId)}
-            onBlur={() => setFocusedField(null)}
-            onChangeText={(val) => updateProjects(index, key, val)}
-          />
-          {value ? (
-            <Ionicons name="checkmark" size={20} color="#3BBFAD" />
-          ) : null}
-        </View>
-        <View
-          style={[styles.underline, isFocused && styles.underlineFocused]}
-        />
-        {/* Full-width underline for non-multiline, top+bottom for multiline */}
-        {!multiline && (
-          <View style={[styles.underline, isFocused && styles.underlineFocused]} />
-        )}
-      </View>
-    );
-  };
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
@@ -303,196 +237,84 @@ ${proj.description}`;
             <Text style={styles.previewText}>Preview</Text>
           </TouchableOpacity>
         </View>
+        {/* Heading */}
+        <View style={styles.headingBlock}>
+          <Text style={styles.mainHeading}>Mention your best Projects</Text>
+          <Text style={styles.subHeading}>
+            Showcase your best work — include live links and tech stack for maximum impact
+          </Text>
+        </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={
-            projectsMode === "nocard" ? styles.scrollContentnoCard :
-              styles.scrollContent}
+            styles.scrollContentnoCard}
         >
-          {/* Heading */}
-          <View style={projectsMode === "nocard" ? styles.headingBlockNoCard : styles.headingBlock}>
-            <Text style={styles.mainHeading}>Your Projects</Text>
-            <Text style={styles.subHeading}>
-              Showcase your best work — include live links and tech stack for maximum impact
-            </Text>
-          </View>
 
           {/* ── Project Cards ── */}
           {
-            projectsMode === "nocard" ? (
-              projectExperience.map((exp: any, index: number) => (
-                <>
-                  {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
-                  {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
-                  {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
-                  {/* ── Description — full width top/bottom borders ── */}
-                  <View style={styles.descriptionWrapper}>
-                    <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
-                    <TextInput
-                      style={styles.descriptionInput}
-                      placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
-                      placeholderTextColor="#bbb"
-                      value={exp.description || ""}
-                      multiline
-                      textAlignVertical="top"
-                      onChangeText={(val) => updateProjects(index, "description", val)}
-                    />
-                  </View>
-                  {/* ── AI Polish Button ── */}
-                  <View style={projectsMode === "nocard" ? styles.aiSectionNoCard : styles.aiSection}>
-                    <TouchableOpacity
-                      style={[
-                        styles.aiBtn,
-                        isGenerating && generatingIndex === index && styles.aiBtnLoading,
-                      ]}
-                      onPress={() => generateSummary(index)}
-                      disabled={isGenerating && generatingIndex === index}
-                      activeOpacity={0.85}
-                    >
-                      {isGenerating && generatingIndex === index ? (
-                        <View style={styles.aiBtnInner}>
-                          <CustomLoader size={18} color="#3BBFAD" bars={12} />
-                          <Text style={styles.aiBtnText}>Polishing description...</Text>
-                        </View>
-                      ) : (
-                        <View style={styles.aiBtnInner}>
-                          <View style={styles.sparkleBox}>
-                            <Text style={styles.sparkle}>✦</Text>
-                          </View>
-                          <View>
-                            <Text style={styles.aiBtnLabel}>Polish with AI</Text>
-                            <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
-                          </View>
-                          <Ionicons
-                            name="arrow-forward"
-                            size={16}
-                            color="#3BBFAD"
-                            style={{ marginLeft: "auto" }}
-                          />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ))
-            ) : (
+            <>
 
-              projectExperience.map((exp: any, index: number) => (
-                <View key={index} style={styles.projectCard}>
+              {
 
-                  {/* Card Header */}
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardHeaderLeft}>
-                      <View style={styles.projectBadge}>
-                        <Text style={styles.projectBadgeText}>{index + 1}</Text>
+                renderField(projectIndex, "title", "Project Title", "title", false, "folder-outline")
+              }
+              {
+                projectsMode === "card" && (
+
+                  renderField(projectIndex, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")
+
+                )
+              }
+              {
+
+                renderField(projectIndex, "liveUrl", "Live Link", "Project url", false, "globe-outline")
+              }
+              {/* ── Description — full width top/bottom borders ── */}
+              {
+
+                renderField(projectIndex, "description", "Describe you project", "Describe you project ", true, "")
+              }
+              {/* ── AI Polish Button ── */}
+              <View style={projectsMode === "nocard" ? styles.aiSectionNoCard : styles.aiSection}>
+                <TouchableOpacity
+                  style={[
+                    styles.aiBtn,
+                    isGenerating && generatingIndex === projectIndex && styles.aiBtnLoading,
+                  ]}
+                  onPress={() => generateSummary(projectIndex)}
+                  disabled={isGenerating && generatingIndex === projectIndex}
+                  activeOpacity={0.85}
+                >
+                  {isGenerating && generatingIndex === projectIndex ? (
+                    <View style={styles.aiBtnInner}>
+                      <CustomLoader size={18} color="#3BBFAD" bars={12} />
+                      <Text style={styles.aiBtnText}>Polishing description...</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.aiBtnInner}>
+                      <View style={styles.sparkleBox}>
+                        <Text style={styles.sparkle}>✦</Text>
                       </View>
                       <View>
-                        <Text style={styles.projectLabel}>PROJECT {index + 1}</Text>
-                        {exp.title ? (
-                          <Text style={styles.projectTitlePreview} numberOfLines={1}>
-                            {exp.title}
-                          </Text>
-                        ) : (
-                          <Text style={styles.projectTitleEmpty}>Untitled project</Text>
-                        )}
+                        <Text style={styles.aiBtnLabel}>Polish with AI</Text>
+                        <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
                       </View>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={16}
+                        color="#3BBFAD"
+                        style={{ marginLeft: "auto" }}
+                      />
                     </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
 
-                    {/* Delete button */}
-                    {projectExperience.length > 1 && (
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => handleRemoveProject(index)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Ionicons name="trash-outline" size={18} color="#e07070" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  <View style={styles.cardDivider} />
-
-                  {/* Fields */}
-                  <View style={styles.cardBody}>
-                    {renderField(index, "title", "Project Title", "e.g. E-Commerce App", false, "folder-outline")}
-                    {renderField(index, "technologies", "Tech Stack", "e.g. React Native, Node.js, MongoDB", false, "code-slash-outline")}
-                    {renderField(index, "liveUrl", "Live Link", "https://yourproject.com", false, "globe-outline")}
-                  </View>
-
-                  {/* ── Description — full width top/bottom borders ── */}
-                  <View style={styles.descriptionWrapper}>
-                    <Text style={styles.descriptionLabel}>DESCRIPTION</Text>
-                    <TextInput
-                      style={styles.descriptionInput}
-                      placeholder={"Describe what you built, the problem it solves,\nand your key contributions..."}
-                      placeholderTextColor="#bbb"
-                      value={exp.description || ""}
-                      multiline
-                      textAlignVertical="top"
-                      onChangeText={(val) => updateProjects(index, "description", val)}
-                    />
-                  </View>
-
-                  {/* ── AI Polish Button ── */}
-                  <View style={styles.aiSection}>
-                    <TouchableOpacity
-                      style={[
-                        styles.aiBtn,
-                        isGenerating && generatingIndex === index && styles.aiBtnLoading,
-                      ]}
-                      onPress={() => generateSummary(index)}
-                      disabled={isGenerating && generatingIndex === index}
-                      activeOpacity={0.85}
-                    >
-                      {isGenerating && generatingIndex === index ? (
-                        <View style={styles.aiBtnInner}>
-                          <CustomLoader size={18} color="#3BBFAD" bars={12} />
-                          <Text style={styles.aiBtnText}>Polishing description...</Text>
-                        </View>
-                      ) : (
-                        <View style={styles.aiBtnInner}>
-                          <View style={styles.sparkleBox}>
-                            <Text style={styles.sparkle}>✦</Text>
-                          </View>
-                          <View>
-                            <Text style={styles.aiBtnLabel}>Polish with AI</Text>
-                            <Text style={styles.aiBtnSub}>Improve grammar & impact</Text>
-                          </View>
-                          <Ionicons
-                            name="arrow-forward"
-                            size={16}
-                            color="#3BBFAD"
-                            style={{ marginLeft: "auto" }}
-                          />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))
-            )
           }
 
-          {/* ── Add Another Project ── */}
-          {
-            projectsMode === "card" && (
-
-              <TouchableOpacity
-                style={[
-                  styles.addBtn,
-                  projectsMode === "card" ? { marginHorizontal: 20 } : { marginHorizontal: 0 }
-                ]} onPress={() => addProjects({ title: "", technologies: "", description: "", liveUrl: "" })}
-                activeOpacity={0.8}
-              >
-                <View style={styles.addBtnIcon}>
-                  <Ionicons name="add" size={20} color="#3BBFAD" />
-                </View>
-                <Text style={styles.addBtnText}>Add another project</Text>
-              </TouchableOpacity>
-            )
-          }
 
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -554,6 +376,33 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "WorkSansRegular",
     marginBottom: 8,
+  },
+
+  // ── Textarea: full-width top/bottom borders ──
+  textAreaWrapper: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fafafa",
+    marginBottom: 20,
+  },
+  charCount: {
+    textAlign: "right",
+    fontSize: 11,
+    color: "#bbb",
+    fontFamily: "WorkSansRegular",
+    paddingRight: 14,
+    paddingTop: 8,
+  },
+  textArea: {
+    minHeight: 160,
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    lineHeight: 26,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
 
   // Project Card
@@ -644,7 +493,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     fontFamily: "WorkSansRegular",
   },
-  multilineInput: { minHeight: 70 },
+  multilineInput: {     
+    minHeight: 160,
+    height:80,
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    lineHeight: 26,
+    // paddingHorizontal: 20,
+    paddingTop: 12,
+    // paddingBottom: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fafafa",
+    marginBottom: 0,
+  },
   underline: { height: 1, backgroundColor: "#eee", marginTop: 4 },
   underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
 

@@ -2,8 +2,12 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystemLegacy from "expo-file-system/legacy";
 import { Paths } from "expo-file-system";
-import { template } from "@/components/TemplateDesign/template1";
+import { template as template1 } from "@/components/TemplateDesign/template1";
+import { template as template2 } from "@/components/TemplateDesign/template2";
+import { resolvePdfLayoutFromTemplateId } from "@/config/templateConfig";
 import { fillTemplate } from "../appcomp/FillTemplate";
+import { fillTemplate2 } from "../appcomp/FillTemplate2";
+
 let pdfCounter = 0;
 
 export const generatePDF = async (formData: any) => {
@@ -13,8 +17,12 @@ export const generatePDF = async (formData: any) => {
     pdfCounter++;
     safeName = safeName.replace(/[^a-zA-Z0-9_.-]/g, "_");
 
-    // Generate PDF
-    const html = fillTemplate(template, formData);
+    const pdfLayout = resolvePdfLayoutFromTemplateId(formData.selected_template);
+
+    const html =
+      pdfLayout === "modern"
+        ? fillTemplate2(template2, formData)
+        : fillTemplate(template1, formData);
     const { uri } = await Print.printToFileAsync({ html });
     console.log("PDF generated at:", uri);
 

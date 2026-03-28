@@ -20,7 +20,8 @@ const SNAP_INTERVAL = CARD_WIDTH + CARD_GAP;
 
 interface ResumeOptionsProps {
   branch: string;                                    // e.g. "CSE", "ECE" from formData.personal_info.branch
-  updateSelectedTemplate: (name: string) => void;   // saves to formData.selected_template
+  /** Persists `TemplateConfig.id` to `formData.selected_template` (e.g. "Classic", "Modern"). */
+  updateSelectedTemplate: (templateId: string) => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -52,17 +53,17 @@ export default function ResumeOptions({
     selectedIndex !== null ? templates[selectedIndex]?.name ?? null : null;
 
   const handleSelect = (index: number) => {
-    const templateName = templates[index]?.name;
-    if (!templateName) return;
+    const t = templates[index];
+    if (!t?.id) return;
 
-    const config = TEMPLATE_CONFIGS[templateName];
+    const config = TEMPLATE_CONFIGS[t.id];
     if (!config) {
-      console.warn(`No config found for template: ${templateName}`);
+      console.warn(`No config found for template id: ${t.id}`);
       return;
     }
 
     setSelectedIndex(index);
-    updateSelectedTemplate(templateName);  //  "Classic" / "Modern" etc. → formData.selected_template
+    updateSelectedTemplate(t.id);
   };
 
   const handleScroll = (event: any) => {

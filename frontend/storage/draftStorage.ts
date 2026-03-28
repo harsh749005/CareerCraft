@@ -30,3 +30,21 @@ export const loadDraftLocally = async (): Promise<ResumeDraftBody | null> => {
     return null;
   }
 };
+// Remove
+export const removeDraftLocally = async () => {
+  try {
+    await AsyncStorage.removeItem("resume_draft");
+    console.log("Draft removed!");
+  } catch (e) {
+    console.error("Remove failed", e);
+  }
+};
+// clearall
+export const clearAllLocalStorage = async () => {
+  try {
+    await AsyncStorage.clear();
+    console.log("All local storage cleared!");
+  } catch (e) {
+    console.error("Clear failed", e);
+  }
+};
