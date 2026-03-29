@@ -18,8 +18,9 @@ import SafeScreen from "@/components/appcomp/SafeScreen";
 import ResumePreviewModal from "../model/ResumePreviewModal";
 // storage filles
 import { saveDraftLocally, loadDraftLocally, removeDraftLocally } from "@/storage/draftStorage";
-
-import { syncDraft, loadDraft } from "@/storage/draftManager";
+import { useLocalSearchParams } from "expo-router";
+import { getResumes, setEditingResumeId } from "../../services/resumeServices";
+import { syncDraft, loadDraft,loadResumeIntoDraft  } from "@/storage/draftManager";
 export default function BuildReume() {
 
 
@@ -89,73 +90,102 @@ export default function BuildReume() {
   //     isMounted = false;
   //   };
   // }, []);
-
+  const { resumeId } = useLocalSearchParams<{ resumeId?: string }>();
   useEffect(() => {
     let isMounted = true;
 
-    const hydrateFromLocalDraft = async () => {
-      const local = await loadDraft();
-      if (!isMounted || !local) return;
-
-      setFormData((prev) => ({
-        ...prev,
-
-        professional_summary: local.professional_summary ?? prev.professional_summary,
-        selected_template: local.selected_template ?? prev.selected_template,
-
-        personal_info: {
-          ...prev.personal_info,
-          ...(local.personal_info ?? {}),
-        },
-
-        otherLinks: {
-          ...prev.otherLinks,
-          ...(local.otherLinks ?? {}),
-        },
-
-        work_experience: Array.isArray(local.work_experience)
-          ? local.work_experience
-          : prev.work_experience,
-
-        projects: Array.isArray(local.projects)
-          ? local.projects
-          : prev.projects,
-
-        education: Array.isArray(local.education)
-          ? local.education
-          : prev.education,
-
-        skills: {
-          categorized: {
-            Languages:
-              local.skills?.categorized?.Languages ??
-              prev.skills.categorized.Languages,
-
-            Frameworks:
-              local.skills?.categorized?.Frameworks ??
-              prev.skills.categorized.Frameworks,
-
-            Tools:
-              local.skills?.categorized?.Tools ??
-              prev.skills.categorized.Tools,
-
-            Databases:
-              local.skills?.categorized?.Databases ??
-              prev.skills.categorized.Databases,
+    const hydrateForm = async () => {
+      if (resumeId) {
+        // ── EDIT MODE: load from saved resume, ignore draft ──
+        const all = await getResumes();
+        const existing = all.find((r) => r.id === resumeId);
+  
+        if (!isMounted || !existing) return;
+  
+        // Push saved data into draft workspace so syncDraft works normally
+        await loadResumeIntoDraft(existing.data);
+        await setEditingResumeId(resumeId);
+  
+        // Hydrate form with saved resume data using same merge logic
+        const saved = existing.data;
+        setFormData((prev) => ({
+          ...prev,
+          professional_summary: saved.professional_summary ?? prev.professional_summary,
+          selected_template: saved.selected_template ?? prev.selected_template,
+          personal_info: {
+            ...prev.personal_info,
+            ...(saved.personal_info ?? {}),
           },
-          uncategorized:
-            local.skills?.uncategorized ??
-            prev.skills.uncategorized,
-        },
-      }));
+          otherLinks: {
+            ...prev.otherLinks,
+            ...(saved.otherLinks ?? {}),
+          },
+          work_experience: Array.isArray(saved.work_experience)
+            ? saved.work_experience
+            : prev.work_experience,
+          projects: Array.isArray(saved.projects)
+            ? saved.projects
+            : prev.projects,
+          education: Array.isArray(saved.education)
+            ? saved.education
+            : prev.education,
+          skills: {
+            categorized: {
+              Languages: saved.skills?.categorized?.Languages ?? prev.skills.categorized.Languages,
+              Frameworks: saved.skills?.categorized?.Frameworks ?? prev.skills.categorized.Frameworks,
+              Tools: saved.skills?.categorized?.Tools ?? prev.skills.categorized.Tools,
+              Databases: saved.skills?.categorized?.Databases ?? prev.skills.categorized.Databases,
+            },
+            uncategorized: saved.skills?.uncategorized ?? prev.skills.uncategorized,
+          },
+        }));
+  
+      } else {
+        // ── NEW MODE: load from draft as before ──
+        await setEditingResumeId(null);
+        const local = await loadDraft();
+        if (!isMounted || !local) return;
+  
+        setFormData((prev) => ({
+          ...prev,
+          professional_summary: local.professional_summary ?? prev.professional_summary,
+          selected_template: local.selected_template ?? prev.selected_template,
+          personal_info: {
+            ...prev.personal_info,
+            ...(local.personal_info ?? {}),
+          },
+          otherLinks: {
+            ...prev.otherLinks,
+            ...(local.otherLinks ?? {}),
+          },
+          work_experience: Array.isArray(local.work_experience)
+            ? local.work_experience
+            : prev.work_experience,
+          projects: Array.isArray(local.projects)
+            ? local.projects
+            : prev.projects,
+          education: Array.isArray(local.education)
+            ? local.education
+            : prev.education,
+          skills: {
+            categorized: {
+              Languages: local.skills?.categorized?.Languages ?? prev.skills.categorized.Languages,
+              Frameworks: local.skills?.categorized?.Frameworks ?? prev.skills.categorized.Frameworks,
+              Tools: local.skills?.categorized?.Tools ?? prev.skills.categorized.Tools,
+              Databases: local.skills?.categorized?.Databases ?? prev.skills.categorized.Databases,
+            },
+            uncategorized: local.skills?.uncategorized ?? prev.skills.uncategorized,
+          },
+        }));
+      }
     };
-
-    hydrateFromLocalDraft();
-
+  
+    hydrateForm();
+  
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [resumeId]);
 
   const setBranch = (branch: string) => {
     setFormData((prev) => {

@@ -1,367 +1,18 @@
-// // components/ResumePreviewCard.tsx
-// import React from "react";
-// import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
-// import { Resume } from "../../types/resume";
-
-// const CARD_WIDTH = Dimensions.get("window").width * 0.68;
-
-// interface Props {
-//   resume: Resume;
-//   isSelected: boolean;
-//   onPress: () => void;
-//   onMorePress: () => void;
-// }
-
-// export default function ResumePreviewCard({
-//   resume,
-//   isSelected,
-//   onPress,
-//   onMorePress,
-// }: Props) {
-//   const d = resume.data;
-//   const personal = d?.personal_info ?? {};
-//   const skills: string[] = [
-//     ...Object.values(d?.skills?.categorized ?? {}).flat(),
-//     ...(d?.skills?.uncategorized ?? []),
-//   ].slice(0, 6) as string[];
-
-//   const workExp = d?.work_experience ?? [];
-//   const education = d?.education ?? [];
-//   const projects = d?.projects ?? [];
-
-//   // Get initials for avatar
-//   const initials = personal.name
-//     ? personal.name
-//         .split(" ")
-//         .slice(0, 2)
-//         .map((w: string) => w[0])
-//         .join("")
-//         .toUpperCase()
-//     : "?";
-
-//   return (
-//     <TouchableOpacity
-//       style={[styles.card, isSelected && styles.cardSelected]}
-//       onPress={onPress}
-//       activeOpacity={0.9}
-//     >
-//       {/* ── Mini Resume Body ── */}
-//       <View style={styles.resumeBody}>
-
-//         {/* Header strip */}
-//         <View style={styles.headerStrip}>
-//           <View style={styles.avatarCircle}>
-//             <Text style={styles.avatarText}>{initials}</Text>
-//           </View>
-//           <View style={{ flex: 1 }}>
-//             <Text style={styles.resumeName} numberOfLines={1}>
-//               {personal.name || "No Name"}
-//             </Text>
-//             <Text style={styles.resumeBranch} numberOfLines={1}>
-//               {personal.branch || ""}
-//             </Text>
-//             {personal.email ? (
-//               <Text style={styles.resumeContact} numberOfLines={1}>
-//                 {personal.email}
-//               </Text>
-//             ) : null}
-//           </View>
-//         </View>
-
-//         <View style={styles.divider} />
-
-//         {/* Summary */}
-//         {d?.professional_summary ? (
-//           <View style={styles.miniSection}>
-//             <Text style={styles.miniLabel}>SUMMARY</Text>
-//             <Text style={styles.miniBody} numberOfLines={2}>
-//               {d.professional_summary}
-//             </Text>
-//           </View>
-//         ) : null}
-
-//         {/* Experience */}
-//         {workExp.length > 0 && (
-//           <View style={styles.miniSection}>
-//             <Text style={styles.miniLabel}>EXPERIENCE</Text>
-//             {workExp.slice(0, 2).map((exp: any, i: number) => (
-//               <View key={i} style={styles.miniRow}>
-//                 <View style={styles.miniDot} />
-//                 <View style={{ flex: 1 }}>
-//                   <Text style={styles.miniTitle} numberOfLines={1}>
-//                     {exp.job_title || exp.role || "—"}
-//                   </Text>
-//                   <Text style={styles.miniSub} numberOfLines={1}>
-//                     {exp.company_name || exp.company || ""}
-//                   </Text>
-//                 </View>
-//               </View>
-//             ))}
-//           </View>
-//         )}
-
-//         {/* Education */}
-//         {education.length > 0 && (
-//           <View style={styles.miniSection}>
-//             <Text style={styles.miniLabel}>EDUCATION</Text>
-//             {education.slice(0, 1).map((edu: any, i: number) => (
-//               <View key={i} style={styles.miniRow}>
-//                 <View style={styles.miniDot} />
-//                 <View style={{ flex: 1 }}>
-//                   <Text style={styles.miniTitle} numberOfLines={1}>
-//                     {edu.degree || "—"}
-//                   </Text>
-//                   <Text style={styles.miniSub} numberOfLines={1}>
-//                     {edu.institution || ""}
-//                   </Text>
-//                 </View>
-//               </View>
-//             ))}
-//           </View>
-//         )}
-
-//         {/* Projects */}
-//         {projects.length > 0 && (
-//           <View style={styles.miniSection}>
-//             <Text style={styles.miniLabel}>PROJECTS</Text>
-//             {projects.slice(0, 2).map((proj: any, i: number) => (
-//               <View key={i} style={styles.miniRow}>
-//                 <View style={styles.miniDot} />
-//                 <Text style={styles.miniTitle} numberOfLines={1}>
-//                   {proj.title || "—"}
-//                 </Text>
-//               </View>
-//             ))}
-//           </View>
-//         )}
-
-//         {/* Skills */}
-//         {skills.length > 0 && (
-//           <View style={styles.miniSection}>
-//             <Text style={styles.miniLabel}>SKILLS</Text>
-//             <View style={styles.skillRow}>
-//               {skills.map((s, i) => (
-//                 <View key={i} style={styles.skillPill}>
-//                   <Text style={styles.skillPillText} numberOfLines={1}>
-//                     {s}
-//                   </Text>
-//                 </View>
-//               ))}
-//             </View>
-//           </View>
-//         )}
-
-//         {/* Links */}
-//         {d?.otherLinks && Object.values(d.otherLinks).some(Boolean) && (
-//           <View style={styles.linksRow}>
-//             {d.otherLinks.github && (
-//               <Ionicons name="logo-github" size={12} color="#888" />
-//             )}
-//             {d.otherLinks.linkedIn && (
-//               <Ionicons name="logo-linkedin" size={12} color="#0077B5" />
-//             )}
-//             {d.otherLinks.leetcode && (
-//               <Ionicons name="code-slash-outline" size={12} color="#FFA116" />
-//             )}
-//           </View>
-//         )}
-//       </View>
-
-//       {/* ── Card Footer ── */}
-//       <View style={styles.cardFooter}>
-//         <View style={{ flex: 1 }}>
-//           <Text style={styles.cvName} numberOfLines={1}>
-//             {resume.name}
-//           </Text>
-//           <Text style={styles.cvTime}>{resume.time}</Text>
-//         </View>
-//         <TouchableOpacity style={styles.moreBtn} onPress={onMorePress}>
-//           <Ionicons name="ellipsis-vertical" size={18} color="#888" />
-//         </TouchableOpacity>
-//       </View>
-//     </TouchableOpacity>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   card: {
-//     width: CARD_WIDTH,
-//     backgroundColor: "#fff",
-//     borderRadius: 16,
-//     overflow: "hidden",
-//     borderWidth: 2,
-//     borderColor: "transparent",
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.08,
-//     shadowRadius: 12,
-//     elevation: 4,
-//   },
-//   cardSelected: { borderColor: "#3BBFAD" },
-
-//   // Mini Resume
-//   resumeBody: {
-//     padding: 14,
-//     minHeight: 340,
-//     backgroundColor: "#fff",
-//   },
-//   headerStrip: {
-//     flexDirection: "row",
-//     alignItems: "flex-start",
-//     gap: 10,
-//     marginBottom: 10,
-//   },
-//   avatarCircle: {
-//     width: 36,
-//     height: 36,
-//     borderRadius: 18,
-//     backgroundColor: "#3BBFAD",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     flexShrink: 0,
-//   },
-//   avatarText: {
-//     fontSize: 13,
-//     color: "#fff",
-//     fontFamily: "WorkSansBold",
-//   },
-//   resumeName: {
-//     fontSize: 13,
-//     fontFamily: "WorkSansBold",
-//     color: "#3D405B",
-//     lineHeight: 18,
-//   },
-//   resumeBranch: {
-//     fontSize: 10,
-//     fontFamily: "WorkSansRegular",
-//     color: "#3BBFAD",
-//     lineHeight: 15,
-//   },
-//   resumeContact: {
-//     fontSize: 9,
-//     fontFamily: "WorkSansRegular",
-//     color: "#888",
-//     lineHeight: 14,
-//   },
-//   divider: {
-//     height: 1,
-//     backgroundColor: "#3BBFAD",
-//     marginBottom: 8,
-//     opacity: 0.4,
-//   },
-
-//   // Sections
-//   miniSection: { marginBottom: 8 },
-//   miniLabel: {
-//     fontSize: 7,
-//     fontFamily: "WorkSansBold",
-//     color: "#3BBFAD",
-//     letterSpacing: 0.8,
-//     marginBottom: 4,
-//     borderBottomWidth: 0.5,
-//     borderBottomColor: "#e8e4d0",
-//     paddingBottom: 2,
-//   },
-//   miniBody: {
-//     fontSize: 8,
-//     fontFamily: "WorkSansRegular",
-//     color: "#555",
-//     lineHeight: 12,
-//   },
-//   miniRow: {
-//     flexDirection: "row",
-//     alignItems: "flex-start",
-//     gap: 5,
-//     marginBottom: 3,
-//   },
-//   miniDot: {
-//     width: 4,
-//     height: 4,
-//     borderRadius: 2,
-//     backgroundColor: "#3BBFAD",
-//     marginTop: 4,
-//     flexShrink: 0,
-//   },
-//   miniTitle: {
-//     fontSize: 9,
-//     fontFamily: "WorkSansSemiBold",
-//     color: "#3D405B",
-//     flex: 1,
-//   },
-//   miniSub: {
-//     fontSize: 8,
-//     fontFamily: "WorkSansRegular",
-//     color: "#888",
-//   },
-
-//   // Skills
-//   skillRow: {
-//     flexDirection: "row",
-//     flexWrap: "wrap",
-//     gap: 4,
-//   },
-//   skillPill: {
-//     backgroundColor: "#F4F1DE",
-//     paddingHorizontal: 6,
-//     paddingVertical: 2,
-//     borderRadius: 10,
-//   },
-//   skillPillText: {
-//     fontSize: 7,
-//     fontFamily: "WorkSansRegular",
-//     color: "#3D405B",
-//     maxWidth: 70,
-//   },
-
-//   // Links row
-//   linksRow: {
-//     flexDirection: "row",
-//     gap: 8,
-//     marginTop: 4,
-//     paddingTop: 6,
-//     borderTopWidth: 0.5,
-//     borderTopColor: "#eee",
-//   },
-
-//   // Footer
-//   cardFooter: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     padding: 14,
-//     borderTopWidth: 1,
-//     borderTopColor: "#f0f0f0",
-//     backgroundColor: "#fafafa",
-//   },
-//   cvName: {
-//     fontSize: 13,
-//     fontFamily: "WorkSansSemiBold",
-//     color: "#3D405B",
-//   },
-//   cvTime: {
-//     fontSize: 11,
-//     color: "#888",
-//     fontFamily: "WorkSansRegular",
-//     marginTop: 2,
-//   },
-//   moreBtn: {
-//     width: 32,
-//     height: 32,
-//     borderRadius: 16,
-//     backgroundColor: "#f5f5f5",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-// });
-
 // components/ResumePreviewCard.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Modal,
+  Animated,
+  TouchableWithoutFeedback,
+  Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
@@ -371,216 +22,527 @@ import { template as template2 } from "@/components/TemplateDesign/template2";
 import { resolvePdfLayoutFromTemplateId } from "@/config/templateConfig";
 import { fillTemplate } from "../appcomp/FillTemplate";
 import { fillTemplate2 } from "../appcomp/FillTemplate2";
-
+import { saveResume } from "../../services/resumeServices";
+import { RenameModal, DeleteModal } from "./ResumeActionModal";
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.68;
-const PREVIEW_HEIGHT = 340;
-
-// A4 page is 794px wide at 96dpi — we scale it down to fit the card
+const CARD_WIDTH = width * 0.72;
 const A4_WIDTH = 794;
 const SCALE = CARD_WIDTH / A4_WIDTH;
-const SCALED_HEIGHT = PREVIEW_HEIGHT / SCALE;
-
+const PREVIEW_HEIGHT = 300;
+const WEBVIEW_HEIGHT = PREVIEW_HEIGHT / SCALE;
+import {
+  renameResume,
+  duplicateResume,
+  deleteResume,
+} from "../../services/resumeServices";
 interface Props {
   resume: Resume;
   isSelected: boolean;
   onPress: () => void;
-  onMorePress: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onDownload: () => void;
+  onDuplicate: (copy: Resume) => void;
+  onRename: (id: string, newName: string) => void;
 }
 
 export default function ResumePreviewCard({
   resume,
   isSelected,
   onPress,
-  onMorePress,
+  onDelete,
+  onEdit,
+  onDownload,
+  onDuplicate,
+  onRename,
 }: Props) {
-  // Build the exact same HTML used for PDF generation
+  // Replace useState declarations
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [renameVisible, setRenameVisible] = useState(false);
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [renameValue, setRenameValue] = useState(resume.name);
+  const slideAnim = React.useRef(new Animated.Value(400)).current;
+
+  // ── Sheet open/close ──
+  const openSheet = () => {
+    setSheetVisible(true);
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 22,
+      stiffness: 220,
+    }).start();
+  };
+
+  const closeSheet = (cb?: () => void) => {
+    Animated.timing(slideAnim, {
+      toValue: 400,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setSheetVisible(false);
+      cb?.();
+    });
+  };
+
+  // ── Rename handlers ──
+  // const handleRenameOpen = () => {
+  //   setRenameValue(resume.name);
+  //   closeSheet(() => setRenameVisible(true));
+  // };
+
+  const handleRenameSave = async () => {
+    const trimmed = renameValue.trim();
+    if (!trimmed) return;
+    await saveResume({ ...resume, name: trimmed });
+    onRename(resume.id, trimmed);
+    setRenameVisible(false);
+  };
+
+  const handleRenameOpen = () => {
+    closeSheet(() => setRenameVisible(true));
+  };
+
+  const handleDuplicate = async () => {
+    closeSheet(async () => {
+      const copy = await duplicateResume(resume);
+      onDuplicate(copy); // updates index.tsx state
+    });
+  };
+
+  const handleDelete = () => {
+    closeSheet(() => setDeleteVisible(true));
+  };
+  // ── HTML for WebView ──
   const html = useMemo(() => {
     try {
       const data = resume.data;
       const pdfLayout = resolvePdfLayoutFromTemplateId(data?.selected_template);
-      return pdfLayout === "modern"
-        ? fillTemplate2(template2, data)
-        : fillTemplate(template1, data);
+      const raw =
+        pdfLayout === "modern"
+          ? fillTemplate2(template2, data)
+          : fillTemplate(template1, data);
+
+      return raw.replace(
+        /<style>/i,
+        `<style>
+          * { box-sizing: border-box !important; }
+          html {
+            width: ${A4_WIDTH}px !important;
+            overflow: hidden !important;
+          }
+          body {
+            width: ${A4_WIDTH}px !important;
+            margin: 28px 52px !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: #fff !important;
+          }
+        `
+      );
     } catch {
-      return "<html><body><p>Preview unavailable</p></body></html>";
+      return `<html><body style="font-family:sans-serif;padding:20px;">
+        <p>Preview unavailable</p></body></html>`;
     }
   }, [resume.data]);
 
-  // Inject CSS that removes page margins and disables scroll for the preview
-  const previewHtml = html.replace(
-    "<style>",
-    `<style>
-      html, body {
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: ${A4_WIDTH}px !important;
-      }
-      body {
-        margin: 40px 60px !important;
-      }
-    `
-  );
-
   return (
-    <TouchableOpacity
-      style={[styles.card, isSelected && styles.cardSelected]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
-      {/* ── Resume Preview ── */}
-      <View style={styles.previewContainer}>
-        {/* WebView renders at A4 width then we CSS-scale it down */}
-        <View style={styles.scaleWrapper}>
-          <WebView
-            style={styles.webview}
-            originWhitelist={["*"]}
-            source={{ html: previewHtml }}
-            scrollEnabled={false}
-            pointerEvents="none"
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            // Prevent any touch from passing through to WebView
-            // so the card's onPress fires correctly
-            onTouchStart={(e) => e.stopPropagation()}
+    <>
+      {/* ── Card ── */}
+      <TouchableOpacity
+        style={[styles.card, isSelected && styles.cardSelected]}
+        onPress={onPress}
+        activeOpacity={0.95}
+      >
+        {/* Resume WebView Preview */}
+        <View style={styles.previewContainer}>
+          <View style={styles.scaleOuter}>
+            <View style={styles.scaleInner}>
+              <WebView
+                source={{ html }}
+                style={styles.webview}
+                originWhitelist={["*"]}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                pointerEvents="none"
+              />
+            </View>
+          </View>
+
+          {/* Tap blocker */}
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            onPress={onPress}
+            activeOpacity={1}
           />
+
+          {/* Download overlay */}
+          <View style={styles.overlayRow}>
+            <TouchableOpacity style={styles.overlayBtn} onPress={onDownload}>
+              <Ionicons name="download-outline" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Invisible tap layer over WebView so onPress works */}
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          onPress={onPress}
-          activeOpacity={1}
-        />
-
-        {/* Action buttons overlay */}
-        <View style={styles.imageOverlay}>
-          <TouchableOpacity style={styles.overlayBtn}>
-            <Ionicons name="download-outline" size={18} color="#fff" />
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cvName} numberOfLines={1}>
+              {resume.name}
+            </Text>
+            <Text style={styles.cvTime}>{resume.time}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.moreBtn}
+            onPress={openSheet}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="ellipsis-horizontal" size={18} color="#3D405B" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.overlayBtn}>
-            <Ionicons name="eye-outline" size={18} color="#fff" />
-          </TouchableOpacity>
         </View>
-      </View>
+      </TouchableOpacity>
 
-      {/* ── Card Footer ── */}
-      <View style={styles.cardFooter}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cvName} numberOfLines={1}>
-            {resume.name}
-          </Text>
-          <Text style={styles.cvTime}>{resume.time}</Text>
-        </View>
-        <TouchableOpacity style={styles.moreBtn} onPress={onMorePress}>
-          <Ionicons name="ellipsis-vertical" size={18} color="#888" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      {/* ── Bottom Sheet ── */}
+      <Modal
+        visible={sheetVisible}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => closeSheet()}
+      >
+        {/* Backdrop */}
+        <TouchableWithoutFeedback onPress={() => closeSheet()}>
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
+
+        <Animated.View
+          style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
+        >
+          {/* Handle bar */}
+          <View style={styles.handle} />
+
+          {/* Options — clean text list like the reference image */}
+          <TouchableOpacity
+            style={styles.sheetRow}
+            onPress={() => closeSheet(onDownload)}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sheetRowText}>Download CV</Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetSep} />
+
+          <TouchableOpacity
+            style={styles.sheetRow}
+            onPress={() => closeSheet(onEdit)}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sheetRowText}>Edit</Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetSep} />
+
+          <TouchableOpacity
+            style={styles.sheetRow}
+            onPress={handleDuplicate}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sheetRowText}>Duplicate</Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetSep} />
+
+          <TouchableOpacity
+            style={styles.sheetRow}
+            onPress={handleRenameOpen}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sheetRowText}>Rename</Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetSep} />
+
+          <TouchableOpacity
+            style={styles.sheetRow}
+            onPress={handleDelete}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.sheetRowText, styles.sheetRowDanger]}>
+              Delete
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.sheetSep} />
+
+          {/* Cancel */}
+          <TouchableOpacity
+            style={[styles.sheetRow, styles.sheetCancelRow]}
+            onPress={() => closeSheet()}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sheetCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
+
+      {/* ── Rename Modal ── */}
+      <RenameModal
+        visible={renameVisible}
+        currentName={resume.name}
+        onSave={async (newName) => {
+          setRenameVisible(false);
+          await renameResume(resume.id, newName);
+          onRename(resume.id, newName); // updates index.tsx state
+        }}
+        onCancel={() => setRenameVisible(false)}
+      />
+
+      <DeleteModal
+        visible={deleteVisible}
+        resumeName={resume.name}
+        onConfirm={async () => {
+          setDeleteVisible(false);
+          await deleteResume(resume.id);
+          onDelete(); // updates index.tsx state
+        }}
+        onCancel={() => setDeleteVisible(false)}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  // ── Card ──
   card: {
     width: CARD_WIDTH,
+    height: 400,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 10,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: "#3D405B",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
   },
   cardSelected: {
     borderColor: "#3BBFAD",
+    shadowColor: "#3BBFAD",
+    shadowOpacity: 0.25,
   },
 
-  // Preview area
+  // ── Preview ──
   previewContainer: {
     width: CARD_WIDTH,
     height: PREVIEW_HEIGHT,
-    overflow: "hidden",
     backgroundColor: "#fff",
+    overflow: "hidden",
   },
-  scaleWrapper: {
-    width: A4_WIDTH,
-    height: SCALED_HEIGHT,
-    transform: [
-      { translateX: -(A4_WIDTH * (1 - SCALE)) / 2 },
-      { translateY: -(SCALED_HEIGHT * (1 - SCALE)) / 2 },
-      { scale: SCALE },
-    ],
+  scaleOuter: {
     position: "absolute",
     top: 0,
     left: 0,
+    width: CARD_WIDTH,
+    height: PREVIEW_HEIGHT,
+    overflow: "hidden",
+  },
+  scaleInner: {
+    width: A4_WIDTH,
+    height: WEBVIEW_HEIGHT,
+    transform: [{ scale: SCALE }],
+    transformOrigin: "top left",
   },
   webview: {
     width: A4_WIDTH,
-    height: SCALED_HEIGHT,
-    backgroundColor: "transparent",
+    height: WEBVIEW_HEIGHT,
+    backgroundColor: "#fff",
   },
-
-  // Overlay buttons
-  imageOverlay: {
+  overlayRow: {
     position: "absolute",
     bottom: 10,
     right: 10,
-    flexDirection: "row",
-    gap: 8,
   },
   overlayBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(61,64,91,0.75)",
+    backgroundColor: "rgba(61,64,91,0.7)",
     justifyContent: "center",
     alignItems: "center",
   },
 
-  // Footer
-  cardFooter: {
+  // ── Footer ──
+  footer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
+    backgroundColor: "#fff",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
-    backgroundColor: "#fafafa",
   },
   cvName: {
-    fontSize: 13,
-    fontFamily: "WorkSansSemiBold",
+    fontSize: 14,
+    fontFamily: "WorkSansBold",
     color: "#3D405B",
   },
   cvTime: {
     fontSize: 11,
-    color: "#888",
+    color: "#aaa",
     fontFamily: "WorkSansRegular",
     marginTop: 2,
   },
   moreBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#f5f5f5",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#F4F1DE",
     justifyContent: "center",
     alignItems: "center",
   },
+
+  // ── Bottom Sheet ──
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 20,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: "#ddd",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  sheetRow: {
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  sheetRowText: {
+    fontSize: 17,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+  },
+  sheetRowDanger: {
+    color: "#e07070",
+  },
+  sheetSep: {
+    height: 1,
+    backgroundColor: "#f2f2f2",
+    marginHorizontal: 0,
+  },
+  sheetCancelRow: {
+    marginTop: 6,
+  },
+  sheetCancelText: {
+    fontSize: 17,
+    fontFamily: "WorkSansRegular",
+    color: "#aaa",
+  },
+
+  // ── Rename Modal ──
+  renameOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingHorizontal: 24,
+  },
+  renameCard: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 28,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  renameTitle: {
+    fontSize: 22,
+    fontFamily: "PlayfairDisplayBold",
+    color: "#3D405B",
+    marginBottom: 8,
+  },
+  renameSub: {
+    fontSize: 14,
+    fontFamily: "WorkSansRegular",
+    color: "#888",
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 28,
+  },
+  renameInputBlock: {
+    width: "100%",
+    marginBottom: 24,
+  },
+  renameInputLabel: {
+    fontSize: 10,
+    fontFamily: "WorkSansBold",
+    color: "#aaa",
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  renameInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  renameInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#3D405B",
+    paddingVertical: 4,
+  },
+  renameUnderline: {
+    height: 1.5,
+    backgroundColor: "#3BBFAD",
+    marginTop: 6,
+  },
+  renameSaveBtn: {
+    width: "100%",
+    backgroundColor: "#3BBFAD",
+    borderRadius: 32,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  renameSaveBtnDisabled: {
+    backgroundColor: "#b2e2dc",
+  },
+  renameSaveText: {
+    fontSize: 16,
+    fontFamily: "WorkSansBold",
+    color: "#fff",
+  },
+  renameCancelBtn: {
+    paddingVertical: 8,
+  },
+  renameCancelText: {
+    fontSize: 15,
+    fontFamily: "WorkSansRegular",
+    color: "#aaa",
+  },
 });
-// ```
-
-// ---
-
-// ## How the scaling works
-// ```
-// A4 page = 794px wide
-// Card = 68% of screen width (e.g. ~272px on a 400px screen)
-
-// SCALE = 272 / 794 ≈ 0.34
-
-// WebView renders at full 794px width (real resume size)
-// then CSS transform: scale(0.34) shrinks it visually
-// SCALED_HEIGHT = 340 / 0.34 ≈ 1000px (WebView tall enough to show content)

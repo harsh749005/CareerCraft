@@ -14,10 +14,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState, useCallback, useRef as useRefReact, useEffect as useEffectReact } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { getResumes, deleteResume } from "../../services/resumeServices";
+import { getResumes, deleteResume, saveResume } from "../../services/resumeServices";
 import { Resume } from "../../types/resume";
 // Add this with your other imports
 import ResumePreviewCard from "../../components/model/ResumePreviewCard";
+import { generatePDF } from "../../components/generator/GeneratePDF";
 const { width, height } = Dimensions.get("window");
 const DRAWER_WIDTH = width * 0.78;
 
@@ -213,10 +214,38 @@ export default function Dashboard() {
                 resume={resume}
                 isSelected={selectedTemplate === index}
                 onPress={() => setSelectedTemplate(index)}
-                onMorePress={async () => {
+                onDelete={async () => {
                   await deleteResume(resume.id);
                   setResumeTemplates((prev) => prev.filter((r) => r.id !== resume.id));
                 }}
+                onEdit={() => router.push({ pathname: "/BuildResume", params: { resumeId: resume.id } })}
+                onDownload={() => generatePDF(resume.data)}
+                onDuplicate={async (copy) => {
+                  await saveResume(copy);
+                  setResumeTemplates((prev) => [copy, ...prev]);
+                }}
+                onRename={(id, newName) => {
+                  // Already saved to AsyncStorage in renameResume()
+                  // Just update local state
+                  setResumeTemplates((prev) =>
+                    prev.map((r) =>
+                      r.id === id
+                        ? {
+                          ...r,
+                          name: newName,
+                          data: {
+                            ...r.data,
+                            personal_info: {
+                              ...r.data?.personal_info,
+                              name: newName,
+                            },
+                          },
+                        }
+                        : r
+                    )
+                  );
+                }}
+
               />
             ))}
           </ScrollView>
