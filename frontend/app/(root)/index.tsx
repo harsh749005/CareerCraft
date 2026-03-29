@@ -11,11 +11,12 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useCallback, useRef as useRefReact, useEffect as useEffectReact } from "react";
+import { useState, useCallback, useRef as useRefReact, useEffect } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-import { getResumes, deleteResume, saveResume } from "../../services/resumeServices";
+import { getResumes, deleteResume, saveResume, renameResume } from "../../services/resumeServices";
 import { Resume } from "../../types/resume";
+
 // Add this with your other imports
 import ResumePreviewCard from "../../components/model/ResumePreviewCard";
 import { generatePDF } from "../../components/generator/GeneratePDF";
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const slideAnim = useRefReact(new Animated.Value(DRAWER_WIDTH)).current;
   const backdropAnim = useRefReact(new Animated.Value(0)).current;
   const { user } = useUser();
+  const userId = user?.id;
   const openDrawer = () => {
     setDrawerVisible(true);
     Animated.parallel([
@@ -96,14 +98,14 @@ export default function Dashboard() {
     useCallback(() => {
       let active = true;
       (async () => {
-        const data = await getResumes();
+        const data = await getResumes(userId);  // ← now passes userId
         if (active) {
           setResumeTemplates(data);
           setLoading(false);
         }
       })();
       return () => { active = false; };
-    }, [])
+    }, [userId])  // ← userId as dependency so it re-fetches after login
   );
 
   return (
@@ -214,19 +216,26 @@ export default function Dashboard() {
                 resume={resume}
                 isSelected={selectedTemplate === index}
                 onPress={() => setSelectedTemplate(index)}
+
                 onDelete={async () => {
-                  await deleteResume(resume.id);
+                  await deleteResume(resume.id, userId);  // ← add userId
                   setResumeTemplates((prev) => prev.filter((r) => r.id !== resume.id));
                 }}
-                onEdit={() => router.push({ pathname: "/BuildResume", params: { resumeId: resume.id } })}
+
+                onEdit={() => router.push({
+                  pathname: "/BuildResume",
+                  params: { resumeId: resume.id }
+                })}
+
                 onDownload={() => generatePDF(resume.data)}
+
                 onDuplicate={async (copy) => {
-                  await saveResume(copy);
+                  await saveResume(copy, userId);  // ← add userId
                   setResumeTemplates((prev) => [copy, ...prev]);
                 }}
+
                 onRename={(id, newName) => {
-                  // Already saved to AsyncStorage in renameResume()
-                  // Just update local state
+                  renameResume(id, newName, userId);  // ← add this line (syncs to Neon)
                   setResumeTemplates((prev) =>
                     prev.map((r) =>
                       r.id === id
@@ -245,7 +254,6 @@ export default function Dashboard() {
                     )
                   );
                 }}
-
               />
             ))}
           </ScrollView>

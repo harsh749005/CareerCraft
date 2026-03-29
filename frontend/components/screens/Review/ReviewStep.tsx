@@ -12,10 +12,12 @@ import CustomLoader from "../../appcomp/CustomLoader";
 import { generatePDF } from "../../generator/GeneratePDF";
 import AuthScreen from "../../../app/(auth)/AuthScreen";
 import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
-import { useAuth } from "@clerk/clerk-expo";
-import { saveResume } from "../../../services/resumeServices";
+import { useAuth,useUser } from "@clerk/clerk-expo";
+import { getEditingResumeId, saveResume } from "../../../services/resumeServices";
 import { router } from "expo-router";
-
+import { clearDraft
+  
+ } from "@/storage/draftManager";
 interface ReviewStepProps {
   data: any;
   prevStep: () => void;
@@ -46,7 +48,7 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   const { isSignedIn } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-
+  const { user } = useUser();
   const handleSubmit = async () => {
     if (!isSignedIn) {
       setShowAuth(true);
@@ -55,14 +57,21 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     generate();
   };
   const handleSaveResume = async () => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    await saveResume({
-      id,
-      name: data.personal_info.name + " – Resume",
-      time: "Just now",
-      createdAt: Date.now(),
-      data: data,
-    });
+    const editingId = await getEditingResumeId();
+    const id = editingId ||
+    `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    await saveResume(
+      {
+        id,
+        name: data.personal_info?.name + " – Resume",
+        time: "Just now",
+        createdAt: Date.now(),
+        data,
+      },
+      user?.id  // ← pass userId here too
+    );
+  
+    await clearDraft();
     router.back(); // useFocusEffect will auto-reload the list
   };
   const generate = async () => {
