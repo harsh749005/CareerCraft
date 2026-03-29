@@ -1,11 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const { neon } = require("@neondatabase/serverless");
 const router = express.Router();
-require("dotenv").config();
 
-const sql = neon(
-  `postgresql://${process.env.NEON_USER}:${process.env.NEON_PASSWORD}@${process.env.NEON_HOST}/${process.env.NEON_DATABASE}?sslmode=require`
-);
+const sql = neon(process.env.DATABASE_URL);
 
 // ── CREATE TABLES (run once) ──────────────────────────────────────────
 router.post("/setup", async (req, res) => {
