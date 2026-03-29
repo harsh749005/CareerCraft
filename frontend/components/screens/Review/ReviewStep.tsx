@@ -13,11 +13,14 @@ import { generatePDF } from "../../generator/GeneratePDF";
 import AuthScreen from "../../../app/(auth)/AuthScreen";
 import { TEMPLATE_CONFIGS } from "@/config/templateConfig";
 import { useAuth } from "@clerk/clerk-expo";
+import { saveResume } from "../../../services/resumeServices";
+import { router } from "expo-router";
 
 interface ReviewStepProps {
   data: any;
   prevStep: () => void;
   goToStep: (step: number) => void;
+  onPreview: () => void;
   step: number;
   totalSteps: number;
 }
@@ -34,6 +37,7 @@ const STEP_MAP = {
 
 const ReviewStep: React.FC<ReviewStepProps> = ({
   data,
+  onPreview,
   prevStep,
   goToStep,
   step,
@@ -50,13 +54,24 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
     }
     generate();
   };
-
+  const handleSaveResume = async () => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    await saveResume({
+      id,
+      name: data.personal_info.name + " – Resume",
+      time: "Just now",
+      createdAt: Date.now(),
+      data: data,
+    });
+    router.back(); // useFocusEffect will auto-reload the list
+  };
   const generate = async () => {
     setIsGenerating(true);
     try {
       setTimeout(async () => {
         console.log("Final Form Data:\n", JSON.stringify(data, null, 2));
         await generatePDF(data);
+        await handleSaveResume();
         setIsGenerating(false);
       }, 3000);
     } catch (err) {

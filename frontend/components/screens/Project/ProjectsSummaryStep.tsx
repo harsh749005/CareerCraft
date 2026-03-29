@@ -20,6 +20,7 @@ interface Props {
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onAddAnother: () => void;
+  onPreview:() => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -32,6 +33,7 @@ const ProjectsSummaryStep: React.FC<Props> = ({
   onEdit,
   onDelete,
   onAddAnother,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -109,7 +111,7 @@ const ProjectsSummaryStep: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>PROJECTS HISTORY</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

@@ -16,6 +16,7 @@ interface Props {
   addEducation: (edu: any) => void;
   updateEducation: any;
   activeEduExperienceIndex: number;
+  onPreview: () => void; 
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -191,7 +192,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({
 
 // ─── Main Component ──────────────────────────────────────────────
 const EducationStep: React.FC<Props> = ({
-  data, addEducation, updateEducation, activeEduExperienceIndex,
+  data, addEducation, updateEducation, activeEduExperienceIndex,onPreview,
    nextStep, prevStep, step, totalSteps,
 }) => {
   const edu = data.education || [];
@@ -298,7 +299,7 @@ const EducationStep: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>EDUCATION</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

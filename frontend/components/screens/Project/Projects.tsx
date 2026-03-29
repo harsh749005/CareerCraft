@@ -22,6 +22,7 @@ interface ProjectStepProps {
   removeProjects: any;
   /** Index in `data.projects` this screen edits (summary / add-another must stay in sync). */
   activeProjectIndex: number;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -34,6 +35,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({
   updateProjects,
   removeProjects,
   activeProjectIndex,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -233,7 +235,7 @@ ${desc}`;
             <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
             <Text style={styles.navTitle}>PROJECTS</Text>
           </View>
-          <TouchableOpacity style={styles.rightBtn}>
+          <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
             <Text style={styles.previewText}>Preview</Text>
           </TouchableOpacity>
         </View>

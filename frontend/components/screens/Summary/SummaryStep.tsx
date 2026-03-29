@@ -17,6 +17,7 @@ interface SummaryStepProps {
   data: any;
   summary: any;
   updateSummary: any;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -27,6 +28,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   data,
   summary,
   updateSummary,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -79,7 +81,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
             <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
             <Text style={styles.navTitle}>SUMMARY</Text>
           </View>
-          <TouchableOpacity style={styles.rightBtn}>
+          <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
             <Text style={styles.previewTextbtn}>Preview</Text>
           </TouchableOpacity>
         </View>

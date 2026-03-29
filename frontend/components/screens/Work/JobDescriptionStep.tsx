@@ -291,6 +291,7 @@ interface Props {
   data: any;
   updateExperience: (index: number, field: string, value: string | boolean) => void;
   activeExperienceIndex: number;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -301,6 +302,7 @@ const JobDescriptionStep: React.FC<Props> = ({
   data,
   updateExperience,
   activeExperienceIndex,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -510,7 +512,7 @@ ${currentText}`;
             </Text>
             <Text style={styles.navTitle}>WORK HISTORY</Text>
           </View>
-          <TouchableOpacity style={styles.rightBtn}>
+          <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
             <Text style={styles.previewText}>Preview</Text>
           </TouchableOpacity>
         </View>

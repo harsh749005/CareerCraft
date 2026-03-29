@@ -11,16 +11,22 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useRef as useRefReact, useEffect as useEffectReact } from "react";
-import { router } from "expo-router";
+import { useState, useCallback, useRef as useRefReact, useEffect as useEffectReact } from "react";
+import { router, useFocusEffect } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { getResumes, deleteResume } from "../../services/resumeServices";
+import { Resume } from "../../types/resume";
+// Add this with your other imports
+import ResumePreviewCard from "../../components/model/ResumePreviewCard";
 const { width, height } = Dimensions.get("window");
 const DRAWER_WIDTH = width * 0.78;
 
-const resumeTemplates: any[] = [];
+// const resumeTemplates: any[] = [];
 
 export default function Dashboard() {
-  
+
+  const [resumeTemplates, setResumeTemplates] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
   const { signOut } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -84,6 +90,20 @@ export default function Dashboard() {
     }
     return "CC";
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const data = await getResumes();
+        if (active) {
+          setResumeTemplates(data);
+          setLoading(false);
+        }
+      })();
+      return () => { active = false; };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -187,38 +207,18 @@ export default function Dashboard() {
             snapToAlignment="start"
             contentContainerStyle={styles.scrollContainer}
           >
-            {resumeTemplates.map((template, index) => {
-              const isSelected = selectedTemplate === index;
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.resumeCard, isSelected && styles.resumeCardSelected]}
-                  onPress={() => setSelectedTemplate(index)}
-                  activeOpacity={0.9}
-                >
-                  <View style={styles.imageWrapper}>
-                    <Image source={template.image} style={styles.resumeImage} resizeMode="cover" />
-                    <View style={styles.imageOverlay}>
-                      <TouchableOpacity style={styles.overlayBtn}>
-                        <Ionicons name="download-outline" size={18} color="#fff" />
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.overlayBtn}>
-                        <Ionicons name="eye-outline" size={18} color="#fff" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View style={styles.cardFooter}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.cvName} numberOfLines={1}>{template.name}</Text>
-                      <Text style={styles.cvTime}>{template.time}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.moreBtn}>
-                      <Ionicons name="ellipsis-vertical" size={18} color="#888" />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+            {resumeTemplates.map((resume, index) => (
+              <ResumePreviewCard
+                key={resume.id}
+                resume={resume}
+                isSelected={selectedTemplate === index}
+                onPress={() => setSelectedTemplate(index)}
+                onMorePress={async () => {
+                  await deleteResume(resume.id);
+                  setResumeTemplates((prev) => prev.filter((r) => r.id !== resume.id));
+                }}
+              />
+            ))}
           </ScrollView>
         )}
       </View>
@@ -273,7 +273,7 @@ export default function Dashboard() {
                   <Text style={styles.profileAvatarInitials}>CC</Text>
                 ) : (
                   <Text style={styles.profileAvatarInitials}>{getInitials()}</Text>
-              )}
+                )}
               </View>
               <Text style={styles.profileName}>
                 {user?.firstName?.toUpperCase() || "CareerCraft User"}
@@ -312,11 +312,11 @@ export default function Dashboard() {
             {/* Menu Items */}
             <View style={styles.menuItems}>
               {[
-                { icon: "person-outline",         label: "My Profile",       onPress: () => {} },
-                { icon: "document-text-outline",  label: "My Resumes",       onPress: closeDrawer },
-                { icon: "settings-outline",       label: "Settings",         onPress: () => {} },
-                { icon: "help-circle-outline",    label: "Help & Support",   onPress: () => {} },
-                { icon: "star-outline",           label: "Rate the App",     onPress: () => {} },
+                { icon: "person-outline", label: "My Profile", onPress: () => { } },
+                { icon: "document-text-outline", label: "My Resumes", onPress: closeDrawer },
+                { icon: "settings-outline", label: "Settings", onPress: () => { } },
+                { icon: "help-circle-outline", label: "Help & Support", onPress: () => { } },
+                { icon: "star-outline", label: "Rate the App", onPress: () => { } },
               ].map((item, i) => (
                 <TouchableOpacity
                   key={i}
@@ -334,29 +334,29 @@ export default function Dashboard() {
             </View>
 
             {/* ✅ Sign Out Button */}
-            {user?(
-              
-            <View style={styles.drawerFooter}>
-              <TouchableOpacity
-                style={styles.signOutBtn}
-                onPress={handleSignOut}
-                activeOpacity={0.85}
-              >
-                <View style={styles.signOutIconBox}>
-                  <Ionicons name="log-out-outline" size={18} color="#e07070" />
-                </View>
-                <Text style={styles.signOutText}>Sign Out</Text>
-              </TouchableOpacity>
+            {user ? (
 
-              {/* App version */}
-              <View style={styles.drawerVersionRow}>
-                <View style={styles.logoDot} />
-                <Text style={styles.drawerLogoText}>
-                  Career<Text style={styles.drawerLogoAccent}>Craft</Text>
-                </Text>
+              <View style={styles.drawerFooter}>
+                <TouchableOpacity
+                  style={styles.signOutBtn}
+                  onPress={handleSignOut}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.signOutIconBox}>
+                    <Ionicons name="log-out-outline" size={18} color="#e07070" />
+                  </View>
+                  <Text style={styles.signOutText}>Sign Out</Text>
+                </TouchableOpacity>
+
+                {/* App version */}
+                <View style={styles.drawerVersionRow}>
+                  <View style={styles.logoDot} />
+                  <Text style={styles.drawerLogoText}>
+                    Career<Text style={styles.drawerLogoAccent}>Craft</Text>
+                  </Text>
+                </View>
               </View>
-            </View>
-            ):(<View style={styles.drawerVersionRow}>
+            ) : (<View style={styles.drawerVersionRow}>
               <View style={styles.logoDot} />
               <Text style={styles.drawerLogoText}>
                 Career<Text style={styles.drawerLogoAccent}>Craft</Text>
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     borderColor: "#e8e4d0",
   },
   statNumber: { fontSize: 22, fontFamily: "WorkSansBold", color: "#3D405B", marginBottom: 2 },
-  statLabel:  { fontSize: 11, color: "#888", fontFamily: "WorkSansRegular" },
+  statLabel: { fontSize: 11, color: "#888", fontFamily: "WorkSansRegular" },
 
   // Section
   sectionRow: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionTitle:  { fontSize: 15, fontFamily: "WorkSansSemiBold", color: "#3D405B" },
+  sectionTitle: { fontSize: 15, fontFamily: "WorkSansSemiBold", color: "#3D405B" },
   sectionAction: { fontSize: 13, color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
   contentArea: { flex: 1 },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     shadowColor: "#3BBFAD", shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 8, elevation: 5,
   },
-  emptyTitle:    { fontSize: 22, fontFamily: "PlayfairDisplayBold", color: "#3D405B", marginBottom: 8, textAlign: "center" },
+  emptyTitle: { fontSize: 22, fontFamily: "PlayfairDisplayBold", color: "#3D405B", marginBottom: 8, textAlign: "center" },
   emptySubtitle: { fontSize: 14, color: "#888", fontFamily: "WorkSansRegular", textAlign: "center", lineHeight: 22, marginBottom: 28 },
   emptyCreateBtn: {
     flexDirection: "row", alignItems: "center",
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   tipChipText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansSemiBold" },
 
   // Resume cards
-  scrollContainer:   { paddingBottom: 10, paddingRight: 20, gap: 20 },
+  scrollContainer: { paddingBottom: 10, paddingRight: 20, gap: 20 },
   resumeCard: {
     width: width * 0.68, backgroundColor: "#fff", borderRadius: 16,
     overflow: "hidden", borderWidth: 2, borderColor: "transparent",
@@ -498,9 +498,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
   },
   resumeCardSelected: { borderColor: "#3BBFAD" },
-  imageWrapper:  { position: "relative" },
-  resumeImage:   { width: "100%", height: 340 },
-  imageOverlay:  { position: "absolute", bottom: 10, right: 10, flexDirection: "row", gap: 8 },
+  imageWrapper: { position: "relative" },
+  resumeImage: { width: "100%", height: 340 },
+  imageOverlay: { position: "absolute", bottom: 10, right: 10, flexDirection: "row", gap: 8 },
   overlayBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: "rgba(61,64,91,0.75)",
@@ -510,8 +510,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center",
     padding: 14, borderTopWidth: 1, borderTopColor: "#f0f0f0",
   },
-  cvName:  { fontSize: 15, fontFamily: "WorkSansSemiBold", color: "#3D405B" },
-  cvTime:  { fontSize: 12, color: "#888", fontFamily: "WorkSansRegular", marginTop: 2 },
+  cvName: { fontSize: 15, fontFamily: "WorkSansSemiBold", color: "#3D405B" },
+  cvTime: { fontSize: 12, color: "#888", fontFamily: "WorkSansRegular", marginTop: 2 },
   moreBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#f5f5f5", justifyContent: "center", alignItems: "center" },
 
   // Create button

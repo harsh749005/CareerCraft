@@ -31,6 +31,7 @@ interface Props {
   removeExperience: (index: number) => void;
   onAddAnotherPosition: () => void;
   onEditExperience: (index: number) => void;
+  onPreview: () => void;
   // onGoToJobDescription: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -43,6 +44,7 @@ const EducationSummary: React.FC<Props> = ({
   removeExperience,
   onAddAnotherPosition,
   onEditExperience,
+  onPreview,
   // onGoToJobDescription,
   nextStep,
   prevStep,
@@ -125,7 +127,7 @@ const EducationSummary: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>EDUCATION HISTORY</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

@@ -32,6 +32,7 @@ interface Props {
   onAddAnotherPosition: () => void;
   onEditExperience: (index: number) => void;
   onGoToJobDescription: (index: number) => void;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -44,6 +45,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
   onAddAnotherPosition,
   onEditExperience,
   onGoToJobDescription,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -125,7 +127,7 @@ const WorkExperienceSummaryStep: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>WORK HISTORY</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

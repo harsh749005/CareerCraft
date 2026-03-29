@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface Props {
   data: any;
   updatePersonalInfo: any;
+  onPreview: () => void; 
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -22,6 +23,7 @@ interface Props {
 const PersonalInfoStep: React.FC<Props> = ({
   data,
   updatePersonalInfo,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -89,7 +91,7 @@ const PersonalInfoStep: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>CONTACT DETAILS</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

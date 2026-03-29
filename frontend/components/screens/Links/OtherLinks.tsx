@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface OtherLinksProps {
   data: any;
   updateOtherLinks: any;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -22,6 +23,7 @@ interface OtherLinksProps {
 const OtherLinks: React.FC<OtherLinksProps> = ({
   data,
   updateOtherLinks,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -77,7 +79,7 @@ const OtherLinks: React.FC<OtherLinksProps> = ({
             <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
             <Text style={styles.navTitle}>OTHER LINKS</Text>
           </View>
-          <TouchableOpacity style={styles.rightBtn}>
+          <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
             <Text style={styles.previewText}>Preview</Text>
           </TouchableOpacity>
         </View>

@@ -8,7 +8,6 @@ import {
   ScrollView,
   Modal,
   SafeAreaView,
-  FlatList,
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,6 +19,7 @@ interface WorkExperienceStepProps {
   removeExperience: any;
   /** Index in `data.work_experience` this screen edits (must match JobDescription + summary actions). */
   activeExperienceIndex: number;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -393,6 +393,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
   addExperience,
   updateExperience,
   removeExperience,
+  onPreview,
   activeExperienceIndex,
   nextStep,
   prevStep,
@@ -537,7 +538,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
           </Text>
           <Text style={styles.navTitle}>WORK HISTORY</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>

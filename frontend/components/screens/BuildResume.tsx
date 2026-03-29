@@ -15,11 +15,11 @@ import ReviewStep from "@/components/screens/Review/ReviewStep";
 import SummaryStep from "@/components/screens/Summary/SummaryStep";
 import OtherLinks from "@/components/screens/Links/OtherLinks";
 import SafeScreen from "@/components/appcomp/SafeScreen";
-
+import ResumePreviewModal from "../model/ResumePreviewModal";
 // storage filles
-import { saveDraftLocally, loadDraftLocally,removeDraftLocally } from "@/storage/draftStorage";
+import { saveDraftLocally, loadDraftLocally, removeDraftLocally } from "@/storage/draftStorage";
 
-import { syncDraft,loadDraft } from "@/storage/draftManager";
+import { syncDraft, loadDraft } from "@/storage/draftManager";
 export default function BuildReume() {
 
 
@@ -28,6 +28,7 @@ export default function BuildReume() {
   /** Which `work_experience` entry WorkExperience + JobDescription steps edit (not always index 0). */
   const [activeWorkExperienceIndex, setActiveWorkExperienceIndex] = useState(0);
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+  const [previewVisible, setPreviewVisible] = useState(false);
   const [formData, setFormData] = useState<{
     personal_info: Record<string, any>;
     professional_summary: string;
@@ -88,56 +89,56 @@ export default function BuildReume() {
   //     isMounted = false;
   //   };
   // }, []);
-  
+
   useEffect(() => {
     let isMounted = true;
-  
+
     const hydrateFromLocalDraft = async () => {
       const local = await loadDraft();
       if (!isMounted || !local) return;
-  
+
       setFormData((prev) => ({
         ...prev,
-  
+
         professional_summary: local.professional_summary ?? prev.professional_summary,
         selected_template: local.selected_template ?? prev.selected_template,
-  
+
         personal_info: {
           ...prev.personal_info,
           ...(local.personal_info ?? {}),
         },
-  
+
         otherLinks: {
           ...prev.otherLinks,
           ...(local.otherLinks ?? {}),
         },
-  
+
         work_experience: Array.isArray(local.work_experience)
           ? local.work_experience
           : prev.work_experience,
-  
+
         projects: Array.isArray(local.projects)
           ? local.projects
           : prev.projects,
-  
+
         education: Array.isArray(local.education)
           ? local.education
           : prev.education,
-  
+
         skills: {
           categorized: {
             Languages:
               local.skills?.categorized?.Languages ??
               prev.skills.categorized.Languages,
-  
+
             Frameworks:
               local.skills?.categorized?.Frameworks ??
               prev.skills.categorized.Frameworks,
-  
+
             Tools:
               local.skills?.categorized?.Tools ??
               prev.skills.categorized.Tools,
-  
+
             Databases:
               local.skills?.categorized?.Databases ??
               prev.skills.categorized.Databases,
@@ -148,14 +149,14 @@ export default function BuildReume() {
         },
       }));
     };
-  
+
     hydrateFromLocalDraft();
-  
+
     return () => {
       isMounted = false;
     };
   }, []);
-  
+
   const setBranch = (branch: string) => {
     setFormData((prev) => {
       const updated = {
@@ -285,17 +286,17 @@ export default function BuildReume() {
       const updatedWorkExp = prev.work_experience.filter(
         (_: any, i: number) => i !== index
       );
-  
+
       const updated = {
         ...prev,
         work_experience: updatedWorkExp,
       };
-  
+
       syncDraft(updated); // 🔥 only line needed
-  
+
       return updated;
     });
-  
+
     setActiveWorkExperienceIndex((prev: number) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
@@ -303,16 +304,17 @@ export default function BuildReume() {
     });
   };
   const removeEduExperience = (index: number) => {
-    setFormData((prev:any) => {
-    const updatedEduExp = {  ...prev,
-      education: prev.education.filter((_: any, i: number) => i !== index),
-    };
-    const updated = {
-      ...prev,
-      education:updatedEduExp,
-    };
-    syncDraft(updated);
-    return updated;
+    setFormData((prev: any) => {
+      const updatedEduExp = {
+        ...prev,
+        education: prev.education.filter((_: any, i: number) => i !== index),
+      };
+      const updated = {
+        ...prev,
+        education: updatedEduExp,
+      };
+      syncDraft(updated);
+      return updated;
     });
 
     setActiveEduExperienceIndex((prev) => {
@@ -403,14 +405,14 @@ export default function BuildReume() {
   const removeProjects = (index: number) => {
     // const updated = formData.projects.filter((_, i) => i !== index);
     // setFormData({ ...formData, projects: updated });
-    setFormData((prev:any) => {
+    setFormData((prev: any) => {
       const updatedProject = {
-      ...prev,
-      projects: prev.projects.filter((_:any, i:number) => i !== index),
+        ...prev,
+        projects: prev.projects.filter((_: any, i: number) => i !== index),
       };
       const updated = {
         ...prev,
-        projects:updatedProject,
+        projects: updatedProject,
       };
       syncDraft(updated);
       return updated;
@@ -622,7 +624,11 @@ export default function BuildReume() {
   return (
     <SafeScreen>
       <View style={{ flex: 1 }}>
-
+        <ResumePreviewModal
+          visible={previewVisible}
+          onClose={() => setPreviewVisible(false)}
+          formData={formData}  // your main form state object
+        />
         {step === 1 && (
           <BranchSelectScreen
             onNext={(branch) => {
@@ -650,6 +656,7 @@ export default function BuildReume() {
           <PersonalInfoStep
             data={formData.personal_info}
             updatePersonalInfo={updatePersonalInfo}
+            onPreview={() => setPreviewVisible(true)}
             prevStep={prevStep}
             nextStep={nextStep}
             step={step}
@@ -662,6 +669,7 @@ export default function BuildReume() {
             data={formData}
             addEducation={addEducation}
             updateEducation={updateEducation}
+            onPreview={() => setPreviewVisible(true)}
             activeEduExperienceIndex={activeEduExperienceIndex}
             nextStep={nextStep}
             prevStep={prevStep}
@@ -676,6 +684,7 @@ export default function BuildReume() {
               removeExperience={removeEduExperience}
               onAddAnotherPosition={handleAddAnotherEduExperience}
               onEditExperience={handleEditEduExperience}
+              onPreview={() => setPreviewVisible(true)}
               nextStep={nextStep}
               prevStep={prevStep}
               step={step}
@@ -695,6 +704,7 @@ export default function BuildReume() {
             updateCategorizedSkill={updateCategorizedSkill}
             updateUncategorizedSkill={updateUncategorizedSkill}
             addSkillCategory={addSkillCategory}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -708,6 +718,7 @@ export default function BuildReume() {
             updateProjects={updateProjects}
             removeProjects={removeProjects}
             activeProjectIndex={activeProjectIndex}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -723,6 +734,7 @@ export default function BuildReume() {
               onEdit={handleEditProjects}
               onDelete={removeProjects}
               onAddAnother={handleAddAnotherProject}
+              onPreview={() => setPreviewVisible(true)}
               nextStep={nextStep}
               prevStep={prevStep}
               step={step}
@@ -744,6 +756,7 @@ export default function BuildReume() {
             updateExperience={updateWorkExperience}
             removeExperience={removeExperience}
             activeExperienceIndex={activeWorkExperienceIndex}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -756,6 +769,7 @@ export default function BuildReume() {
             data={formData}
             updateExperience={updateWorkExperience}
             activeExperienceIndex={activeWorkExperienceIndex}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -770,6 +784,7 @@ export default function BuildReume() {
               onAddAnotherPosition={handleAddAnotherPosition}
               onEditExperience={handleEditWorkExperience}
               onGoToJobDescription={handleGoToJobDescription}
+              onPreview={() => setPreviewVisible(true)}
               nextStep={nextStep}
               prevStep={prevStep}
               step={step}
@@ -781,6 +796,7 @@ export default function BuildReume() {
           <OtherLinks
             data={formData}
             updateOtherLinks={updateOtherLinks}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -793,6 +809,7 @@ export default function BuildReume() {
             data={formData}
             summary={formData.professional_summary}
             updateSummary={updateSummary}
+            onPreview={() => setPreviewVisible(true)}
             nextStep={nextStep}
             prevStep={prevStep}
             step={step}
@@ -800,7 +817,7 @@ export default function BuildReume() {
           />
         )}
 
-        {step === 14 && <ReviewStep data={formData} prevStep={prevStep} step={step}
+        {step === 14 && <ReviewStep data={formData} prevStep={prevStep} step={step} onPreview={() => setPreviewVisible(true)}
           totalSteps={totalSteps} goToStep={goToStep} />}
       </View>
     </SafeScreen>

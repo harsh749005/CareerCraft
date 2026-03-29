@@ -18,6 +18,7 @@ interface Props {
   updateCategorizedSkill: (category: string, skill: string) => void;
   updateUncategorizedSkill: (skill: string) => void;
   addSkillCategory: (categoryName: string) => void;
+  onPreview: () => void;
   nextStep: () => void;
   prevStep: () => void;
   step: number;
@@ -158,6 +159,7 @@ const SkillsStep: React.FC<Props> = ({
   updateCategorizedSkill,
   updateUncategorizedSkill,
   addSkillCategory,
+  onPreview,
   nextStep,
   prevStep,
   step,
@@ -258,7 +260,7 @@ const SkillsStep: React.FC<Props> = ({
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>SKILLS SET</Text>
         </View>
-        <TouchableOpacity style={styles.rightBtn}>
+        <TouchableOpacity style={styles.rightBtn} onPress={onPreview}>
           <Text style={styles.previewText}>Preview</Text>
         </TouchableOpacity>
       </View>
