@@ -1,5 +1,5 @@
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-console.log("🌐 API BASE_URL:", BASE_URL); // check .env is loading
+// console.log("🌐 API BASE_URL:", BASE_URL); // check .env is loading
 
 export const api = {
   syncUser: async (id: string, email: string) => {
