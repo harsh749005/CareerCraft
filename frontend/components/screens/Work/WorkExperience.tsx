@@ -545,14 +545,16 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+        contentContainerStyle={styles.scrollContent}
       >
+        <View style={styles.headingBlock}>
         <Text style={styles.mainHeading}>
           Tell us about your most recent job
         </Text>
         <Text style={styles.subHeading}>
           {`We'll start there and work backward.`}
         </Text>
+        </View>
 
         {/* Job Title — opens modal */}
         {renderSearchField("Job title", "job_title", () =>
@@ -729,22 +731,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "WorkSansSemiBold",
   },
-
+  scrollContent: { paddingHorizontal: 20,paddingBottom: 20 },
+  headingBlock: { paddingTop: 24, marginBottom: 20 },
   mainHeading: {
-    marginTop: 10,
-    fontSize: 28,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 36,
-    maxWidth: 300,
   },
-  subHeading: {
-    marginTop: 6,
-    fontSize: 15,
-    color: "#666",
-    fontFamily: "WorkSansRegular",
-    marginBottom: 8,
-  },
+  subHeading: { marginTop: 8,fontSize: 14, color: "#888", fontFamily: "WorkSansRegular", lineHeight: 20 },
+
 
   fieldContainer: { marginTop: 20 },
   floatingLabel: {

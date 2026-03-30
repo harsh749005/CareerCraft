@@ -1,0 +1,17 @@
+BranchSelectScreen
+  user picks "Computer Science"
+  → setSelectedBranch("CSE")          // BranchOption.value
+
+onNext("CSE") called
+  → setBranch("CSE")                  // stored in formData.personal_info.branch
+
+ResumeOptions receives
+  branch = formData.personal_info.branch  // = "CSE"
+
+getTemplatesForBranch("CSE")
+  → looks up BRANCH_TEMPLATE_MAP["CSE"]  // = ["Modern", "Creative", "Classic"]
+  → maps each ID to TEMPLATE_CONFIGS[id]
+  → returns those 3 TemplateConfig objects
+
+  BranchOption.value  ===  BRANCH_TEMPLATE_MAP key
+     "CSE"          ===       "CSE"          ✅

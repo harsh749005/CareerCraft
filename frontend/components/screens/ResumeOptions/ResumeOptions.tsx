@@ -242,8 +242,8 @@ const styles = StyleSheet.create({
 
   headingBlock: { paddingHorizontal: 20, paddingTop: 8, marginBottom: 4 },
   mainHeading: {
-    fontSize: 26, color: "#3D405B", fontFamily: "PlayfairDisplayBold",
-    lineHeight: 34, marginBottom: 6,
+    fontSize: 30, color: "#3D405B", fontFamily: "PlayfairDisplayBold",
+    lineHeight: 34, marginBottom: 6,marginTop:20
   },
   subHeading: { fontSize: 14, color: "#888", fontFamily: "WorkSansRegular" },
   scrollContainer: { paddingVertical: 24, paddingHorizontal: 20, gap: CARD_GAP },

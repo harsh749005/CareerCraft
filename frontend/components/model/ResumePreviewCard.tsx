@@ -22,19 +22,20 @@ import { template as template2 } from "@/components/TemplateDesign/template2";
 import { resolvePdfLayoutFromTemplateId } from "@/config/templateConfig";
 import { fillTemplate } from "../appcomp/FillTemplate";
 import { fillTemplate2 } from "../appcomp/FillTemplate2";
-import { saveResume } from "../../services/resumeServices";
 import { RenameModal, DeleteModal } from "./ResumeActionModal";
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.72;
-const A4_WIDTH = 794;
-const SCALE = CARD_WIDTH / A4_WIDTH;
-const PREVIEW_HEIGHT = 300;
-const WEBVIEW_HEIGHT = PREVIEW_HEIGHT / SCALE;
 import {
   renameResume,
   duplicateResume,
   deleteResume,
+  saveResume
 } from "../../services/resumeServices";
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width * 0.72;
+const A4_WIDTH = 794;
+const A4_HEIGHT = 1123;
+const PREVIEW_HEIGHT = 320;                    // card preview area height
+const SCALE = CARD_WIDTH / A4_WIDTH;           // how much to shrink A4 → card
+const WEBVIEW_HEIGHT = PREVIEW_HEIGHT / SCALE;
 interface Props {
   resume: Resume;
   isSelected: boolean;
@@ -122,27 +123,26 @@ export default function ResumePreviewCard({
         pdfLayout === "modern"
           ? fillTemplate2(template2, data)
           : fillTemplate(template1, data);
-
-      return raw.replace(
-        /<style>/i,
-        `<style>
+  
+      const inject = `
+        <meta name="viewport" content="width=${A4_WIDTH}" />
+        <style>
           * { box-sizing: border-box !important; }
-          html {
-            width: ${A4_WIDTH}px !important;
-            overflow: hidden !important;
-          }
-          body {
-            width: ${A4_WIDTH}px !important;
-            margin: 28px 52px !important;
+          html, body {
+            margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
+            width: ${A4_WIDTH}px !important;
             background: #fff !important;
+            overflow: hidden !important;
           }
-        `
-      );
+        </style>
+      `;
+  
+      if (raw.includes("</head>")) return raw.replace("</head>", `${inject}</head>`);
+      if (raw.includes("<head>"))  return raw.replace("<head>", `<head>${inject}`);
+      return `<html><head>${inject}</head><body>${raw}</body></html>`;
     } catch {
-      return `<html><body style="font-family:sans-serif;padding:20px;">
-        <p>Preview unavailable</p></body></html>`;
+      return `<html><body style="font-family:sans-serif;padding:20px;"><p>Preview unavailable</p></body></html>`;
     }
   }, [resume.data]);
 
@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
     height: 400,
     backgroundColor: "#fff",
     borderRadius: 10,
+    padding:5,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
@@ -352,8 +353,12 @@ const styles = StyleSheet.create({
   scaleInner: {
     width: A4_WIDTH,
     height: WEBVIEW_HEIGHT,
-    transform: [{ scale: SCALE }],
-    transformOrigin: "top left",
+    // ✅ Correct way to scale from top-left in React Native
+    transform: [
+      { translateX: -(A4_WIDTH * (1 - SCALE)) / 2 },
+      { translateY: -(WEBVIEW_HEIGHT * (1 - SCALE)) / 2 },
+      { scale: SCALE },
+    ],
   },
   webview: {
     width: A4_WIDTH,

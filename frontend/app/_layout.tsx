@@ -3,11 +3,10 @@ import { SplashScreen, Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import NoInternetScreen from "@/components/appcomp/NoNetworkScreen";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import SplashLoader from "@/components/appcomp/SplashLoader/SplashLoader";
-
 // Token cache for Clerk
 const tokenCache = {
   async getToken(key: string) {
@@ -80,10 +79,12 @@ function RootNavigator() {
   }
 
   return (
+
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(root)" />
     </Stack>
+
   );
 }
 

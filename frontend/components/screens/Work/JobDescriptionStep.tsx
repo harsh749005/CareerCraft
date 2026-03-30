@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert
+  Alert,
+  Animated
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { callGeminiAPI } from "@/api/gemini";
@@ -197,9 +198,10 @@ const RoleSearchModal: React.FC<{
   const [query, setQuery] = useState("");
   const filtered = query.trim()
     ? roleSuggestions.filter((s) =>
-        s.toLowerCase().includes(query.toLowerCase()),
-      )
+      s.toLowerCase().includes(query.toLowerCase()),
+    )
     : [];
+
 
   const handleSelect = (val: string) => {
     onSelect(val);
@@ -313,7 +315,30 @@ const JobDescriptionStep: React.FC<Props> = ({
     Math.max(0, activeExperienceIndex),
     Math.max(0, workExperience.length - 1)
   );
+  // Expert Modal 
+  const [expertBoxExpanded, setexpertBoxExpanded] = useState(false);
+  const [selectedExpertModalVisible, setselectedExpertModalVisible] = useState(false);
+  const rotateAnimexp = useRef(new Animated.Value(0)).current;
 
+  const toggleExperOptionBox = () => {
+    const toValue = expertBoxExpanded ? 0 : 1;
+
+    Animated.spring(rotateAnimexp, {
+      toValue,
+      useNativeDriver: true,
+      tension: 120,
+      friction: 8,
+    }).start();
+    if (!expertBoxExpanded) {
+
+      setselectedExpertModalVisible(true);
+    }
+    setexpertBoxExpanded(!expertBoxExpanded);
+  }
+  const arrowRotationExpert = rotateAnimexp.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
   // ── Bullet state ──
   const [bullets, setBullets] = useState<BulletPoint[]>([]);
   const [past, setPast] = useState<BulletPoint[][]>([]); // undo stack
@@ -330,7 +355,7 @@ const JobDescriptionStep: React.FC<Props> = ({
 
   // ── Modal state ──
   const [showRoleModal, setShowRoleModal] = useState(false);
-  
+
   const [searchRole, setSearchRole] = useState("");
 
   // ── Editing state ──
@@ -379,8 +404,8 @@ const JobDescriptionStep: React.FC<Props> = ({
       setFuture([]);
       return;
     }
-    const lines = raw.split(/\r?\n/).filter((l:any) => l.trim());
-    const parsed: BulletPoint[] = lines.map((line:any, i:any) => ({
+    const lines = raw.split(/\r?\n/).filter((l: any) => l.trim());
+    const parsed: BulletPoint[] = lines.map((line: any, i: any) => ({
       id: `loaded-${safeIndex}-${i}`,
       text: line.replace(/^•\s*/, "").trim(),
     }));
@@ -465,9 +490,9 @@ const JobDescriptionStep: React.FC<Props> = ({
       );
       return;
     }
-  
+
     const currentText = bullets.map((b) => `• ${b.text}`).join("\n");
-  
+
     setIsPolishing(true);
     try {
       const prompt = `Polish these job description bullet points. Improve grammar, punctuation, readability, and impact. Use strong action verbs. Keep the same number of bullets. Return ONLY bullet lines, each starting with "• ".
@@ -499,7 +524,7 @@ ${currentText}`;
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.container}>
-      <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
+        <StatusBar backgroundColor="#e8f5f2" barStyle="dark-content" />
 
         {/* Navbar */}
         <View style={styles.navbar}>
@@ -519,11 +544,14 @@ ${currentText}`;
 
         {/* ── TOP SECTION (fixed, not scrollable) ── */}
         <View style={styles.topSection}>
+          <View style={styles.headingBlock}>
+
           <Text style={styles.mainHeading}>Add your job description</Text>
           <Text style={styles.subHeading}>
             Get help writing your bullet points with the pre-written examples
             below
           </Text>
+          </View>
 
           {/* Text Area */}
           {/* // Replace the textArea ScrollView content with this: */}
@@ -607,74 +635,74 @@ ${currentText}`;
           </ScrollView>
 
           {/* Toolbar */}
-         {/* Toolbar */}
-<View style={styles.toolbar}>
-  <TouchableOpacity
-    onPress={() => toggleFmt("bullet")}
-    style={[styles.toolBtn, fmt.bullet && styles.toolBtnActive]}
-  >
-    <Ionicons name="list" size={20} color={fmt.bullet ? "#3BBFAD" : "#555"} />
-  </TouchableOpacity>
+          {/* Toolbar */}
+          <View style={styles.toolbar}>
+            <TouchableOpacity
+              onPress={() => toggleFmt("bullet")}
+              style={[styles.toolBtn, fmt.bullet && styles.toolBtnActive]}
+            >
+              <Ionicons name="list" size={20} color={fmt.bullet ? "#3BBFAD" : "#555"} />
+            </TouchableOpacity>
 
-  <TouchableOpacity
-    onPress={() => toggleFmt("bold")}
-    style={[styles.toolBtn, fmt.bold && styles.toolBtnActive]}
-  >
-    <Text style={[styles.toolText, { fontFamily: "WorkSansBold" }, fmt.bold && styles.toolTextActive]}>
-      B
-    </Text>
-  </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => toggleFmt("bold")}
+              style={[styles.toolBtn, fmt.bold && styles.toolBtnActive]}
+            >
+              <Text style={[styles.toolText, { fontFamily: "WorkSansBold" }, fmt.bold && styles.toolTextActive]}>
+                B
+              </Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity
-    onPress={() => toggleFmt("italic")}
-    style={[styles.toolBtn, fmt.italic && styles.toolBtnActive]}
-  >
-    <Text style={[styles.toolText, { fontStyle: "italic" }, fmt.italic && styles.toolTextActive]}>
-      I
-    </Text>
-  </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => toggleFmt("italic")}
+              style={[styles.toolBtn, fmt.italic && styles.toolBtnActive]}
+            >
+              <Text style={[styles.toolText, { fontStyle: "italic" }, fmt.italic && styles.toolTextActive]}>
+                I
+              </Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity
-    onPress={() => toggleFmt("underline")}
-    style={[styles.toolBtn, fmt.underline && styles.toolBtnActive]}
-  >
-    <Text style={[styles.toolText, { textDecorationLine: "underline" }, fmt.underline && styles.toolTextActive]}>
-      U
-    </Text>
-  </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => toggleFmt("underline")}
+              style={[styles.toolBtn, fmt.underline && styles.toolBtnActive]}
+            >
+              <Text style={[styles.toolText, { textDecorationLine: "underline" }, fmt.underline && styles.toolTextActive]}>
+                U
+              </Text>
+            </TouchableOpacity>
 
-  {/* Undo */}
-  <TouchableOpacity
-    onPress={undo}
-    style={[styles.toolBtn, past.length > 0 && styles.toolBtnActive]}
-    disabled={past.length === 0}
-  >
-    <Ionicons name="arrow-undo" size={20} color={past.length > 0 ? "#3BBFAD" : "#ccc"} />
-  </TouchableOpacity>
+            {/* Undo */}
+            <TouchableOpacity
+              onPress={undo}
+              style={[styles.toolBtn, past.length > 0 && styles.toolBtnActive]}
+              disabled={past.length === 0}
+            >
+              <Ionicons name="arrow-undo" size={20} color={past.length > 0 ? "#3BBFAD" : "#ccc"} />
+            </TouchableOpacity>
 
-  {/* Redo */}
-  <TouchableOpacity
-    onPress={redo}
-    style={[styles.toolBtn, future.length > 0 && styles.toolBtnActive]}
-    disabled={future.length === 0}
-  >
-    <Ionicons name="arrow-redo" size={20} color={future.length > 0 ? "#3BBFAD" : "#ccc"} />
-  </TouchableOpacity>
+            {/* Redo */}
+            <TouchableOpacity
+              onPress={redo}
+              style={[styles.toolBtn, future.length > 0 && styles.toolBtnActive]}
+              disabled={future.length === 0}
+            >
+              <Ionicons name="arrow-redo" size={20} color={future.length > 0 ? "#3BBFAD" : "#ccc"} />
+            </TouchableOpacity>
 
-  {/* ── AI Polish Button ── */}
-  <TouchableOpacity
-    onPress={polishWithAI}
-    disabled={isPolishing || bullets.length === 0}
-    style={[styles.toolBtn, styles.aiPolishBtn, isPolishing && styles.aiPolishBtnLoading]}
-    activeOpacity={0.8}
-  >
-    {isPolishing ? (
-      <ActivityIndicator size="small" color="#3BBFAD" />
-    ) : (
-      <Text style={styles.sparkle}>✦</Text>
-    )}
-  </TouchableOpacity>
-</View>
+            {/* ── AI Polish Button ── */}
+            <TouchableOpacity
+              onPress={polishWithAI}
+              disabled={isPolishing || bullets.length === 0}
+              style={[styles.toolBtn, styles.aiPolishBtn, isPolishing && styles.aiPolishBtnLoading]}
+              activeOpacity={0.8}
+            >
+              {isPolishing ? (
+                <ActivityIndicator size="small" color="#3BBFAD" />
+              ) : (
+                <Text style={styles.sparkle}>✦</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
           {/* Continue */}
           <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
@@ -687,7 +715,8 @@ ${currentText}`;
           <View style={styles.examplesHeader}>
             <Text style={styles.examplesLabel}>EXAMPLES FROM OUR EXPERTS</Text>
             {/* ✅ Arrow opens full screen modal */}
-            <TouchableOpacity onPress={() => setShowRoleModal(true)}>
+            <TouchableOpacity onPress={toggleExperOptionBox}>
+
               <Ionicons name="chevron-up" size={22} color="#3D405B" />
             </TouchableOpacity>
           </View>
@@ -770,7 +799,130 @@ ${currentText}`;
             )}
           </ScrollView>
         </View>
+        {/* <Modal 
+                visible={selectedExpertModalVisible}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => {
+                  setselectedExpertModalVisible(false);
+                  setexpertBoxExpanded(false);
+                  Animated.spring(rotateAnimexp, { toValue: 0, useNativeDriver: true }).start();
+                }}
+        >
+        <ScrollView
+            style={styles.examplesMini}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
 
+          </ScrollView>
+        </Modal> */}
+
+        {/* moda */}
+        <Modal
+          visible={selectedExpertModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => {
+            setselectedExpertModalVisible(false);
+            setexpertBoxExpanded(false);
+            Animated.spring(rotateAnimexp, { toValue: 0, useNativeDriver: true }).start();
+          }}
+        >
+          <SafeAreaView style={styles.skillsModalContainer}>
+            {/* Modal handle */}
+            <View style={styles.modalHandle} />
+
+            {/* Modal header */}
+            <View style={styles.skillsModalHeader}>
+              <View>
+                <Text style={styles.skillsModalTitle}>Selected Description</Text>
+                <Text style={styles.skillsModalSubtitle}>
+                  Description
+                  {/* {allSelectedSkills.length} skill{allSelectedSkills.length > 1 ? "s" : ""} added */}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.skillsModalCloseBtn}
+                onPress={() => {
+                  setselectedExpertModalVisible(false);
+                  setexpertBoxExpanded(false);
+                  Animated.spring(rotateAnimexp, { toValue: 0, useNativeDriver: true }).start();
+                }}
+              >
+                <Ionicons name="chevron-down" size={22} color="#3D405B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.skillsModalDivider} />
+
+            {/* All skills in a wrap grid */}
+            <ScrollView
+              contentContainerStyle={styles.skillsModalBody}
+              showsVerticalScrollIndicator={false}
+            >
+              {(roleExamples[getRoleKey(searchRole)] || [])
+                .slice(0, 3)
+                .map((ex, i) => {
+                  const isSelected = selectedTexts.includes(ex);
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={[
+                        styles.exampleCard,
+                        isSelected && styles.exampleCardSelected,
+                      ]}
+                      onPress={() => toggleExample(ex)}
+                      activeOpacity={0.8}
+                    >
+                      <View
+                        style={[
+                          styles.exIcon,
+                          isSelected && styles.exIconSelected,
+                        ]}
+                      >
+                        <Ionicons
+                          name={isSelected ? "checkmark" : "add"}
+                          size={24}
+                          color="#fff"
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.exText,
+                          isSelected && styles.exTextSelected,
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {ex}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              {!searchRole && (
+                <Text style={styles.hintText}>
+                  Search your role to see relevant suggestions
+                </Text>
+              )}
+              <View style={{ height: 20 }} />
+            </ScrollView>
+
+            {/* Bottom close button */}
+            <View style={styles.skillsModalFooter}>
+              <TouchableOpacity
+                style={styles.skillsModalDoneBtn}
+                onPress={() => {
+                  setselectedExpertModalVisible(false);
+                  setexpertBoxExpanded(false);
+                  Animated.spring(rotateAnimexp, { toValue: 0, useNativeDriver: true }).start();
+                }}
+              >
+                <Text style={styles.skillsModalDoneBtnText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </Modal>
         {/* Modals */}
         <RoleSearchModal
           visible={showRoleModal}
@@ -810,17 +962,19 @@ const styles = StyleSheet.create({
 
   // Top section
   topSection: { paddingHorizontal: 20 },
+  headingBlock: { paddingTop: 16, marginBottom: 20 },
+
   mainHeading: {
-    marginTop:10,
-    fontSize: 28,
+    marginTop: 10,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 36,
     maxWidth: 200,
   },
   subHeading: {
-    marginTop: 6,
-    fontSize: 13,
+    marginTop: 8,
+    fontSize: 14,
     color: "#666",
     marginBottom: 14,
     lineHeight: 20,
@@ -855,7 +1009,7 @@ const styles = StyleSheet.create({
   bulletText: {
     fontFamily: "WorkSansRegular",
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: "#3D405B",
     lineHeight: 22,
   },
@@ -904,19 +1058,19 @@ const styles = StyleSheet.create({
   toolBtnActive: { backgroundColor: "#e8f5f2" },
   toolText: { fontSize: 17, color: "#555", fontFamily: "WorkSansRegular" },
   toolTextActive: { color: "#3BBFAD" },
-// ── ADD to the styles StyleSheet ──
-aiPolishBtn: {
-  backgroundColor: "#e8f5f2",
-  borderWidth: 1,
-  borderColor: "#3BBFAD",
-},
-aiPolishBtnLoading: {
-  opacity: 0.6,
-},
-sparkle: {
-  fontSize: 16,
-  color: "#3BBFAD",
-},
+  // ── ADD to the styles StyleSheet ──
+  aiPolishBtn: {
+    backgroundColor: "#e8f5f2",
+    borderWidth: 1,
+    borderColor: "#3BBFAD",
+  },
+  aiPolishBtnLoading: {
+    opacity: 0.6,
+  },
+  sparkle: {
+    fontSize: 16,
+    color: "#3BBFAD",
+  },
   // Continue
   continueBtn: {
     backgroundColor: "#3BBFAD",
@@ -1033,6 +1187,68 @@ sparkle: {
     marginTop: 16,
     fontFamily: "WorkSansRegular",
   },
+
+  // ── Selected Skills Full Modal ───────────────────────────────────────────────
+  skillsModalContainer: {
+    flex: 1, backgroundColor: "#fff",
+  },
+  modalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: "#ddd", alignSelf: "center", marginTop: 12, marginBottom: 8,
+  },
+  skillsModalHeader: {
+    flexDirection: "row", justifyContent: "space-between",
+    alignItems: "flex-start", paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16,
+  },
+  skillsModalTitle: {
+    fontSize: 22, fontFamily: "PlayfairDisplayBold", color: "#3D405B",
+  },
+  skillsModalSubtitle: {
+    fontSize: 13, fontFamily: "WorkSansRegular", color: "#888", marginTop: 2,
+  },
+  skillsModalCloseBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: "#f0f0f0", justifyContent: "center", alignItems: "center",
+  },
+  skillsModalDivider: { height: 1, backgroundColor: "#eee", marginHorizontal: 24 },
+  skillsModalBody: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40 },
+  skillsModalSectionLabel: {
+    fontSize: 10, fontFamily: "WorkSansBold", color: "#aaa",
+    letterSpacing: 1.2, marginBottom: 14,
+  },
+  skillsModalTagGrid: {
+    flexDirection: "row", flexWrap: "wrap", gap: 10,
+  },
+  skillsModalTag: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: "#3BBFAD", borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8,
+  },
+  skillsModalTagText: { color: "#fff", fontSize: 14, fontFamily: "WorkSansSemiBold" },
+  skillsModalEmpty: {
+    alignItems: "center", paddingTop: 60, gap: 12,
+  },
+  skillsModalEmptyText: {
+    fontSize: 18, fontFamily: "PlayfairDisplayBold",
+    color: "#3D405B", marginTop: 12,
+  },
+  skillsModalEmptySubText: {
+    fontSize: 14, fontFamily: "WorkSansRegular",
+    color: "#aaa", textAlign: "center", lineHeight: 22,
+  },
+  skillsModalFooter: {
+    paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: "#eee",
+  },
+  skillsModalDoneBtn: {
+    backgroundColor: "#3D405B", paddingVertical: 16,
+    borderRadius: 32, alignItems: "center",
+  },
+  skillsModalDoneBtnText: {
+    color: "#fff", fontSize: 16, fontFamily: "WorkSansBold", letterSpacing: 1.2,
+  },
+
+
 });
 
 const mStyles = StyleSheet.create({

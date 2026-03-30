@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   mainHeading: {
-    fontSize: 28,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 36,

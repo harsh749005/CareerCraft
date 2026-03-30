@@ -310,11 +310,13 @@ const EducationStep: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
       >
         {/* Heading */}
+        <View style={styles.headingBlock}>
+
         <Text style={styles.mainHeading}>Tell us about your education</Text>
         <Text style={styles.subHeading}>
           {`Include every school, even if you're still there or didn't graduate`}
         </Text>
-
+        </View>
         {/* Fields */}
         <View style={styles.fieldsBlock}>
           {renderField("Institution", "institution")}
@@ -451,14 +453,13 @@ const styles = StyleSheet.create({
   previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
 
   scrollContent: { paddingBottom: 100 },
-
+  headingBlock: { paddingHorizontal: 20, paddingTop: 24, marginBottom: 20 },
   mainHeading: {
-    marginTop: 24,
+    // marginTop: 24,
     fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 38,
-    paddingHorizontal: 20,
   },
   subHeading: {
     marginTop: 8,
@@ -466,7 +467,6 @@ const styles = StyleSheet.create({
     color: "#888",
     fontFamily: "WorkSansRegular",
     lineHeight: 22,
-    paddingHorizontal: 20,
     marginBottom: 24,
   },
 

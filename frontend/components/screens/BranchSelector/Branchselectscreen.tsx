@@ -10,7 +10,6 @@ import {
   FlatList,
   Modal,
   StatusBar,
-  Platform,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,7 +20,7 @@ import {
   BranchOption,
 } from "../../../utils/branchUtils";
 import { router } from "expo-router";
-
+import { useUser } from "@clerk/clerk-expo";
 interface BranchSelectScreenProps {
   onNext: (branch: string) => void;  // passes BranchOption.value e.g. "CSE", "IT"
   nextStep: () => void;
@@ -34,11 +33,11 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const user = useUser();
 
   const filteredBranches = BRANCH_OPTIONS.filter((b) =>
     b.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const selectedOption = selectedBranch ? getBranchOption(selectedBranch) : null;
 
   const handleSelect = (branch: BranchOption) => {
@@ -62,9 +61,13 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
       <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
       {/* ── Navbar ── */}
       <View style={styles.navbar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.leftIcon}>
-          <Ionicons name="arrow-back" size={22} color="#3D405B" />
-        </TouchableOpacity>
+        {
+          user.isSignedIn && (
+            <TouchableOpacity onPress={() => router.push("/(root)")} style={styles.leftIcon}>
+              <Ionicons name="arrow-back" size={22} color="#3D405B" />
+            </TouchableOpacity>
+          )
+        }
         <View style={styles.centerContent}>
           <Text style={styles.stepText}>Step {step} of {totalSteps}</Text>
           <Text style={styles.navTitle}>BRANCH SELECTION</Text>
@@ -74,7 +77,7 @@ const BranchSelectScreen: React.FC<BranchSelectScreenProps> = ({ onNext, nextSte
         </TouchableOpacity>
       </View>
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={styles.headingBlock}>
         <Text style={styles.mainHeading}>{`What's your field of study?`}</Text>
         <Text style={styles.subHeading}>
           {`We'll recommend the best resume templates for your branch`}
@@ -263,25 +266,21 @@ const styles = StyleSheet.create({
   previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
   // Header
   scrollContent: { paddingHorizontal: 20, paddingBottom: 120 },
-  header: {
-    marginBottom: 28,
-  },
+  headingBlock: { paddingHorizontal: 20, paddingTop: 24, marginBottom: 20 },
+
 
   mainHeading: {
-    marginTop: 24,
     fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 38,
-    paddingHorizontal: 20,
   },
   subHeading: {
-    marginTop: 8,
+    marginTop: 6,
     fontSize: 14,
     color: "#888",
     fontFamily: "WorkSansRegular",
     lineHeight: 22,
-    paddingHorizontal: 20,
     marginBottom: 24,
   },
 

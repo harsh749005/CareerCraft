@@ -365,11 +365,12 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
 
   mainHeading: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "PlayfairDisplayBold",
     color: "#3D405B",
-    marginBottom: 24,
     lineHeight: 36,
+    marginBottom: 24,
+    maxWidth:300
   },
 
   // Experience card

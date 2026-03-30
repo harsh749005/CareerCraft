@@ -25,6 +25,63 @@ const DRAWER_WIDTH = width * 0.78;
 
 // const resumeTemplates: any[] = [];
 
+// skeleton code 
+function SkeletonCard() {
+  const shimmerAnim = useRefReact(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  const opacity = shimmerAnim.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+
+  return (
+    <Animated.View style={[skelStyles.card, { opacity }]}>
+      <View style={skelStyles.imageArea} />
+      <View style={skelStyles.footer}>
+        <View>
+          <View style={skelStyles.lineLg} />
+          <View style={[skelStyles.lineSm, { marginTop: 6 }]} />
+        </View>
+        <View style={skelStyles.circle} />
+      </View>
+    </Animated.View>
+  );
+}
+
+const skelStyles = StyleSheet.create({
+  card: {
+    width: width * 0.68,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#e8e4d0",
+  },
+  imageArea: {
+    width: "100%",
+    height: 340,
+    backgroundColor: "#e8e4d0",
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+  },
+  lineLg: { width: 120, height: 14, backgroundColor: "#e8e4d0", borderRadius: 6 },
+  lineSm: { width: 80, height: 11, backgroundColor: "#f0ede0", borderRadius: 6 },
+  circle: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#e8e4d0" },
+});
+
+
 export default function Dashboard() {
 
   const [resumeTemplates, setResumeTemplates] = useState<Resume[]>([]);
@@ -128,10 +185,15 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
+
       {/* ── Stats row ── */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{resumeTemplates.length}</Text>
+          {loading ? (
+            <View style={{ width: 32, height: 22, backgroundColor: "#e8e4d0", borderRadius: 6, marginBottom: 4 }} />
+          ) : (
+            <Text style={styles.statNumber}>{resumeTemplates.length}</Text>
+          )}
           <Text style={styles.statLabel}>Resumes</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: "#e8f5f2" }]}>
@@ -156,52 +218,61 @@ export default function Dashboard() {
 
       {/* ── Content ── */}
       <View style={styles.contentArea}>
-        {resumeTemplates.length === 0 ? (
-          <View style={styles.emptyWrapper}>
-            <View style={styles.emptyIllustration}>
-              <View style={styles.emptyDocBig}>
-                <View style={styles.emptyLine} />
-                <View style={[styles.emptyLine, { width: "60%" }]} />
-                <View style={[styles.emptyLine, { width: "80%" }]} />
-                <View style={[styles.emptyLine, { width: "50%" }]} />
-              </View>
-              <View style={styles.emptyDocSmall}>
-                <View style={styles.emptyLine} />
-                <View style={[styles.emptyLine, { width: "70%" }]} />
-              </View>
-              <View style={styles.emptyPlusBadge}>
-                <Ionicons name="add" size={20} color="#fff" />
-              </View>
-            </View>
-
-            <Text style={styles.emptyTitle}>No resumes yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Create your first professional resume{"\n"}in just a few minutes
-            </Text>
-
-            <TouchableOpacity
-              style={styles.emptyCreateBtn}
-              onPress={() => router.push("/BuildResume")}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="add" size={18} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.emptyCreateText}>Create New Resume</Text>
-            </TouchableOpacity>
-
-            <View style={styles.tipsRow}>
-              {["ATS Friendly", "PDF Export", "AI Powered"].map((tip, i) => (
-                <View key={i} style={styles.tipChip}>
-                  <Ionicons
-                    name={i === 0 ? "checkmark-circle-outline" : i === 1 ? "document-outline" : "flash-outline"}
-                    size={13}
-                    color="#3BBFAD"
-                  />
-                  <Text style={styles.tipChipText}>{tip}</Text>
+        {loading ? (    // Skeleton loading state
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            <SkeletonCard />
+            <SkeletonCard />
+          </ScrollView>) : resumeTemplates.length === 0 ? (
+            <View style={styles.emptyWrapper}>
+              <View style={styles.emptyIllustration}>
+                <View style={styles.emptyDocBig}>
+                  <View style={styles.emptyLine} />
+                  <View style={[styles.emptyLine, { width: "60%" }]} />
+                  <View style={[styles.emptyLine, { width: "80%" }]} />
+                  <View style={[styles.emptyLine, { width: "50%" }]} />
                 </View>
-              ))}
+                <View style={styles.emptyDocSmall}>
+                  <View style={styles.emptyLine} />
+                  <View style={[styles.emptyLine, { width: "70%" }]} />
+                </View>
+                <View style={styles.emptyPlusBadge}>
+                  <Ionicons name="add" size={20} color="#fff" />
+                </View>
+              </View>
+
+              <Text style={styles.emptyTitle}>No resumes yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Create your first professional resume{"\n"}in just a few minutes
+              </Text>
+
+              <TouchableOpacity
+                style={styles.emptyCreateBtn}
+                onPress={() => router.push("/BuildResume")}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.emptyCreateText}>Create New Resume</Text>
+              </TouchableOpacity>
+
+              <View style={styles.tipsRow}>
+                {["ATS Friendly", "PDF Export", "AI Powered"].map((tip, i) => (
+                  <View key={i} style={styles.tipChip}>
+                    <Ionicons
+                      name={i === 0 ? "checkmark-circle-outline" : i === 1 ? "document-outline" : "flash-outline"}
+                      size={13}
+                      color="#3BBFAD"
+                    />
+                    <Text style={styles.tipChipText}>{tip}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        ) : (
+          ) : (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -313,7 +384,7 @@ export default function Dashboard() {
                 )}
               </View>
               <Text style={styles.profileName}>
-                {user?.firstName?.toUpperCase() || "CareerCraft User"}
+                {user?.fullName?.toUpperCase() || "CareerCraft User"}
               </Text>
               <Text style={styles.profileEmail}>
                 {user?.emailAddresses[0].emailAddress || ""}

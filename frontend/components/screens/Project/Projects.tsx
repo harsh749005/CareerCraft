@@ -362,22 +362,21 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 20 },
 
   // Heading
-  headingBlock: { paddingHorizontal: 20, marginBottom: 20 },
+  headingBlock: { paddingHorizontal: 20, marginBottom: 20 ,paddingTop: 24},
   headingBlockNoCard: { marginBottom: 20 },
   mainHeading: {
-    marginTop: 10,
-    fontSize: 28,
+
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 36,
-    maxWidth: 300,
   },
   subHeading: {
-    marginTop: 6,
+    marginTop: 8,
     fontSize: 15,
     color: "#666",
     fontFamily: "WorkSansRegular",
-    marginBottom: 8,
+    // marginBottom: 8,
   },
 
   // ── Textarea: full-width top/bottom borders ──

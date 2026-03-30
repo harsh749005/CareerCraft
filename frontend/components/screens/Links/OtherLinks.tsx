@@ -83,85 +83,90 @@ const OtherLinks: React.FC<OtherLinksProps> = ({
             <Text style={styles.previewText}>Preview</Text>
           </TouchableOpacity>
         </View>
+        <View style={{ flex: 1 }}>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Heading */}
-          <Text style={styles.mainHeading}>Add your online presence</Text>
-          <Text style={styles.subHeading}>
-            Include links to your professional profiles and portfolio to stand out
-          </Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Heading */}
+            <View style={styles.headingBlock}>
 
-          {/* Link Fields */}
-          {links.map(({ key, label, placeholder, icon }) => {
-            const value = dataLink[key] || "";
-            const isFocused = focusedField === key;
+              <Text style={styles.mainHeading}>Add your online presence</Text>
+              <Text style={styles.subHeading}>
+                Include links to your professional profiles and portfolio to stand out
+              </Text>
+            </View>
 
-            return (
-              <View key={key} style={styles.fieldContainer}>
-                {/* Floating Label */}
-                {(value || isFocused) && (
-                  <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
-                )}
+            {/* Link Fields */}
+            {links.map(({ key, label, placeholder, icon }) => {
+              const value = dataLink[key] || "";
+              const isFocused = focusedField === key;
 
-                <View style={styles.fieldRow}>
-                  {/* Left Icon */}
-                  <Ionicons
-                    name={icon as any}
-                    size={20}
-                    color={isFocused ? "#3BBFAD" : value ? "#3D405B" : "#bbb"}
-                    style={styles.leftFieldIcon}
-                  />
-
-                  {/* Input */}
-                  <TextInput
-                    style={[
-                      styles.input,
-                      isFocused && styles.inputFocused,
-                    ]}
-                    placeholder={isFocused ? placeholder : label}
-                    placeholderTextColor="#aaa"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    value={value}
-                    onFocus={() => setFocusedField(key)}
-                    onBlur={() => setFocusedField(null)}
-                    onChangeText={(val) => updateOtherLinks(key, val)}
-                  />
-
-                  {/* ✅ Delete / Clear icon */}
-                  {value ? (
-                    <TouchableOpacity
-                      onPress={() => updateOtherLinks(key, "")}
-                      style={styles.clearBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#e07070" />
-                    </TouchableOpacity>
-                  ) : (
-                    // Green tick when valid URL
-                    value.startsWith("http") && (
-                      <Ionicons name="checkmark-circle" size={20} color="#3BBFAD" />
-                    )
+              return (
+                <View key={key} style={styles.fieldContainer}>
+                  {/* Floating Label */}
+                  {(value || isFocused) && (
+                    <Text style={styles.floatingLabel}>{label.toUpperCase()}</Text>
                   )}
+
+                  <View style={styles.fieldRow}>
+                    {/* Left Icon */}
+                    <Ionicons
+                      name={icon as any}
+                      size={20}
+                      color={isFocused ? "#3BBFAD" : value ? "#3D405B" : "#bbb"}
+                      style={styles.leftFieldIcon}
+                    />
+
+                    {/* Input */}
+                    <TextInput
+                      style={[
+                        styles.input,
+                        isFocused && styles.inputFocused,
+                      ]}
+                      placeholder={isFocused ? placeholder : label}
+                      placeholderTextColor="#aaa"
+                      keyboardType="url"
+                      autoCapitalize="none"
+                      value={value}
+                      onFocus={() => setFocusedField(key)}
+                      onBlur={() => setFocusedField(null)}
+                      onChangeText={(val) => updateOtherLinks(key, val)}
+                    />
+
+                    {/* ✅ Delete / Clear icon */}
+                    {value ? (
+                      <TouchableOpacity
+                        onPress={() => updateOtherLinks(key, "")}
+                        style={styles.clearBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#e07070" />
+                      </TouchableOpacity>
+                    ) : (
+                      // Green tick when valid URL
+                      value.startsWith("http") && (
+                        <Ionicons name="checkmark-circle" size={20} color="#3BBFAD" />
+                      )
+                    )}
+                  </View>
+
+                  {/* Underline */}
+                  <View
+                    style={[
+                      styles.underline,
+                      isFocused && styles.underlineFocused,
+                      value && !isFocused && styles.underlineFilled,
+                    ]}
+                  />
                 </View>
+              );
+            })}
 
-                {/* Underline */}
-                <View
-                  style={[
-                    styles.underline,
-                    isFocused && styles.underlineFocused,
-                    value && !isFocused && styles.underlineFilled,
-                  ]}
-                />
-              </View>
-            );
-          })}
-
-          <View style={{ height: 100 }} />
-        </ScrollView>
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
         {/* Continue Button */}
         <TouchableOpacity style={styles.continueBtn} onPress={nextStep}>
@@ -210,18 +215,20 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 24,
   },
 
   // Heading
+  headingBlock: {
+    paddingTop: 24, paddingBottom: 20
+  },
   mainHeading: {
-    fontSize: 28,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 36,
-    marginBottom: 8,
   },
   subHeading: {
+    marginTop: 8,
     fontSize: 14,
     color: "#888",
     fontFamily: "WorkSansRegular",
@@ -276,10 +283,9 @@ const styles = StyleSheet.create({
 
   // Continue
   continueBtn: {
-    position: "absolute",
-    bottom: 24,
-    left: 20,
-    right: 20,
+    marginHorizontal: 20,
+    marginBottom: 24,
+    marginTop: 8,
     backgroundColor: "#3BBFAD",
     paddingVertical: 18,
     borderRadius: 32,

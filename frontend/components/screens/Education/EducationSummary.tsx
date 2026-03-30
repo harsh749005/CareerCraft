@@ -137,8 +137,10 @@ const EducationSummary: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
       >
         {/* Heading */}
-        <Text style={styles.mainHeading}>Education history summary</Text>
+        <View style={styles.headingBlock}>
 
+        <Text style={styles.mainHeading}>Education history summary</Text>
+</View>
         {/* ── Experience Cards ── */}
         {visibleEntries.length === 0 ? (
           <View style={styles.emptyState}>
@@ -362,10 +364,10 @@ const styles = StyleSheet.create({
   navTitle: { fontSize: 14, letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
   previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
 
-  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
-
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+  headingBlock: {  paddingTop: 24, marginBottom: 20 },
   mainHeading: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "PlayfairDisplayBold",
     color: "#3D405B",
     marginBottom: 24,

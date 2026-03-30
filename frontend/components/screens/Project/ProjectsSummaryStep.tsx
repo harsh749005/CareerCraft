@@ -120,7 +120,10 @@ const ProjectsSummaryStep: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
       >
         {/* Heading */}
+        <View style={styles.headingBlock}>
+
         <Text style={styles.mainHeading}>Project summary</Text>
+        </View>
         {visibleEntries.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="build-outline" size={40} color="#ccc" />
@@ -298,9 +301,10 @@ const styles = StyleSheet.create({
   stepText: { fontSize: 11, color: "#3D405B", fontFamily: "WorkSansRegular" },
   navTitle: { fontSize: 14,letterSpacing: 1, color: "#3D405B", fontFamily: "WorkSansBold" },
   previewText: { color: "#3BBFAD", fontSize: 15, fontFamily: "WorkSansSemiBold" },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+  headingBlock: { paddingTop: 24, marginBottom: 20 },
   mainHeading: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "PlayfairDisplayBold",
     color: "#3D405B",
     marginBottom: 24,
