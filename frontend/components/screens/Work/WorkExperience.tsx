@@ -567,7 +567,7 @@ const WorkExperienceStep: React.FC<WorkExperienceStepProps> = ({
         )}
 
         {/* City & Country */}
-        {/* {renderTextField("City", "city")} */}
+        {renderTextField("City", "city")}
         {renderTextField("Country", "country")}
 
         {/* Date Row */}

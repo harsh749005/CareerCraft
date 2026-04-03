@@ -322,6 +322,8 @@ const EducationStep: React.FC<Props> = ({
           {renderField("Institution", "institution")}
           {renderField("Degree", "degree")}
           {renderField("Result / CGPA", "result")}
+          {renderField("City", "city")}
+          {renderField("Country", "country")}
         </View>
 
         {/* ── Start Date ── full-width top/bottom borders */}

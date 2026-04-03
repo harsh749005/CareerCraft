@@ -4,8 +4,8 @@ export type SkillsDisplayMode = "categorized" | "uncategorized" | "both";
 
 export type ProjectsDisplayMode = "card" | "nocard";
 
-/** Which PDF HTML shell (`template1.js` vs `template2.js`) to use in GeneratePDF. */
-export type PdfTemplateLayout = "classic" | "modern";
+/** Which PDF HTML shell (`template1.js` / `template2.js` / `template3.js`) to use in GeneratePDF. */
+export type PdfTemplateLayout = "classic" | "modern" | "classic2";
 
 export type TemplateConfig = {
   /** Stable key stored in `formData.selected_template` (must match `TEMPLATE_CONFIGS` record keys). */
@@ -33,7 +33,7 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#3BBFAD",
     image: require("../assets/images/resume/resume1.png"),
     skills: { mode: "uncategorized" },
-    projects: { mode: "card" },
+    projects: { mode: "nocard" },
     pdfLayout: "classic",
   },
   Modern: {
@@ -53,19 +53,29 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
     tagColor: "#3D405B",
     image: require("../assets/images/resume/resume2.jpg"),
     skills: { mode: "categorized" },
-    projects: { mode: "card" },
-    pdfLayout: "modern",
+    projects: { mode: "nocard" },
+    pdfLayout: "classic",
   },
-  // Creative: {
-  //   id: "Creative",
-  //   name: "Creative",
-  //   tag: "Stand Out",
-  //   tagColor: "#E07A5F",
-  //   image: require("../assets/images/resume/resume3.jpg"),
-  //   skills: { mode: "both" },
-  //   projects: { mode: "card" },
-  //   pdfLayout: "modern",
-  // },
+  Creative: {
+    id: "Creative",
+    name: "Creative",
+    tag: "Stand Out",
+    tagColor: "#E07A5F",
+    image: require("../assets/images/resume/resume3.jpg"),
+    skills: { mode: "uncategorized" },
+    projects: { mode: "nocard" },
+    pdfLayout: "classic",
+  },
+  Professional: {
+    id: "Professional",
+    name: "Professional",
+    tag: "Industry Ready",
+    tagColor: "#5C6BC0",
+    image: require("../assets/images/resume/resume3.png"), // swap with your template3 preview image
+    skills: { mode: "uncategorized" },
+    projects: { mode: "nocard" },
+    pdfLayout: "classic",
+  },
 };
 
 /**
@@ -74,37 +84,37 @@ export const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
  */
 export const BRANCH_TEMPLATE_MAP: Record<string, string[]> = {
   // ── Tech ──
-  CSE:  ["Modern", "Creative", "Classic"],
-  IT:   ["Modern", "Creative", "Classic"],
-  SE:   ["Modern", "Creative", "Classic"],
-  CYS:  ["Modern", "Executive", "Classic"],
-  DS:   ["Modern", "Creative", "Classic"],
-  AI:   ["Modern", "Creative", "Classic"],
-  ECE:  ["Classic", "Modern", "Executive"],
-  EEE:  ["Classic", "Executive", "Modern"],
-  CE:   ["Modern", "Classic", "Executive"],
-  IS:   ["Modern", "Classic", "Executive"],
-  NET:  ["Modern", "Executive", "Classic"],
-  CC:   ["Modern", "Creative", "Classic"],
+  CSE:  ["Modern", "Creative", "Classic", "Professional"],
+  IT:   ["Modern", "Creative", "Classic", "Professional"],
+  SE:   ["Modern", "Creative", "Classic", "Professional"],
+  CYS:  ["Modern", "Executive", "Classic", "Professional"],
+  DS:   ["Modern", "Creative", "Classic", "Professional"],
+  AI:   ["Modern", "Creative", "Classic", "Professional"],
+  ECE:  ["Classic", "Modern", "Executive", "Professional"],
+  EEE:  ["Classic", "Executive", "Modern", "Professional"],
+  CE:   ["Modern", "Classic", "Executive", "Professional"],
+  IS:   ["Modern", "Classic", "Executive", "Professional"],
+  NET:  ["Modern", "Executive", "Classic", "Professional"],
+  CC:   ["Modern", "Creative", "Classic", "Professional"],
 
   // ── Non-Tech ──
-  ME:   ["Executive", "Classic", "Modern"],
-  CVL:  ["Executive", "Classic", "Modern"],
-  CHE:  ["Classic", "Executive", "Modern"],
-  BIO:  ["Creative", "Classic", "Modern"],
-  MBA:  ["Executive", "Modern", "Classic"],
-  COM:  ["Executive", "Classic", "Modern"],
-  ARTS: ["Creative", "Classic", "Modern"],
-  LAW:  ["Executive", "Classic", "Modern"],
-  MED:  ["Classic", "Executive", "Modern"],
-  ARCH: ["Creative", "Executive", "Classic"],
-  PSY:  ["Creative", "Classic", "Modern"],
-  EDU:  ["Classic", "Creative", "Modern"],
-  MJ:   ["Creative", "Modern", "Classic"],
-  OTH:  ["Classic", "Modern", "Executive", "Creative"],
+  ME:   ["Professional", "Executive", "Classic", "Modern"],
+  CVL:  ["Professional", "Executive", "Classic", "Modern"],
+  CHE:  ["Professional", "Classic", "Executive", "Modern"],
+  BIO:  ["Creative", "Professional", "Classic", "Modern"],
+  MBA:  ["Executive", "Professional", "Modern", "Classic"],
+  COM:  ["Professional", "Executive", "Classic", "Modern"],
+  ARTS: ["Creative", "Professional", "Classic", "Modern"],
+  LAW:  ["Professional", "Executive", "Classic", "Modern"],
+  MED:  ["Professional", "Classic", "Executive", "Modern"],
+  ARCH: ["Creative", "Professional", "Executive", "Classic"],
+  PSY:  ["Creative", "Professional", "Classic", "Modern"],
+  EDU:  ["Professional", "Classic", "Creative", "Modern"],
+  MJ:   ["Creative", "Modern", "Professional", "Classic"],
+  OTH:  ["Classic", "Modern", "Executive", "Creative", "Professional"],
 
   // ── Fallback ──
-  All:  ["Classic", "Modern", "Executive", "Creative"],
+  All:  ["Classic", "Modern", "Executive", "Creative", "Professional"],
 };
 
 /**

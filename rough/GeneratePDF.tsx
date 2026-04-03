@@ -4,9 +4,11 @@ import * as FileSystemLegacy from "expo-file-system/legacy";
 import { Paths } from "expo-file-system";
 import { template as template1 } from "@/components/TemplateDesign/template1";
 import { template as template2 } from "@/components/TemplateDesign/template2";
+import { template as template3 } from "@/components/TemplateDesign/template3";
 import { resolvePdfLayoutFromTemplateId } from "@/config/templateConfig";
 import { fillTemplate } from "../appcomp/FillTemplate";
 import { fillTemplate2 } from "../appcomp/FillTemplate2";
+import { fillTemplate3 } from "../appcomp/FillTemplate3";
 
 let pdfCounter = 0;
 
@@ -19,20 +21,25 @@ export const generatePDF = async (formData: any) => {
 
     const pdfLayout = resolvePdfLayoutFromTemplateId(formData.selected_template);
 
-    const html =
-      pdfLayout === "modern"
-        ? fillTemplate2(template2, formData)
-        : fillTemplate(template1, formData);
+    let html: string;
+    if (pdfLayout === "modern") {
+      html = fillTemplate2(template2, formData);
+    } else if (pdfLayout === "classic2") {
+      // template3 uses the classic engine variant but a distinct HTML shell
+      html = fillTemplate3(template3, formData);
+    } else {
+      html = fillTemplate(template1, formData);
+    }
+
     const { uri } = await Print.printToFileAsync({ html });
     console.log("PDF generated at:", uri);
 
-    console.log("SafeNAme = " , safeName)
+    console.log("SafeName =", safeName);
     console.log("Paths.document:", Paths.document);
 
-    // Build new absolute file URI correctly
     const newUri = `${Paths.document.uri}${safeName}.pdf`;
-    console.log("New URI = ",newUri)
-    // Move file
+    console.log("New URI =", newUri);
+
     await FileSystemLegacy.moveAsync({
       from: uri,
       to: newUri,
@@ -40,11 +47,9 @@ export const generatePDF = async (formData: any) => {
 
     console.log("Moved PDF to:", newUri);
 
-    // Share
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(newUri);
-    } 
-    
+    }
   } catch (error) {
     console.error("Error generating PDF:", error);
   }

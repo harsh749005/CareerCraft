@@ -1,6 +1,6 @@
 import { TEMPLATE_CONFIGS, SkillsDisplayMode } from "../../config/templateConfig";
 
-export type ResumeTemplateVariant = "classic" | "modern";
+export type ResumeTemplateVariant = "classic" | "modern" | "classic2";
 
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
@@ -49,7 +49,7 @@ function formatBulletPointsHTML(text: string, variant: ResumeTemplateVariant): s
   return `<ul style="font-size:${liSize};margin-top:4px;padding-left:${ulPad};list-style-type:disc;">${listItems}</ul>`;
 }
 
-function formatSkillsInner(formData: any, variant: ResumeTemplateVariant): string {
+function formatSkillsInner(formData: any, variant: ResumeTemplateVariant = "classic"): string {
   const skillsMode: SkillsDisplayMode =
     TEMPLATE_CONFIGS?.[formData.selected_template]?.skills?.mode ?? "uncategorized";
 
@@ -88,14 +88,15 @@ function formatSkillsInner(formData: any, variant: ResumeTemplateVariant): strin
 
   return `
     <div style="display:flex;flex-direction:column;gap:4px;margin:0;padding:0;line-height:1.35;">
-      ${finalSkillsHTML}
+      ${
+    variant === "classic2" ? `<strong style="font-family:'Times New Roman',serif;font-size:10px;margin:0;padding:0;">Skills:</strong> ${finalSkillsHTML}` :
+    finalSkillsHTML}
     </div>
   `;
 }
 
-function formatSkillsModern(formData: any, variant: ResumeTemplateVariant): string {
-  const inner = formatSkillsInner(formData, variant);
-  console.log(inner)
+function formatSkillsModern(formData: any): string {
+  const inner = formatSkillsInner(formData);
   return `<div class="skills-modern">${inner}</div>`;
 }
 
@@ -105,11 +106,16 @@ function formatExperience(formData: any, variant: ResumeTemplateVariant): string
       ?.map((exp: any) => {
         const start = formatMonthYear(exp.start_month, exp.start_year);
         const end = exp.end_year ? formatMonthYear(exp.end_month, exp.end_year) : "Present";
-        const duration = start || end ? `${start} - ${end}` : "";
+        // const duration = start || end ? `${start} - ${end}` : "";
+        const duration = variant === "classic2" ? 
+        exp.end_year : 
+        variant === "modern" ? 
+        start || end ? `${start} - ${end}` : "" :
+        start || end ? `${exp.start_year} - ${exp.end_year}` : "";
+
         const location = [exp.city, exp.country].filter(Boolean).join(", ");
         const bullets = exp.description ? formatBulletPointsHTML(exp.description, variant) : "";
-        const country = exp.country;
-        // console.log(country)
+
         if (variant === "modern") {
           return `
         <div class="exp-block" style="margin-bottom:10px;">
@@ -118,7 +124,7 @@ function formatExperience(formData: any, variant: ResumeTemplateVariant): string
             <em style="font-family:'Times New Roman',serif;font-size:10px;white-space:nowrap;flex-shrink:0;">${duration}</em>
           </div>
           <div class="row-between" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:2px;">
-            <em style="font-family:'Times New Roman',serif;font-size:10px;">${exp.company_name + " , "+country|| ""}</em>
+            <em style="font-family:'Times New Roman',serif;font-size:10px;">${exp.company_name || ""}</em>
             <span style="font-family:'Times New Roman',serif;font-size:10px;white-space:nowrap;">${location}</span>
           </div>
           ${bullets}
@@ -126,6 +132,7 @@ function formatExperience(formData: any, variant: ResumeTemplateVariant): string
       `;
         }
 
+        // classic & classic2 share the same experience layout
         return `
         <div style="margin-top:4px">
           <div style="display: flex; justify-content: space-between;">
@@ -148,54 +155,74 @@ function formatExperience(formData: any, variant: ResumeTemplateVariant): string
 }
 
 function formatEducation(formData: any, variant: ResumeTemplateVariant): string {
-  const ed = formData.education;
-  // const location = ed;
   return (
     formData.education
-    ?.map((ed: any) => {
-      let duration = "";
-      let location = ed["city"] + " , "+ed["country"]
-      // console.log(location)
-      // console.log(ed["city"])
-        if (ed.start && ed.end) {
-          duration = `${ed.start} - ${ed.end}`;
-        } else {
-          const start = formatMonthYear(ed.start_month, ed.start_year);
-          const end = ed.is_present ? "Present" : formatMonthYear(ed.end_month, ed.end_year);
-          duration = start || end ? `${start} - ${end}` : ed.year || "";
+      ?.map((ed: any) => {
+        // ── classic2 (template3): show year only, e.g. "2014 – 2017" or just "2017" ──
+        if (variant === "classic2") {
+          const startYear = ed.start_year || (ed.start ? ed.start.split(/[-–]/)[0]?.trim() : "");
+          const endYear = ed.is_present
+            ? "Present"
+            : ed.end_year || (ed.end ? ed.end.split(/[-–]/).pop()?.trim() : "") || ed.year || "";
+          // const duration = startYear && endYear ? `${startYear} – ${endYear}` : endYear || startYear || "";
+          const duration = variant === "classic2" ? endYear : startYear && endYear ? `${startYear} – ${endYear}` : endYear || startYear || "";
+
+          return `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;">
+              <span style="font-family:'Times New Roman',serif;font-size:10.5pt;">${ed.institution || ""}</span>
+              <em style="font-family:'Times New Roman',serif;font-size:10pt;white-space:nowrap;">${duration}</em>
+            </div>
+            <div style="font-family:'Times New Roman',serif;font-size:10.5pt;font-weight:bold;margin-bottom:2px;">
+              ${ed.degree || ""}
+            </div>
+            ${
+              variant === "classic2" ? "" : ed.result
+                ? `<div style="font-family:'Times New Roman',serif;font-size:10px;">
+                    <strong>Major GPA:</strong> ${ed.result}
+                  </div>`
+                : ""
+            }
+          </div>
+        `;
         }
 
+        // ── modern ──
         if (variant === "modern") {
+          let duration = "";
+          if (ed.start && ed.end) {
+            duration = `${ed.start} - ${ed.end}`;
+          } else {
+            const start = formatMonthYear(ed.start_month, ed.start_year);
+            const end = ed.is_present ? "Present" : formatMonthYear(ed.end_month, ed.end_year);
+            duration = start || end ? `${start} - ${end}` : ed.year || "";
+          }
           return `
-<div class="edu-block" style="margin-bottom:10px; font-family:'Times New Roman', serif;">           
-<div style="display:flex; justify-content:space-between; align-items:flex-start;">
-              <div style="display:flex; flex-direction:column;">
-      <strong style="font-size:10.5pt;">
-        ${ed.institution || ""}
-      </strong>
-      <span style="font-size:10pt; margin-top:2px;font-style:italic;">
-        ${ed.degree || ""}
-      </span>
-    </div>
-<!-- Right Side -->
-    <div style="display:flex; flex-direction:column; text-align:right;">
-      <em style="font-size:8pt; white-space:nowrap;">
-        ${location}
-      </em>
-      <em style="font-size:8pt; white-space:nowrap;">
-        ${duration}
-      </em>
-    </div>
-
-    </div>
+          <div class="edu-block" style="margin-bottom:10px;">
+            <div class="row-between" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;">
+              <strong style="font-family:'Times New Roman',serif;font-size:10.5pt;">${ed.institution || ""}</strong>
+            </div>
+            <div class="row-between" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:2px;">
+              <span style="font-family:'Times New Roman',serif;font-size:10px;">${ed.degree || ""}</span>
+              <em style="font-family:'Times New Roman',serif;font-size:10px;white-space:nowrap;">${duration}</em>
+            </div>
             ${
-            variant === "modern" ? "" :
               ed.result
                 ? `<div style="font-family:'Times New Roman',serif;font-size:10px;margin-top:2px;"><strong>Major GPA:</strong> ${ed.result}</div>`
                 : ""
             }
           </div>
         `;
+        }
+
+        // ── classic (template1) ──
+        let duration = "";
+        if (ed.start && ed.end) {
+          duration = `${ed.start} - ${ed.end}`;
+        } else {
+          const start = formatMonthYear(ed.start_month, ed.start_year);
+          const end = ed.is_present ? "Present" : formatMonthYear(ed.end_month, ed.end_year);
+          duration = start || end ? `${start} - ${end}` : ed.year || "";
         }
 
         return `
@@ -252,6 +279,7 @@ function formatProjects(formData: any, variant: ResumeTemplateVariant): string {
         `;
         }
 
+        // classic & classic2 share the same projects layout
         return `
           <div style="margin-bottom: 4px;">
             <div style="display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px;row-gap:4px;margin-bottom:4px;">
@@ -282,7 +310,7 @@ function formatProjects(formData: any, variant: ResumeTemplateVariant): string {
   );
 }
 
-function formatSummary(formData: any, variant: ResumeTemplateVariant): string {
+function formatSummary(formData: any): string {
   const text = formData.professional_summary;
 
   if (!text) return "";
@@ -311,38 +339,32 @@ function formatSummary(formData: any, variant: ResumeTemplateVariant): string {
 function formatLinks(formData: any, variant: ResumeTemplateVariant): string {
   const links = formData.otherLinks;
   if (!links || Object.keys(links).length === 0) return "";
-  console.log(links);
-  const moderntemplink = variant === "modern" ? links["linkedIn"]:""
+
   const listItems = Object.entries(links)
     .map(([, value]) => {
       return `<p style="margin-bottom: 1px;"><a href="${value}" style="color:black;font-size:8px">${value}</a></p>`;
     })
     .join("");
-// console.log(listItems);
-  return `
-  ${
-    variant === "modern" ? 
-  // `<div>${modernlink}</div>`:
-  "":
-  `<div style="display:flex;flex-direction:column;">
-    ${listItems}
-  </div>`
 
-  }`
-  ;
+  return `
+    <div style="display:flex;flex-direction:column;">
+
+      ${
+    variant === "classic2" ? "":
+      listItems}
+    </div>
+  `;
 }
 
-function formatContactLine(formData: any, variant: ResumeTemplateVariant): string {
+function formatContactLine(formData: any): string {
   const p = formData.personal_info || {};
   const phone = p.phone || p.number;
-  const link = formData.otherLinks["linkedIn"];
-  const parts = [phone, p.email, link].filter(Boolean);
-  console.log(link)
-  return variant === "modern" ? parts.join(" | ") : parts.join(" · ");
+  const parts = [phone, p.email, p.linkedin, p.portfolio].filter(Boolean);
+  return parts.join(" · ");
 }
 
 function professionalFallbackTemplate(formData: any, variant: ResumeTemplateVariant): string {
-  const fs = variant === "modern" ? formatSkillsModern(formData, variant) : formatSkillsInner(formData, variant);
+  const fs = variant === "modern" ? formatSkillsModern(formData) : formatSkillsInner(formData);
 
   return `
     <div style="font-family: 'Times New Roman', serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;">
@@ -421,31 +443,32 @@ function professionalFallbackTemplate(formData: any, variant: ResumeTemplateVari
   `;
 }
 
-function summarySectionHTML(formData: any, variant: ResumeTemplateVariant): string {
+function summarySectionHTML(formData: any): string {
   const raw = (formData.professional_summary || "").trim();
   if (!raw) return "";
-  const inner = formatSummary(formData, variant);
+  const inner = formatSummary(formData);
   return `
       <div class="section">
-        <h2 class="section-title">${variant === "modern" ? "":"Summary"}</h2>
-        ${variant === "modern" ?"":inner}
+        <h2 class="section-title">Summary</h2>
+        ${inner}
       </div>`;
 }
 
 function linksSectionHTML(formData: any, variant: ResumeTemplateVariant): string {
   const inner = formatLinks(formData, variant);
   if (!inner.trim()) return "";
-  console.log(inner)
   return `
       <div class="section">
-        <h2 class="section-title">${variant === "modern" ? "":"Links"}</h2>
-        <div>        ${inner}
-</div>
+        <h2 class="section-title">Links</h2>
+        <div>${inner}</div>
       </div>`;
 }
 
 /**
- * Fills an HTML template string with resume data. Use `variant` to switch section layouts (classic vs modern).
+ * Fills an HTML template string with resume data. Use `variant` to switch section layouts.
+ * - "classic"  → template1 layout
+ * - "modern"   → template2 layout
+ * - "classic2" → template3 layout (year-only education duration, institution+degree stacked)
  */
 export function fillResumeTemplate(
   template: string | null | undefined,
@@ -458,16 +481,16 @@ export function fillResumeTemplate(
     return template
       .replace(/\{\{name\}\}/g, formData.personal_info?.name || "")
       .replace(/\{\{email\}\}/g, formData.personal_info?.email || "")
-      .replace(/\{\{links\}\}/g, formatLinks(formData, v))
-      .replace(/\{\{links_block\}\}/g, linksSectionHTML(formData, v))
       .replace(/\{\{number\}\}/g, formData.personal_info?.phone || formData.personal_info?.number || "")
-      .replace(/\{\{contact\}\}/g, formatContactLine(formData, v))
-      .replace(/\{\{summary\}\}/g, formatSummary(formData, v))
-      .replace(/\{\{summary_block\}\}/g, summarySectionHTML(formData, v))
-      .replace(/\{\{skills\}\}/g, v === "modern" ? formatSkillsModern(formData, v) : formatSkillsInner(formData, v))
+      .replace(/\{\{contact\}\}/g, formatContactLine(formData))
+      .replace(/\{\{summary\}\}/g, formatSummary(formData))
+      .replace(/\{\{summary_block\}\}/g, summarySectionHTML(formData))
+      .replace(/\{\{skills\}\}/g, v === "modern" ? formatSkillsModern(formData) : formatSkillsInner(formData, v))
       .replace(/\{\{experience\}\}/g, formatExperience(formData, v))
       .replace(/\{\{education\}\}/g, formatEducation(formData, v))
-      .replace(/\{\{projects\}\}/g, formatProjects(formData, v));
+      .replace(/\{\{projects\}\}/g, formatProjects(formData, v))
+      .replace(/\{\{links\}\}/g, formatLinks(formData, v))
+      .replace(/\{\{links_block\}\}/g, linksSectionHTML(formData, v));
   }
 
   return professionalFallbackTemplate(formData, v);

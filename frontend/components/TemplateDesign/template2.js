@@ -34,13 +34,13 @@ export const template = `
         color: #333;
         padding-bottom: 10px;
         margin-bottom: 14px;
-        border-bottom: 1px solid #000;
+        
       }
       .section {
         margin-bottom: 16px;
       }
       .section-title {
-        font-size: 9.5pt;
+        font-size: 12.5pt;
         font-weight: bold;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -62,7 +62,7 @@ export const template = `
       <h1 class="name">{{name}}</h1>
       <div class="contact">{{contact}}</div>
 
-      {{summary_block}}
+      
 
       <div class="section">
         <h2 class="section-title">Education</h2>
