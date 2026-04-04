@@ -86,7 +86,7 @@ export default function Dashboard() {
 
   const [resumeTemplates, setResumeTemplates] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
-  const { signOut } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const slideAnim = useRefReact(new Animated.Value(DRAWER_WIDTH)).current;
@@ -132,6 +132,9 @@ export default function Dashboard() {
     }, 300);
   };
 
+  const handleLogin = () => {
+    router.push("/(auth)/AuthScreen");
+  };
   // Get greeting based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -148,9 +151,16 @@ export default function Dashboard() {
     if (user?.emailAddresses[0].emailAddress) {
       return user.emailAddresses[0].emailAddress.slice(0, 2).toUpperCase();
     }
-    return "CC";
+    return "G";
   };
-
+  function getRelativeTime(timestamp: number): string {
+    const diff = Date.now() - timestamp;
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return "Today";
+    if (days === 1) return "1d ago";
+    if (days < 7) return `${days}d ago`;
+    return `${Math.floor(days / 7)}w ago`;
+  }
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -197,12 +207,18 @@ export default function Dashboard() {
           <Text style={styles.statLabel}>Resumes</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: "#e8f5f2" }]}>
-          <Text style={[styles.statNumber, { color: "#3BBFAD" }]}>0</Text>
-          <Text style={styles.statLabel}>Downloads</Text>
+          <Text style={[styles.statNumber, { color: "#3BBFAD" }]}>
+            {resumeTemplates.length === 0 ? "—" : getRelativeTime(Math.max(...resumeTemplates.map(r => r.createdAt)))}
+          </Text>
+          <Text style={styles.statLabel}>Last Edited</Text>
         </View>
+
+        {/* // This Week card */}
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>—</Text>
-          <Text style={styles.statLabel}>Last Edit</Text>
+          <Text style={styles.statNumber}>
+            {resumeTemplates.filter(r => Date.now() - r.createdAt < 604800000).length}
+          </Text>
+          <Text style={styles.statLabel}>This Week</Text>
         </View>
       </View>
 
@@ -378,13 +394,13 @@ export default function Dashboard() {
             <View style={styles.profileSection}>
               <View style={styles.profileAvatarLarge}>
                 {user?.firstName === "" ? (
-                  <Text style={styles.profileAvatarInitials}>CC</Text>
+                  <Text style={styles.profileAvatarInitials}>G</Text>
                 ) : (
                   <Text style={styles.profileAvatarInitials}>{getInitials()}</Text>
                 )}
               </View>
               <Text style={styles.profileName}>
-                {user?.fullName?.toUpperCase() || "CareerCraft User"}
+                {user?.fullName?.toUpperCase() || "Guest"}
               </Text>
               <Text style={styles.profileEmail}>
                 {user?.emailAddresses[0].emailAddress || ""}
@@ -442,34 +458,47 @@ export default function Dashboard() {
             </View>
 
             {/* ✅ Sign Out Button */}
-            {user ? (
 
-              <View style={styles.drawerFooter}>
-                <TouchableOpacity
-                  style={styles.signOutBtn}
-                  onPress={handleSignOut}
-                  activeOpacity={0.85}
+
+            <View style={styles.drawerFooter}>
+              <TouchableOpacity
+                style={[styles.signOutBtn,
+                { backgroundColor: isSignedIn ? "#fff5f5" : "#e6f4ea" },
+                { borderColor: isSignedIn ? "#ffdddd" : "#ddffdd" }
+                ]}
+                onPress={isSignedIn ? handleSignOut : handleLogin}
+                activeOpacity={0.85}
+              >
+                <View
+                  style={[
+                    styles.signOutIconBox,
+                    { backgroundColor: isSignedIn ? "#ffe8e8" : "#e6f4ea" }
+                  ]}
                 >
-                  <View style={styles.signOutIconBox}>
-                    <Ionicons name="log-out-outline" size={18} color="#e07070" />
-                  </View>
-                  <Text style={styles.signOutText}>Sign Out</Text>
-                </TouchableOpacity>
-
-                {/* App version */}
-                <View style={styles.drawerVersionRow}>
-                  <View style={styles.logoDot} />
-                  <Text style={styles.drawerLogoText}>
-                    Career<Text style={styles.drawerLogoAccent}>Craft</Text>
-                  </Text>
+                  <Ionicons
+                    name={isSignedIn ? "log-out-outline" : "log-in-outline"}
+                    size={18}
+                    color={isSignedIn ? "#e07070" : "#2e7d32"}
+                  />
                 </View>
+
+                <Text style={[styles.signOutText,
+                { color: isSignedIn ? "#e07070" : "green" }
+                ]}>
+                  {isSignedIn ? "Sign Out" : "Login"}
+                </Text>
+              </TouchableOpacity>
+
+
+              {/* App version */}
+              <View style={styles.drawerVersionRow}>
+                <View style={styles.logoDot} />
+                <Text style={styles.drawerLogoText}>
+                  Career<Text style={styles.drawerLogoAccent}>Craft</Text>
+                </Text>
               </View>
-            ) : (<View style={styles.drawerVersionRow}>
-              <View style={styles.logoDot} />
-              <Text style={styles.drawerLogoText}>
-                Career<Text style={styles.drawerLogoAccent}>Craft</Text>
-              </Text>
-            </View>)}
+            </View>
+
           </Animated.View>
         </View>
       </Modal>
@@ -780,9 +809,9 @@ const styles = StyleSheet.create({
   signOutBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff5f5",
+    // backgroundColor: "#fff5f5",
     borderWidth: 1,
-    borderColor: "#fdd",
+    // borderColor: "#fdd",
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -793,7 +822,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: "#ffe8e8",
+    // backgroundColor: "#ffe8e8",
     justifyContent: "center",
     alignItems: "center",
   },

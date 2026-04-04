@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGoogleAuth } from "../../utils/usegoogleAuth";
+import { useAuth, useUser } from "@clerk/clerk-expo";
+import { router } from "expo-router";
 
 interface AuthScreenProps {
   onAuthSuccess: () => void;
@@ -35,7 +37,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
   const isPasswordValid = password.length >= 6;
   const isConfirmValid = mode === "login" || confirmPassword === password;
   const canSubmit = isEmailValid && isPasswordValid && isConfirmValid;
-
+  const { isSignedIn } = useAuth();
   const handleSubmit = async () => {
     if (!canSubmit) return;
 
@@ -86,11 +88,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" />
+        {/* <StatusBar barStyle="dark-content" backgroundColor="#F4F1DE" /> */}
 
         {/* ── Navbar ── */}
         <View style={styles.navbar}>
-          <TouchableOpacity onPress={onBack} style={styles.leftIcon}>
+          <TouchableOpacity
+            onPress={() =>
+              //   style={styles.leftIcon} 
+              isSignedIn
+                ? onBack()
+                : router.push("/(root)")
+            }
+          >
             <Ionicons name="arrow-back" size={22} color="#3D405B" />
           </TouchableOpacity>
           <View style={styles.centerContent}>
@@ -144,10 +153,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
           {/* Google Button */}
           <TouchableOpacity
             // style={[styles.googleBtn, (!request || isLoading) && { opacity: 0.6 }]}
-            style={[styles.googleBtn, ( isLoading) && { opacity: 0.6 }]}
+            style={[styles.googleBtn, (isLoading) && { opacity: 0.6 }]}
             onPress={handleGoogle}
             // disabled={!request || isLoading}
-            disabled={ isLoading}
+            disabled={isLoading}
             activeOpacity={0.85}
           >
             <Text style={styles.googleG}>G</Text>
@@ -247,7 +256,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess, onBack }) => {
                         password.length >= i * 2 && {
                           backgroundColor:
                             password.length < 4 ? "#e07070" :
-                            password.length < 6 ? "#f0a04e" : "#3BBFAD",
+                              password.length < 6 ? "#f0a04e" : "#3BBFAD",
                         },
                       ]}
                     />
@@ -360,17 +369,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
 
   navbar: {
-    height: 56,
+    height: 76,
     backgroundColor: "#F4F1DE",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
+    paddingTop: 20
   },
-  leftIcon:      { position: "absolute", left: 20 },
+  // leftIcon:      { position: "absolute", left: 20 },
   centerContent: { flex: 1, alignItems: "center" },
   navTitle: {
     fontSize: 14,
-    fontWeight: "bold",
+    // fontWeight: "bold",
     letterSpacing: 1,
     color: "#3D405B",
     fontFamily: "WorkSansBold",
@@ -379,13 +389,13 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 20 },
 
   headingBlock: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingTop: 28,
     marginBottom: 20,
     alignItems: "center",
   },
   mainHeading: {
-    fontSize: 26,
+    fontSize: 30,
     color: "#3D405B",
     fontFamily: "PlayfairDisplayBold",
     lineHeight: 34,
@@ -489,7 +499,7 @@ const styles = StyleSheet.create({
   dividerLine: { flex: 1, height: 1, backgroundColor: "#eee" },
   dividerText: { fontSize: 12, color: "#aaa", fontFamily: "WorkSansRegular" },
 
-  fieldsBlock:    { paddingHorizontal: 20 },
+  fieldsBlock: { paddingHorizontal: 20 },
   fieldContainer: { marginBottom: 20 },
   floatingLabel: {
     fontSize: 10,
@@ -499,8 +509,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: "WorkSansSemiBold",
   },
-  fieldRow:   { flexDirection: "row", alignItems: "center" },
-  fieldIcon:  { marginRight: 10 },
+  fieldRow: { flexDirection: "row", alignItems: "center" },
+  fieldIcon: { marginRight: 10 },
   fieldInput: {
     flex: 1,
     fontSize: 15,
@@ -508,9 +518,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontFamily: "WorkSansRegular",
   },
-  underline:        { height: 1,   backgroundColor: "#eee", marginTop: 4 },
+  underline: { height: 1, backgroundColor: "#eee", marginTop: 4 },
   underlineFocused: { height: 1.5, backgroundColor: "#3BBFAD" },
-  underlineFilled:  { backgroundColor: "#81B29A" },
+  underlineFilled: { backgroundColor: "#81B29A" },
 
   strengthRow: {
     flexDirection: "row",
@@ -549,7 +559,7 @@ const styles = StyleSheet.create({
   },
   termsLink: { color: "#3BBFAD", fontFamily: "WorkSansSemiBold" },
 
-  switchMode:     { alignItems: "center", paddingVertical: 8 },
+  switchMode: { alignItems: "center", paddingVertical: 8 },
   switchModeText: {
     fontSize: 15,
     color: "#3D405B",
